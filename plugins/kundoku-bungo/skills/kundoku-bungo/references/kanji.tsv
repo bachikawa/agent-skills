@@ -37,7 +37,7 @@ modern	old	old_codepoint	kind	one_to_many	note	evidence	evidence_url
 勉	勉	U+FA33	compat	0		官吏服務紀律（1887）	https://ja.wikisource.org/w/index.php?oldid=111480
 勤	勤	U+FA34	compat	0		集議院規則（1869）	https://ja.wikisource.org/w/index.php?oldid=218192
 勧	勸	U+52F8	joyo	0		醫師畫工諸職人ノ位階及國名受領等ヲ廢ス（1869）	https://ja.wikisource.org/w/index.php?oldid=143292
-勲	勳	U+52F3	joyo	0		勲章制定ノ件（1872）	https://ja.wikisource.org/w/index.php?oldid=111231
+勲	勳	U+52F3	joyo	0		勳章從軍記章制定ノ件（1875）	https://ja.wikisource.org/w/index.php?oldid=111313
 区	區	U+5340	joyo	0		大中小藩ノ區別ヲ定ム（1868）	https://ja.wikisource.org/w/index.php?oldid=143496
 医	醫	U+91AB	joyo	1	ふつうは醫	醫師畫工諸職人ノ位階及國名受領等ヲ廢ス（1869）	https://ja.wikisource.org/w/index.php?oldid=143292
 卑	卑	U+FA35	compat	0		集議院ニ於テ待詔院下局ノ事務ヲ料理セシム（1869）	https://ja.wikisource.org/w/index.php?oldid=143286
@@ -241,7 +241,7 @@ modern	old	old_codepoint	kind	one_to_many	note	evidence	evidence_url
 繁	繁	U+FA59	compat	0		各地ノ風習舊慣ヲ私法ト爲ス等申禁解禁ノ條件（1872）	https://ja.wikisource.org/w/index.php?oldid=98091
 缶	罐	U+7F50	joyo	1	容器の「かん」はふつう罐	刑法 (明治13年太政官布告第36号)（1880）	https://ja.wikisource.org/w/index.php?oldid=216438
 署	署	U+FA5A	compat	0		府藩縣交涉訴訟准判規程（1871）	https://ja.wikisource.org/w/index.php?oldid=143392
-翻	飜	U+98DC	joyo	0		陸軍軍法会議法（1921）	https://ja.wikisource.org/w/index.php?oldid=220894
+翻	飜	U+98DC	joyo	0		昭和十一年富山縣告諭第二號（1936）	https://ja.wikisource.org/w/index.php?oldid=109168
 者	者	U+FA5B	compat	0		德川慶喜征討ノ大號令ヲ發シ諸侯ヲシテ去就ヲ決セシム（1868）	https://ja.wikisource.org/w/index.php?oldid=168786
 聴	聽	U+807D	joyo	0		府藩縣交涉訴訟准判規程（1871）	https://ja.wikisource.org/w/index.php?oldid=143392
 胆	膽	U+81BD	joyo	0		蝦夷地ヲ北海道ト稱シ十一國ニ分割國名郡名ヲ定ム（1869）	https://ja.wikisource.org/w/index.php?oldid=154011

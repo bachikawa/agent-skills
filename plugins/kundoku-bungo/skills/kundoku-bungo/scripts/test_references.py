@@ -41,11 +41,13 @@ SOURCE_URL = re.compile(r"https://ja\.wikisource\.org/w/index\.php\?oldid=\d+")
 SOURCE_YEAR = re.compile(r"（(\d{4})）$")
 # Wording used only in the name of the emperor; the table must not teach it.
 IMPERIAL_WORDS = re.compile(
-    r"朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|宸|思召|詔|勅|敕"
+    r"朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|宸|思召|休命|大御心|詔|勅|敕"
+    r"|御誓文|御沙汰|朝威|皇基|皇政|皇居"
 )
 # Stenographers' notes in speeches, such as （拍手） and （大喝采）.
 STENOGRAPHY_NOTE = re.compile(
-    r"（[^（）]*(?:拍手|喝采|喝釆|謹聴|謹聼|謹聽|笑声|笑聲|ヒヤ|ノー)[^（）]*）"
+    r"（[^（）]*(?:拍手|喝采|喝釆|謹聴|謹聼|謹聽|笑声|笑聲|大笑|異議ナシ|賛成|贊成"
+    r"|ヒヤ|ノー)[^（）]*）"
 )
 # Section and paragraph numbers in Arabic digits are added by transcribers.
 DIGITS = re.compile(r"[0-9０-９]")
