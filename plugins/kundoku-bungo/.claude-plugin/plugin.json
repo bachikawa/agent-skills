@@ -1,0 +1,10 @@
+{
+  "name": "kundoku-bungo",
+  "version": "0.1.0",
+  "description": "現代の日本語と、明治〜昭和 20 年ごろの公の書き言葉（漢文訓読体の普通文）を相互に変換する。",
+  "author": {
+    "name": "bachikawa"
+  },
+  "repository": "https://github.com/bachikawa/agent-skills",
+  "license": "MIT"
+}
