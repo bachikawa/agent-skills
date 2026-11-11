@@ -5,20 +5,32 @@ script (hiragana and katakana), voicing marks, small kana and
 punctuation. Rewriting grammar, choosing words and historical kana
 spelling are left to the agent, because they depend on context.
 
+Half-width katakana are out of scope and left as they are.
+
 Usage:
-    python convert_chars.py to-bungo [options] < input.txt
-    python convert_chars.py to-modern < input.txt
+    python convert_chars.py to-bungo [options] --input FILE
+    python convert_chars.py to-modern --input FILE
+
+Without --input, the text is read from standard input.
 """
 
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import unicodedata
 
 _HIRAGANA_START = 0x3041
 _HIRAGANA_END = 0x3096
+_HIRAGANA_BLOCK_END = 0x309F
+_KATAKANA_BLOCK_START = 0x30A0
+_KATAKANA_BLOCK_END = 0x30FF
 _KANA_OFFSET = 0x60
+
+# ヵ and ヶ are used as counters and in place names (三ヶ月, 霞ヶ関),
+# not read as kana, so they stay katakana.
+_KATAKANA_KEPT = {"ヵ", "ヶ"}
 
 # Iteration marks are converted together with the kana they repeat.
 _HIRAGANA_ITERATION = {"ゝ": "ヽ", "ゞ": "ヾ"}
@@ -31,11 +43,30 @@ _SMALL_TO_LARGE = str.maketrans(
 
 _COMBINING_VOICED = "゙"
 _COMBINING_SEMI_VOICED = "゚"
-_SPACING_MARKS = {"゛", "゜"}
+_SPACING_VOICED = "゛"
+_SPACING_SEMI_VOICED = "゜"
+_VOICING_MARKS = {
+    _COMBINING_VOICED,
+    _COMBINING_SEMI_VOICED,
+    _SPACING_VOICED,
+    _SPACING_SEMI_VOICED,
+}
 
 _COMMA = "、"
 _PERIOD = "。"
 _IDEOGRAPHIC_SPACE = "　"
+# A period needs no separator when a closing bracket or the end of the
+# line follows it.
+_CLOSING_OR_END = re.compile(_PERIOD + r"(?=[」』）〕】\])]|\s*$)")
+
+
+def _is_kana(char: str) -> bool:
+    """Returns whether the character is in the hiragana or katakana block."""
+    code = ord(char)
+    return (
+        _HIRAGANA_START <= code <= _HIRAGANA_BLOCK_END
+        or _KATAKANA_BLOCK_START <= code <= _KATAKANA_BLOCK_END
+    )
 
 
 def to_katakana(text: str) -> str:
@@ -64,7 +95,8 @@ def to_hiragana(text: str) -> str:
     """Converts katakana to hiragana.
 
     Katakana that have no hiragana counterpart (such as ヷ or the long
-    vowel mark ー) are left as they are.
+    vowel mark ー) are left as they are, and so are ヵ and ヶ, which are
+    used as counters and in place names.
 
     Args:
         text: The text to convert.
@@ -74,9 +106,11 @@ def to_hiragana(text: str) -> str:
     """
     result = []
     for char in text:
-        code = ord(char)
-        if _HIRAGANA_START + _KANA_OFFSET <= code <= _HIRAGANA_END + _KANA_OFFSET:
-            result.append(chr(code - _KANA_OFFSET))
+        code = ord(char) - _KANA_OFFSET
+        if char in _KATAKANA_KEPT:
+            result.append(char)
+        elif _HIRAGANA_START <= code <= _HIRAGANA_END:
+            result.append(chr(code))
         else:
             result.append(_KATAKANA_ITERATION.get(char, char))
     return "".join(result)
@@ -97,22 +131,16 @@ def strip_voicing_marks(text: str) -> str:
     """
     result = []
     for char in text:
-        if char in (_COMBINING_VOICED, _COMBINING_SEMI_VOICED) or char in _SPACING_MARKS:
+        if char in _VOICING_MARKS:
             continue
         if _is_kana(char):
             # Decompose kana only: normalizing the whole text would also
-            # turn CJK compatibility ideographs (old forms such as 社)
-            # into their modern unified forms.
-            base = unicodedata.normalize("NFD", char)[0]
-            result.append(base)
+            # turn CJK compatibility ideographs (old forms such as the
+            # U+FA4C form of 社) into their modern unified forms.
+            result.append(unicodedata.normalize("NFD", char)[0])
         else:
             result.append(char)
     return "".join(result)
-
-
-def _is_kana(char: str) -> bool:
-    code = ord(char)
-    return _HIRAGANA_START <= code <= 0x309F or 0x30A0 <= code <= 0x30FF
 
 
 def enlarge_small_kana(text: str) -> str:
@@ -132,9 +160,9 @@ def enlarge_small_kana(text: str) -> str:
 def remove_punctuation(text: str) -> str:
     """Removes the Japanese comma and period.
 
-    The comma is removed. A period inside a line becomes an ideographic
-    space so that sentences stay apart; a period at the end of a line is
-    removed.
+    The comma is removed. A period followed by a closing bracket or by
+    the end of the line (spaces aside) is removed. Any other period
+    becomes an ideographic space so that sentences stay apart.
 
     Args:
         text: The text to convert.
@@ -145,8 +173,8 @@ def remove_punctuation(text: str) -> str:
     lines = []
     for line in text.split("\n"):
         line = line.replace(_COMMA, "")
-        line = line.rstrip(_PERIOD).replace(_PERIOD, _IDEOGRAPHIC_SPACE)
-        lines.append(line)
+        line = _CLOSING_OR_END.sub("", line)
+        lines.append(line.replace(_PERIOD, _IDEOGRAPHIC_SPACE))
     return "\n".join(lines)
 
 
@@ -201,21 +229,43 @@ def to_modern(text: str) -> str:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(
+        description=__doc__.splitlines()[0]
+    )
     sub = parser.add_subparsers(dest="direction", required=True)
 
-    bungo = sub.add_parser("to-bungo", help="convert toward pre-war notation")
-    bungo.add_argument("--hiragana", action="store_true", help="keep kana in hiragana")
-    bungo.add_argument("--keep-voicing", action="store_true", help="keep ゛ and ゜")
-    bungo.add_argument("--keep-small-kana", action="store_true", help="keep small kana")
-    bungo.add_argument("--keep-punctuation", action="store_true", help="keep 、 and 。")
+    bungo = sub.add_parser(
+        "to-bungo", help="convert toward pre-war notation"
+    )
+    bungo.add_argument(
+        "--hiragana", action="store_true", help="keep kana in hiragana"
+    )
+    bungo.add_argument(
+        "--keep-voicing", action="store_true", help="keep voicing marks"
+    )
+    bungo.add_argument(
+        "--keep-small-kana", action="store_true", help="keep small kana"
+    )
+    bungo.add_argument(
+        "--keep-punctuation",
+        action="store_true",
+        help="keep the Japanese comma and period",
+    )
 
-    sub.add_parser("to-modern", help="convert katakana to hiragana")
+    modern = sub.add_parser(
+        "to-modern", help="convert katakana to hiragana"
+    )
+    for subparser in (bungo, modern):
+        subparser.add_argument(
+            "--input",
+            metavar="FILE",
+            help="read the text from this UTF-8 file instead of stdin",
+        )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Reads text from stdin, converts it and writes it to stdout.
+    """Reads text, converts it and writes it to standard output.
 
     Args:
         argv: Command-line arguments without the program name. Uses
@@ -224,11 +274,18 @@ def main(argv: list[str] | None = None) -> int:
     Returns:
         The exit code.
     """
-    args = _build_parser().parse_args(argv)
-    # The Windows console may not use UTF-8, and the input is Japanese.
+    # The Windows console may not use UTF-8, and both the input and the
+    # help text contain Japanese. Writing "\n" as is keeps the line
+    # endings the same on every platform.
     sys.stdin.reconfigure(encoding="utf-8")
-    sys.stdout.reconfigure(encoding="utf-8")
-    text = sys.stdin.read()
+    sys.stdout.reconfigure(encoding="utf-8", newline="\n")
+    sys.stderr.reconfigure(encoding="utf-8")
+    args = _build_parser().parse_args(argv)
+    if args.input:
+        with open(args.input, encoding="utf-8") as source:
+            text = source.read()
+    else:
+        text = sys.stdin.read()
     if args.direction == "to-bungo":
         result = to_bungo(
             text,
