@@ -386,6 +386,28 @@ class CommandLineTest(unittest.TestCase):
             completed.stdout.decode("utf-8"), "$(echo injected)カクセイ"
         )
 
+    def test_remove_input_deletes_the_file_after_reading(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory, "input.txt")
+            source.write_text("がくせい", encoding="utf-8")
+            completed = self._run(
+                "to-bungo", "--input", str(source), "--remove-input"
+            )
+            self.assertFalse(source.exists())
+        self.assertEqual(completed.returncode, 0)
+        self.assertEqual(completed.stdout.decode("utf-8"), "カクセイ")
+
+    def test_input_file_is_kept_without_remove_input(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory, "input.txt")
+            source.write_text("がくせい", encoding="utf-8")
+            self._run("to-bungo", "--input", str(source))
+            self.assertTrue(source.exists())
+
+    def test_remove_input_without_input_is_a_usage_error(self) -> None:
+        completed = self._run("to-bungo", "--remove-input", given="がくせい")
+        self.assertEqual(completed.returncode, 2)
+
     def test_input_file_with_bom_does_not_leak_the_bom(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory, "input.txt")

@@ -14,7 +14,9 @@ Usage:
     python convert_chars.py to-bungo [options] --input FILE
     python convert_chars.py to-modern [options] --input FILE
 
-Without --input, the text is read from standard input.
+Without --input, the text is read from standard input. With
+--remove-input, the input file is deleted after it has been read, so
+that a temporary file holding the user's text does not stay behind.
 """
 
 from __future__ import annotations
@@ -22,6 +24,7 @@ from __future__ import annotations
 import argparse
 import csv
 import functools
+import os
 import re
 import sys
 import unicodedata
@@ -404,6 +407,11 @@ def _build_parser() -> argparse.ArgumentParser:
             metavar="FILE",
             help="read the text from this UTF-8 file instead of stdin",
         )
+        subparser.add_argument(
+            "--remove-input",
+            action="store_true",
+            help="delete the --input file after reading it",
+        )
     return parser
 
 
@@ -422,7 +430,10 @@ def main(argv: list[str] | None = None) -> int:
     # is keeps the line endings the same on every platform.
     sys.stdout.reconfigure(encoding="utf-8", newline="\n")
     sys.stderr.reconfigure(encoding="utf-8")
-    args = _build_parser().parse_args(argv)
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+    if args.remove_input and args.input is None:
+        parser.error("--remove-input requires --input")
     if args.input is not None:
         try:
             # utf-8-sig drops the BOM that some Windows editors add.
@@ -431,6 +442,13 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, UnicodeDecodeError) as error:
             print(f"cannot read {args.input}: {error}", file=sys.stderr)
             return 1
+        if args.remove_input:
+            try:
+                os.remove(args.input)
+            except OSError as error:
+                # The text is already read, so the conversion goes on;
+                # the warning tells the caller to delete the file.
+                print(f"cannot remove {args.input}: {error}", file=sys.stderr)
     else:
         sys.stdin.reconfigure(encoding="utf-8-sig")
         text = sys.stdin.read()
