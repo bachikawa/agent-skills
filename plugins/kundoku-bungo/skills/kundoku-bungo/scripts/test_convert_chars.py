@@ -122,7 +122,14 @@ class ToKyujitaiTest(unittest.TestCase):
         self.assertEqual(convert_chars.to_kyujitai("学生"), "學生")
 
     def test_kanji_whose_old_form_depends_on_the_word_are_kept(self) -> None:
-        cases = {"弁護": "弁護", "台": "台", "民衆": "民衆"}
+        # 勅 stays: official documents of the period wrote 勅令, not 敕令.
+        cases = {
+            "弁護": "弁護",
+            "台": "台",
+            "民衆": "民衆",
+            "勅令": "勅令",
+            "政党": "政党",
+        }
         for given, expected in cases.items():
             with self.subTest(given=given):
                 self.assertEqual(convert_chars.to_kyujitai(given), expected)

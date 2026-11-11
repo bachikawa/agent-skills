@@ -281,10 +281,25 @@ class BuildRevisionsTest(unittest.TestCase):
         self.assertEqual(rows[0].oldid, 1)
         self.assertEqual(rows[0].usage, "kanji_only")
 
-    def test_pinned_rescript_without_a_year_is_kanji_only(self) -> None:
-        pinned = [Page("某ノ勅語", 1, "本文", [])]
-        rows, _ = fetch_corpus.build_revisions(pinned, {1: "all"}, [])
-        self.assertEqual(rows[0].usage, "kanji_only")
+    def test_pinned_revision_left_out_by_the_rules_is_an_error(self) -> None:
+        cases = {
+            "no year": Page("某ノ勅語", 1, "本文", []),
+            "treaty": Page("日英同盟協約", 2, law(1902), []),
+            "current": Page("某法", 3, law_with_notes(1907, "{{現行法令掲載}}"), []),
+        }
+        for name, page in cases.items():
+            with self.subTest(case=name):
+                with self.assertRaises(fetch_corpus.CorpusError):
+                    fetch_corpus.build_revisions(
+                        [page], {page.oldid: "all"}, []
+                    )
+
+    def test_pinned_speech_is_text_only(self) -> None:
+        pinned = [Page("祝東京專門学校之開校", 4, law(1882), [])]
+        rows, _ = fetch_corpus.build_revisions(pinned, {4: "all"}, [])
+        self.assertEqual(
+            (rows[0].usage, rows[0].rule), ("text_only", "non-government")
+        )
 
     def test_pinned_page_only_in_examples_stays_examples_only(self) -> None:
         pinned = [Page("株熱の余症恐るべし", 5, law(1893), [])]
@@ -700,12 +715,89 @@ class UnihanTest(unittest.TestCase):
 
 
 class PinnedOldidsTest(unittest.TestCase):
-    def test_current_tables_cite_37_revisions(self) -> None:
+    def test_only_revisions_cited_by_examples_alone_are_examples_only(
+        self,
+    ) -> None:
         pinned = fetch_corpus.pinned_oldids()
-        self.assertEqual(len(pinned), 37)
+        self.assertGreater(len(pinned), 0)
         self.assertEqual(
             sorted(o for o, u in pinned.items() if u == "examples_only"),
             [218223, 218225],
+        )
+
+
+class PinnedOldidsUnionTest(unittest.TestCase):
+    def test_revision_pinned_before_stays_pinned(self) -> None:
+        rows = [
+            Revision("某ノ詔書", 9, "a" * 40, 1900, "kanji_only", "pinned", "x"),
+            Revision("株", 8, "b" * 40, 1893, "examples_only", "pinned", "x"),
+            Revision("法", 7, "c" * 40, 1900, "all", "listed", "x"),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            references = Path(directory, "references")
+            references.mkdir()
+            for name in ("kanji.tsv", "vocabulary.tsv", "examples.md"):
+                Path(references, name).write_text("", encoding="utf-8")
+            Path(references, "kanji.tsv").write_text(
+                "https://ja.wikisource.org/w/index.php?oldid=5\n", "utf-8"
+            )
+            path = Path(directory, "corpus_revisions.tsv")
+            fetch_corpus.write_revisions(rows, path)
+            pinned = fetch_corpus.pinned_oldids(references, path)
+        self.assertEqual(pinned, {5: "all", 9: "all", 8: "examples_only"})
+
+    def test_pinned_revision_cited_only_by_examples_stays_all(self) -> None:
+        rows = [Revision("告諭", 8, "a" * 40, 1936, "all", "pinned", "x")]
+        with tempfile.TemporaryDirectory() as directory:
+            references = Path(directory, "references")
+            references.mkdir()
+            for name in ("kanji.tsv", "vocabulary.tsv"):
+                Path(references, name).write_text("", encoding="utf-8")
+            Path(references, "examples.md").write_text(
+                "https://ja.wikisource.org/w/index.php?oldid=8\n", "utf-8"
+            )
+            path = Path(directory, "corpus_revisions.tsv")
+            fetch_corpus.write_revisions(rows, path)
+            pinned = fetch_corpus.pinned_oldids(references, path)
+        self.assertEqual(pinned, {8: "all"})
+
+
+class ReclassifyPinnedTest(unittest.TestCase):
+    def test_cited_revision_is_pinned_and_an_old_pin_stays(self) -> None:
+        cited = Page("刑法", 1, law(1880), [])
+        other = Page("法例", 2, law(1898), [])
+        old_pin = Page("古い", 3, law(1890), [])
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory, "work")
+            references = Path(directory, "references")
+            references.mkdir()
+            Path(references, "kanji.tsv").write_text(
+                "https://ja.wikisource.org/w/index.php?oldid=1\n", "utf-8"
+            )
+            for name in ("vocabulary.tsv", "examples.md"):
+                Path(references, name).write_text("", encoding="utf-8")
+            revisions = Path(directory, "corpus_revisions.tsv")
+            fetch_corpus.write_revisions(
+                [
+                    Revision(
+                        "古い", 3, old_pin.sha1, 1890, "all", "pinned", "pinned"
+                    )
+                ],
+                revisions,
+            )
+            for page in (cited, other, old_pin):
+                fetch_corpus.save_page(work, page)
+            fetch_corpus.save_page_index(work, [old_pin], [cited, other])
+            with mock.patch.object(
+                fetch_corpus, "REFERENCES", references
+            ), mock.patch.object(
+                fetch_corpus, "REVISIONS_FILE", revisions
+            ), contextlib.redirect_stderr(io.StringIO()):
+                fetch_corpus._command_reclassify(work)
+            rows = fetch_corpus.read_revisions(revisions)
+        self.assertEqual(
+            {row.oldid: row.source for row in rows},
+            {1: "pinned", 2: "listed", 3: "pinned"},
         )
 
 

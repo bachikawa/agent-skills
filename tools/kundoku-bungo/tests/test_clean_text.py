@@ -260,6 +260,25 @@ class LineExclusionsTest(unittest.TestCase):
                 clean_text.read_line_exclusions(path)
 
 
+class KanjiLinesTest(unittest.TestCase):
+    TEXT = "凡ソ人タル者ハ其身ヲ修メ"
+
+    def test_new_form_section_never_attests_kanji(self) -> None:
+        page = f"== 新字体 ==\n{self.TEXT}\n"
+        self.assertEqual(clean_text.kanji_lines(page), [])
+        self.assertEqual(clean_text.vocabulary_lines(page), [self.TEXT])
+
+    def test_only_the_original_section_attests_kanji(self) -> None:
+        page = f"== 原文 ==\n{self.TEXT}\n== 新字体 ==\n新シイ字ノ行\n"
+        self.assertEqual(clean_text.kanji_lines(page), [self.TEXT])
+
+    def test_lines_with_imperial_wording_are_kept(self) -> None:
+        page = "朕惟フニ\n{{傍点|甲}}乙\n凡ソ人タル者ハ"
+        self.assertEqual(
+            clean_text.kanji_lines(page), ["朕惟フニ", "凡ソ人タル者ハ"]
+        )
+
+
 class VocabularyLinesTest(unittest.TestCase):
     def test_lines_with_imperial_wording_are_left_out(self) -> None:
         page = "朕惟フニ\n汝等之ヲ守レ敕\n凡ソ人タル者ハ"
