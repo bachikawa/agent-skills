@@ -32,6 +32,27 @@ class BodyTest(unittest.TestCase):
     def test_page_without_header_is_unchanged(self) -> None:
         self.assertEqual(clean_text.body("本文"), "本文")
 
+    def test_nested_templates_close_the_header_at_the_right_place(
+        self,
+    ) -> None:
+        cases = {
+            "{{Header|a={{X}}}}Z": "Z",
+            "{{Header|a={{X|{{Y}}}}|n=1}}Z": "Z",
+            "{{Header|a={{A|{{B}}}}\n}}Z": "Z",
+        }
+        for page, expected in cases.items():
+            with self.subTest(page=page):
+                self.assertEqual(clean_text.body(page), expected)
+
+    def test_header_after_another_template_is_found(self) -> None:
+        page = "{{Otheruses}}\n{{header\n|year=1907\n|notes=注\n}}\n本文"
+        header, rest = clean_text.split_header(page)
+        self.assertIn("year=1907", header)
+        self.assertEqual(rest, "{{Otheruses}}\n\n本文")
+
+    def test_unclosed_header_takes_the_rest_of_the_page(self) -> None:
+        self.assertEqual(clean_text.body("前\n{{Header|notes=注\n本文"), "前\n")
+
 
 class StripMarkupTest(unittest.TestCase):
     def test_ref_notes_are_removed(self) -> None:
@@ -63,6 +84,39 @@ class StripMarkupTest(unittest.TestCase):
         text = "葛" + chr(0xE0100) + "城" + chr(0xFE00)
         self.assertEqual(clean_text.strip_markup(text), "葛城")
 
+    def test_nested_text_templates_keep_their_text(self) -> None:
+        text = "陸{{r|{{異体字|&#xFA45;}}|かい}}軍"
+        self.assertEqual(
+            clean_text.strip_markup(text), "陸" + COMPAT_SEA + "軍"
+        )
+
+    def test_ref_with_a_slash_in_its_name_keeps_the_text_after_it(
+        self,
+    ) -> None:
+        text = '甲<ref name="a/b">注</ref>乙<ref name="c/d"/>丙'
+        self.assertEqual(clean_text.strip_markup(text), "甲乙丙")
+
+    def test_br_becomes_a_line_break(self) -> None:
+        text = "スヘシ<br />第二條　本文<BR>終"
+        self.assertEqual(
+            clean_text.strip_markup(text), "スヘシ\n第二條　本文\n終"
+        )
+
+    def test_links_to_files_and_other_languages_are_removed(self) -> None:
+        text = "[[File:x.jpg|thumb|説明]]甲[[en:Title]]乙[[category:法]]丙"
+        self.assertEqual(clean_text.strip_markup(text), "甲乙丙")
+
+    def test_controls_from_character_references_are_removed(self) -> None:
+        text = "甲&#9;乙&#x202E;丙&#x200B;丁&#7;"
+        self.assertEqual(clean_text.strip_markup(text), "甲 乙丙丁")
+
+    def test_removed_templates_can_be_marked(self) -> None:
+        text = "本法ハ{{傍点|公布}}ノ日ヨリ"
+        self.assertEqual(
+            clean_text.strip_markup(text, mark_removed=True),
+            "本法ハ" + clean_text.REMOVED + "ノ日ヨリ",
+        )
+
 
 class StenographyNoteTest(unittest.TestCase):
     def test_note_of_a_stenographer_is_removed(self) -> None:
@@ -72,6 +126,27 @@ class StenographyNoteTest(unittest.TestCase):
     def test_bracket_of_the_original_text_is_kept(self) -> None:
         text = "（別紙）詔書寫"
         self.assertEqual(clean_text.remove_stenography_notes(text), text)
+
+    def test_notes_written_in_old_kanji_forms_are_removed(self) -> None:
+        cases = {
+            "終ニ（大喝采）": "終ニ",
+            "余ハ（謹聽）": "余ハ",
+            "ナリ（笑聲）": "ナリ",
+            "述フ（拍手起ル）": "述フ",
+            "諸君（「ヒヤヒヤ」）": "諸君（「ヒヤヒヤ」）",
+        }
+        for text, expected in cases.items():
+            with self.subTest(text=text):
+                self.assertEqual(
+                    clean_text.remove_stenography_notes(text), expected
+                )
+
+    def test_bracket_with_other_words_is_kept(self) -> None:
+        for text in ("（ヒヤリト感ス）", "（大）", "（大正元年）"):
+            with self.subTest(text=text):
+                self.assertEqual(
+                    clean_text.remove_stenography_notes(text), text
+                )
 
 
 class LineExclusionsTest(unittest.TestCase):
@@ -123,6 +198,34 @@ class VocabularyLinesTest(unittest.TestCase):
             clean_text.vocabulary_lines(page),
             ["總則", "法律ニ正條ナキ者ハ", "罰則"],
         )
+
+    def test_number_followed_by_text_is_kept(self) -> None:
+        page = "第三條ノ規定ニ依リ\n第十二條中「甲」ヲ改ム\n第二條第一項ノ者"
+        self.assertEqual(
+            clean_text.vocabulary_lines(page),
+            ["第三條ノ規定ニ依リ", "第十二條中「甲」ヲ改ム", "第二條第一項ノ者"],
+        )
+
+    def test_branch_number_with_a_space_is_removed(self) -> None:
+        page = f"第一條ノ二{SPACE}本文\n第廿條 本文"
+        self.assertEqual(clean_text.vocabulary_lines(page), ["本文", "本文"])
+
+    def test_lines_that_may_hold_editors_material_are_left_out(self) -> None:
+        page = "\n".join(
+            [
+                "本法ハ{{傍点|公布}}ノ日ヨリ",
+                "==第一章==",
+                "{|",
+                "|-",
+                "| 表ノ中",
+                "&lt;b&gt;甲",
+                "乙ハ丙ナリ",
+            ]
+        )
+        self.assertEqual(clean_text.vocabulary_lines(page), ["乙ハ丙ナリ"])
+
+    def test_definition_list_mark_is_removed_before_the_number(self) -> None:
+        self.assertEqual(clean_text.vocabulary_lines(";第一條 本文"), ["本文"])
 
     def test_list_marks_and_empty_lines_are_removed(self) -> None:
         page = "{{Header|year=1872}}\n*:人々自ラ其身ヲ立テ\n\n#" + SPACE

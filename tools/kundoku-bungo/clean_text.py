@@ -13,7 +13,8 @@ The functions are used by the scripts that build the tables:
   compatibility ideographs they name, because MediaWiki stores literal
   compatibility ideographs only after normalizing them to NFC.
 - vocabulary_lines() gives the lines that may be quoted in the
-  vocabulary table and the examples.
+  vocabulary table and the examples. When a line may hold anything other
+  than the original text, the whole line is left out.
 """
 
 from __future__ import annotations
@@ -27,91 +28,155 @@ from pathlib import Path
 LINE_EXCLUSIONS_FILE = Path(__file__).resolve().parent / "line_exclusions.tsv"
 LINE_EXCLUSION_COLUMNS = ["title", "start", "end"]
 IDEOGRAPHIC_SPACE = chr(0x3000)
+# Put in place of a template that strip_markup() removes from the middle
+# of the text, so that vocabulary_lines() can leave the line out.
+REMOVED = chr(0xFFFC)
 # Wording used only in the name of the emperor; a line that has it is not
 # quoted in the vocabulary table or the examples.
 IMPERIAL_WORDS = re.compile(
-    "朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|休命|大御心|詔|勅|敕"
+    "朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|宸|休命|大御心|詔|勅|敕"
 )
-# Notes of stenographers in speeches, such as （拍手） and （ヒヤヒヤ）.
-# Brackets of the original text, such as （別紙）, are kept.
+# Notes of stenographers in speeches, such as （拍手） and （大喝采）. A
+# bracket is removed only when everything in it is such a note, so that
+# brackets of the original text, such as （別紙）, are kept.
+_NOTE_WORDS = (
+    "拍手|喝采|喝釆|謹聴|謹聼|謹聽|ヒヤヒヤ|ノーノー|笑声|笑聲|大笑|"
+    "異議ナシ|賛成|贊成|ノー|ヒヤ"
+)
+_NOTE_MODIFIERS = "大満滿場一同再三起ル起ルアリ者、・ " + IDEOGRAPHIC_SPACE
 STENOGRAPHY_NOTE = re.compile(
-    "（[^（）]*(?:拍手|喝采|謹聴|謹聼|ヒヤヒヤ|ヒヤ|ノーノー|笑声|大笑)[^（）]*）"
+    f"（(?:(?:{_NOTE_WORDS})|[{_NOTE_MODIFIERS}])+）"
 )
-# Half-width brackets are written by editors (notes and readings), not by
-# the original documents, which use full-width ones.
+_NOTE_WORD = re.compile(_NOTE_WORDS)
+# Editors use half-width brackets for their notes, and some transcriptions
+# use them for the brackets of the original text too. The two cannot be
+# told apart, so a line with them is left out.
 HALF_WIDTH_BRACKET = re.compile(r"[()\[\]]")
-_KANJI_NUMBER = "一二三四五六七八九十百千〇"
+# Characters that mark editors' markup left after strip_markup(), or that
+# the original documents never have.
+_LEFTOVER_MARKUP = re.compile(f"[<>{{}}|={REMOVED}]")
+_KANJI_NUMBER = "一二三四五六七八九十百千〇廿卅"
 # Chapter and article numbers at the start of a line, with the space after.
+# A number followed directly by text, as in 「第三條ノ規定ニ依リ」, is part
+# of the sentence and is kept.
 HEADING_NUMBER = re.compile(
-    f"^(?:第[{_KANJI_NUMBER}]+[編章節款條条項]|[{_KANJI_NUMBER}]+章)"
-    f"[ {IDEOGRAPHIC_SPACE}]*"
+    f"^(?:第[{_KANJI_NUMBER}]+[編章節款條条項](?:ノ[{_KANJI_NUMBER}]+)?"
+    f"|[{_KANJI_NUMBER}]+章)(?:[ {IDEOGRAPHIC_SPACE}]+|$)"
 )
-_VARIATION_SELECTORS = re.compile(
-    f"[{chr(0xFE00)}-{chr(0xFE0F)}{chr(0xE0100)}-{chr(0xE01EF)}]"
+# Variation selectors, C0 and C1 controls other than the line break, and
+# bidirectional controls. Character references can bring them back.
+_INVISIBLE = re.compile(
+    f"[{chr(0xFE00)}-{chr(0xFE0F)}{chr(0xE0100)}-{chr(0xE01EF)}"
+    f"{chr(0x00)}-{chr(0x09)}{chr(0x0B)}-{chr(0x1F)}{chr(0x7F)}-{chr(0x9F)}"
+    f"{chr(0x200B)}-{chr(0x200F)}{chr(0x202A)}-{chr(0x202E)}"
+    f"{chr(0x2066)}-{chr(0x2069)}{chr(0xFEFF)}]"
 )
+_HEADER_START = re.compile(r"\{\{\s*[Hh]eader\s*[|}]")
 # Templates whose first argument is the text of the original document.
 _TEXT_TEMPLATE = re.compile(
     r"\{\{\s*(?:[Ll]ang\s*\|[^|{}]*|異体字|[Rr]|[Rr]uby)\s*\|([^{}|]*)[^{}]*\}\}"
 )
 _ANY_TEMPLATE = re.compile(r"\{\{[^{}]*\}\}")
-_LINE_MARKS = f" {IDEOGRAPHIC_SPACE}*:#"
+# Links that show no text of the document: files, categories and links
+# to other languages.
+_HIDDEN_LINK = re.compile(
+    r"\[\[\s*(?:[Ff]ile|[Ii]mage|ファイル|画像|[Cc]ategory|カテゴリ"
+    r"|[a-z]{2,3}(?:-[a-z]+)?)\s*:[^\]]*\]\]"
+)
+_LINE_MARKS = f" {IDEOGRAPHIC_SPACE}*:#;"
 
 
-def body(wikitext: str) -> str:
-    """Removes the page header template at the top of a page.
+def _template_end(text: str, start: int) -> int | None:
+    """Returns the index just after the template that starts at start."""
+    depth = 0
+    position = start
+    while position < len(text) - 1:
+        pair = text[position : position + 2]
+        if pair == "{{":
+            depth += 1
+            position += 2
+        elif pair == "}}":
+            depth -= 1
+            position += 2
+            if depth == 0:
+                return position
+        else:
+            position += 1
+    return None
+
+
+def split_header(wikitext: str) -> tuple[str, str]:
+    """Splits the page header template (Header) from the rest of a page.
 
     Args:
         wikitext: The wikitext of a whole page.
 
     Returns:
-        The wikitext after the first template, when the page starts with
-        one; otherwise the wikitext unchanged.
+        The header template and the wikitext without it. When there is no
+        header, the first value is empty. When the header is not closed,
+        the whole page is taken as the header, so that no editors' notes
+        reach the text.
     """
-    text = wikitext.lstrip()
-    if not text.startswith("{{"):
-        return wikitext
-    depth = 0
-    for position in range(len(text) - 1):
-        pair = text[position : position + 2]
-        if pair == "{{":
-            depth += 1
-        elif pair == "}}":
-            depth -= 1
-            if depth == 0:
-                return text[position + 2 :]
-    return ""
+    match = _HEADER_START.search(wikitext)
+    if match is None:
+        return "", wikitext
+    end = _template_end(wikitext, match.start())
+    if end is None:
+        return wikitext[match.start() :], wikitext[: match.start()]
+    header = wikitext[match.start() : end]
+    return header, wikitext[: match.start()] + wikitext[end:]
 
 
-def strip_markup(wikitext: str) -> str:
+def body(wikitext: str) -> str:
+    """Removes the page header template (Header) from a page.
+
+    Args:
+        wikitext: The wikitext of a whole page.
+
+    Returns:
+        The wikitext without the header (see split_header()).
+    """
+    return split_header(wikitext)[1]
+
+
+def strip_markup(wikitext: str, *, mark_removed: bool = False) -> str:
     """Removes the editors' markup and keeps the text of the document.
 
     Removes notes in <ref> tags, text in bold (numbers added by
-    transcribers), templates other than those holding the text, category
-    links, HTML tags and variation selectors. Keeps the text of links and
-    of the 異体字・Lang・r・Ruby templates. Character references are
-    turned into characters without normalizing them, so compatibility
-    ideographs survive.
+    transcribers), templates other than those holding the text, links to
+    files, categories and other languages, HTML tags, invisible
+    characters and controls. Keeps the text of links and of the
+    異体字・Lang・r・Ruby templates, also when they are nested. <br> becomes
+    a line break. Character references are turned into characters without
+    normalizing them, so compatibility ideographs survive.
 
     Args:
         wikitext: Wikitext, usually the result of body().
+        mark_removed: Put REMOVED in place of each template that is
+            removed, so that a caller can tell where text may be missing.
 
     Returns:
         The plain text, with the line breaks of the wikitext.
     """
-    text = re.sub(r"<ref[^>/]*/>", "", wikitext)
-    text = re.sub(r"<ref[^>]*>.*?</ref>", "", text, flags=re.S)
+    text = re.sub(r"<ref\b[^>]*/>", "", wikitext)
+    text = re.sub(r"<ref\b[^>]*>.*?</ref>", "", text, flags=re.S)
+    text = re.sub(r"<br\s*/?>", "\n", text, flags=re.I)
     text = re.sub(r"'''[^']*'''", "", text)
+    replacement = REMOVED if mark_removed else ""
     previous = None
     while previous != text:
         previous = text
-        text = _TEXT_TEMPLATE.sub(r"\1", text)
-        text = _ANY_TEMPLATE.sub("", text)
-    text = re.sub(r"\[\[(?:Category|カテゴリ):[^\]]*\]\]", "", text)
+        inner = None
+        while inner != text:
+            inner = text
+            text = _TEXT_TEMPLATE.sub(r"\1", text)
+        text = _ANY_TEMPLATE.sub(replacement, text)
+    text = _HIDDEN_LINK.sub("", text)
     text = re.sub(r"\[\[(?:[^|\]]*\|)?([^\]]*)\]\]", r"\1", text)
     text = re.sub(r"<[^>]+>", "", text)
     text = text.replace("''", "")
-    text = html.unescape(text)
-    return _VARIATION_SELECTORS.sub("", text)
+    text = html.unescape(text).replace("\t", " ")
+    return _INVISIBLE.sub("", text)
 
 
 def remove_stenography_notes(text: str) -> str:
@@ -121,9 +186,14 @@ def remove_stenography_notes(text: str) -> str:
         text: Plain text from strip_markup().
 
     Returns:
-        The text without the notes. Other brackets are kept.
+        The text without the notes. A bracket that holds anything other
+        than notes is kept.
     """
-    return STENOGRAPHY_NOTE.sub("", text)
+
+    def replace(match: re.Match[str]) -> str:
+        return "" if _NOTE_WORD.search(match.group(0)) else match.group(0)
+
+    return STENOGRAPHY_NOTE.sub(replace, text)
 
 
 def apply_line_exclusions(
@@ -154,11 +224,7 @@ def apply_line_exclusions(
         if start is None:
             raise ValueError(f"start anchor not found: {start_anchor}")
         end = next(
-            (
-                i
-                for i in range(start, len(kept))
-                if end_anchor in kept[i]
-            ),
+            (i for i in range(start, len(kept)) if end_anchor in kept[i]),
             None,
         )
         if end is None:
@@ -202,9 +268,11 @@ def vocabulary_lines(
     """Returns the lines of a page that may be quoted as examples.
 
     Takes the text of the page (see body() and strip_markup()), removes
-    stenographers' notes and the given ranges, trims list marks and
-    heading numbers, and leaves out lines that are empty, use wording
-    only for the emperor, or have half-width brackets.
+    stenographers' notes and the given ranges, and trims list marks and
+    heading numbers. Leaves out lines that are empty, that are headings
+    (starting with =), that use wording only for the emperor, or that may
+    hold editors' material: half-width brackets, leftovers of markup, or
+    a removed template.
 
     Args:
         wikitext: The wikitext of a whole page.
@@ -213,14 +281,17 @@ def vocabulary_lines(
     Returns:
         The lines in the order of the page.
     """
-    text = remove_stenography_notes(strip_markup(body(wikitext)))
+    text = strip_markup(body(wikitext), mark_removed=True)
+    text = remove_stenography_notes(text)
     lines = apply_line_exclusions(text.split("\n"), ranges)
     result = []
     for line in lines:
+        if line.lstrip().startswith(("=", "{|", "|")):
+            continue
         line = HEADING_NUMBER.sub("", line.strip(_LINE_MARKS))
         if not line or IMPERIAL_WORDS.search(line):
             continue
-        if HALF_WIDTH_BRACKET.search(line):
+        if HALF_WIDTH_BRACKET.search(line) or _LEFTOVER_MARKUP.search(line):
             continue
         result.append(line)
     return result
