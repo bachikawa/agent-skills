@@ -533,16 +533,24 @@ def classify(
     return "all", "default"
 
 
-def pinned_oldids(references: Path = REFERENCES) -> dict[int, str]:
-    """Reads the revisions that the current tables cite.
+def pinned_oldids(
+    references: Path = REFERENCES, revisions: Path = REVISIONS_FILE
+) -> dict[int, str]:
+    """Reads the revisions that must stay in corpus_revisions.tsv.
+
+    These are the revisions the current tables cite, and the revisions
+    already pinned in corpus_revisions.tsv. A pinned revision stays
+    pinned when a rebuilt table stops citing it, so that rebuilding a
+    table never shrinks the corpus it is built from.
 
     Args:
         references: The references directory of the skill.
+        revisions: corpus_revisions.tsv; skipped when it does not exist.
 
     Returns:
         Each revision ID with the usage it needs: examples_only when only
-        examples.md cites it, otherwise all (an imperial page still
-        becomes kanji_only; see build_revisions()).
+        examples.md cites it (or it was examples_only), otherwise all (an
+        imperial page still becomes kanji_only; see build_revisions()).
     """
     pattern = re.compile(r"oldid=(\d+)")
     tables = set()
@@ -558,6 +566,11 @@ def pinned_oldids(references: Path = REFERENCES) -> dict[int, str]:
     result = {oldid: "all" for oldid in tables}
     for oldid in examples - tables:
         result[oldid] = "examples_only"
+    if revisions.exists():
+        for row in read_revisions(revisions):
+            if row.source == "pinned" and row.oldid not in result:
+                usage = row.usage
+                result[row.oldid] = "all" if usage == "kanji_only" else usage
     return result
 
 
@@ -956,12 +969,21 @@ def _command_revisions(api: WikisourceApi, work: Path) -> None:
 
 
 def _command_reclassify(work: Path) -> None:
-    pinned, listed = load_page_index(work)
+    saved_pinned, saved_listed = load_page_index(work)
     usage = pinned_oldids()
-    if set(usage) != {page.oldid for page in pinned}:
+    # The tables may now cite revisions that were found in the categories
+    # (the kanji table is built from them), so the pinned revisions are
+    # the cited ones from either list. A revision that was pinned but is
+    # no longer cited is dropped; its page is still listed.
+    by_oldid = {page.oldid: page for page in saved_listed + saved_pinned}
+    missing = set(usage) - set(by_oldid)
+    if missing:
         raise CorpusError(
-            "the tables cite other revisions now; run revisions again"
+            f"the tables cite revisions not fetched: {sorted(missing)};"
+            " run revisions again"
         )
+    pinned = [by_oldid[oldid] for oldid in sorted(usage)]
+    listed = [page for page in saved_listed if page.oldid not in usage]
     _write_classification(work, usage, pinned, listed)
 
 

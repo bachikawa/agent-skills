@@ -700,13 +700,57 @@ class UnihanTest(unittest.TestCase):
 
 
 class PinnedOldidsTest(unittest.TestCase):
-    def test_current_tables_cite_37_revisions(self) -> None:
+    def test_only_revisions_cited_by_examples_alone_are_examples_only(
+        self,
+    ) -> None:
         pinned = fetch_corpus.pinned_oldids()
-        self.assertEqual(len(pinned), 37)
+        self.assertGreater(len(pinned), 0)
         self.assertEqual(
             sorted(o for o, u in pinned.items() if u == "examples_only"),
             [218223, 218225],
         )
+
+
+class PinnedOldidsUnionTest(unittest.TestCase):
+    def test_revision_pinned_before_stays_pinned(self) -> None:
+        rows = [
+            Revision("某ノ詔書", 9, "a" * 40, 1900, "kanji_only", "pinned", "x"),
+            Revision("株", 8, "b" * 40, 1893, "examples_only", "pinned", "x"),
+            Revision("法", 7, "c" * 40, 1900, "all", "listed", "x"),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            references = Path(directory, "references")
+            references.mkdir()
+            for name in ("kanji.tsv", "vocabulary.tsv", "examples.md"):
+                Path(references, name).write_text("", encoding="utf-8")
+            Path(references, "kanji.tsv").write_text(
+                "https://ja.wikisource.org/w/index.php?oldid=5\n", "utf-8"
+            )
+            path = Path(directory, "corpus_revisions.tsv")
+            fetch_corpus.write_revisions(rows, path)
+            pinned = fetch_corpus.pinned_oldids(references, path)
+        self.assertEqual(pinned, {5: "all", 9: "all", 8: "examples_only"})
+
+
+class ReclassifyPinnedTest(unittest.TestCase):
+    def test_cited_listed_revision_becomes_pinned(self) -> None:
+        cited = Page("刑法", 1, law(1880), [])
+        other = Page("法例", 2, law(1898), [])
+        stale = Page("古い", 3, law(1890), [])
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            for page in (cited, other, stale):
+                fetch_corpus.save_page(work, page)
+            fetch_corpus.save_page_index(work, [stale], [cited, other])
+            with mock.patch.object(
+                fetch_corpus, "pinned_oldids", return_value={1: "all"}
+            ), mock.patch.object(
+                fetch_corpus, "_write_classification"
+            ) as write:
+                fetch_corpus._command_reclassify(work)
+            _, usage, pinned, listed = write.call_args.args
+            self.assertEqual([p.oldid for p in pinned], [1])
+            self.assertEqual([p.oldid for p in listed], [2])
 
 
 if __name__ == "__main__":
