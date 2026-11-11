@@ -53,26 +53,39 @@ compatibility: 字の機械的な変換に Python 3.10 以上（標準ライブ�
 
 1. 変換する文を、一時ファイルに UTF-8 で書く。ファイルを書くツール（Claude Code では Write）を使い、シェルの `echo` やコマンドの引数には文を入れない。
    - 文は、利用者が貼った第三者の文のことがある。シェルのコマンドに文を入れると、文の中の `$(...)`・バッククォート・`$変数` が実行・展開されるおそれがあるため。
-   - 一時ファイルは、作業中のリポジトリの外（OS の一時ディレクトリなど）に置く。リポジトリの中に置くと、誤ってコミットされるおそれがあるため。
-2. そのファイルのパスを `--input` で渡す。
-3. 変換が終わったら、一時ファイルを必ず消す。
+   - 一時ファイルは、OS の一時ディレクトリの直下に、`kundoku-bungo-` で始まる名前で置く（例: `kundoku-bungo-20261111-1.txt`）。リポジトリの中に置くと、誤ってコミットされるおそれがあるため。
+   - 一時ディレクトリのパスは、次のコマンドで長い形を得る。Windows では、`~1` を含む短い形（8.3 形式）のパスを使わない。短い形は、Claude Code が確認を求めることがあるため。
+
+     ```bash
+     python -c "import os, tempfile; print(os.path.realpath(tempfile.gettempdir()))"
+     ```
+
+   - 利用者が文の入ったファイルを示した時は、そのファイルを読み、中身を一時ファイルに写してから渡す。利用者のファイルを `--input` に直接渡す時は、`--remove-input` を付けない。
+2. 一時ファイルのパスを `--input` で渡し、`--remove-input` を付ける。スクリプトは、変換が終わった後に一時ファイルを消す。
+   - スクリプトが消すのは、一時ディレクトリの直下にある `kundoku-bungo-` で始まる名前の普通のファイルだけである。ほかのファイルは消さず、「not removed」と警告を出す。
+   - 一時ファイルは作業ディレクトリの外にあるので、エージェントが別のコマンドで消そうとすると、権限で止まることがある。スクリプトに消させるのは、そのためである。
+3. 次の時は、一時ファイルが残っている。利用者にそのパスを伝える。
+   - スクリプトが「cannot remove」か「not removed」と出した時
+   - スクリプトが終了コード 1 か 2 で止まった時（変換の前・途中で止まると、ファイルは消さない）
+   - 表記の指定を変えて変換し直す時は、残っている一時ファイルをもう一度使ってよい。消えていたら、書き直す。
 
 ```bash
 # Windows（python）
-python "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時ファイルのパス>"
+python "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時ファイルのパス>" --remove-input
 # macOS・Linux（python3）
-python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時ファイルのパス>"
+python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時ファイルのパス>" --remove-input
 ```
 
 - `${CLAUDE_SKILL_DIR}` は、この `SKILL.md` があるディレクトリである。Claude Code は、スキルを読み込む時に実際のパスに置き換える。Claude Code 以外では、このディレクトリのパスに置き換える。
 - パスに空白が入ることがあるので、スクリプトのパスと一時ファイルのパスは、必ず引用符で囲む。
 - 上の書き方は、bash（Windows では Git Bash）でも PowerShell でも動く。
 - 選べる表記の指定は、上の表の「スクリプトの指定」を足す。
+- 表記の指定がない時は、文書の種類にかかわらず、上の表の既定にする。[references/examples.md](references/examples.md) の対訳は言い回しの手本で、表記の手本ではない。
 - 結果は標準出力に UTF-8 で出る。ファイルが読めない時は、終了コード 1 でエラーの内容を出す。
 
 ## 現代語から文語にする
 
-1. 依頼から、文書の種類（法令・告諭・演説・新聞など）と、選べる表記の指定を読み取る。種類が分からなければ、告諭の調子にする。
+1. 依頼から、文書の種類（法令・告諭・演説・新聞など）と、選べる表記の指定を読み取る。種類が分からなければ、告諭の調子にする。文書の種類ごとの調子は、[references/examples.md](references/examples.md) の対訳を手本にする。
 2. [grammar.md](references/grammar.md) を読み、文を書き換える。
    - 動詞・形容詞を文語の活用に戻す（2 節）。
    - 文末・否定・条件・使役の言い方を、表に従って選ぶ（3〜6 節）。
@@ -90,10 +103,11 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時
    - 濁点を取ったことで、別の語に読めるところがないか（「ザル」→「サル」など）。そのままにしてよいが、気になる時は伝える。
    - 天皇の名義でだけ使う言い方が入っていないか。
    - 文書の形で出す時は、末尾の書き添えが「（現代の作文。史料ではない）」と一字一句同じか。
+   - 同じ種類の文書の対訳（[references/examples.md](references/examples.md)）と比べて、言い回しの調子が大きく外れていないか。
 
 ## 文語から現代語にする
 
-1. スクリプトの `to-modern` で、表にある旧字体を新字体にし、カタカナをひらがなにする（読みやすくするため。省いてもよい）。呼び出し方は、上の「スクリプトの呼び出し方」と同じで、`to-bungo` を `to-modern` にする。旧字体を残す時は `--keep-kyujitai` を足す。
+1. スクリプトの `to-modern` で、表にある旧字体を新字体にし、カタカナをひらがなにする（読みやすくするため。省いてもよい）。呼び出し方は、上の「スクリプトの呼び出し方」と同じで、`to-bungo` を `to-modern` にする（`--remove-input` も付ける）。旧字体を残す時は `--keep-kyujitai` を足す。
    - 小書きの「ヵ」「ヶ」（「三ヶ月」「霞ヶ関」など）は、カタカナのまま残る。
    - 大きく書いた「ケ」「カ」（「三ケ月」「一ケ所」）は、「け」「か」になる。数字と助数詞の間のものは「箇」の意味なので、「三か月」「一か所」と読む。
 2. 濁点を補って読む（「妨け」→「妨げ」、「及ひ」→「及び」、「あらさる」→「あらざる」）。文脈で決める。
@@ -127,5 +141,6 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時
 | --- | --- | --- |
 | [references/grammar.md](references/grammar.md) | 活用・文末・否定・条件・構文・接続の言葉・歴史的仮名遣い・使わない言い方・文書の形 | 変換する時は毎回 |
 | [references/kanji.tsv](references/kanji.tsv) | 新字体と旧字体の対応（典拠付き）。`one_to_many` が `1` の行は、`note` を見て語ごとに選ぶ | 文語にする時の手順 4（Python がない時）と手順 5 |
+| [references/examples.md](references/examples.md) | 公文書・演説・新聞の一節と現代語訳の対訳（出典付き） | 文書の種類ごとの調子をつかむ時と、変換の結果を見直す時 |
 | [references/vocabulary.tsv](references/vocabulary.tsv) | 漢文訓読から来た語の読み・今の意味・当時の用例（出典付き） | 文語にする時の手順 2 と、現代語にする時の手順 4 |
 | [scripts/convert_chars.py](scripts/convert_chars.py) | 字体・仮名・濁点・小書きの仮名・句読点の機械的な変換 | 文語にする時の手順 4 と、現代語にする時の手順 1 |

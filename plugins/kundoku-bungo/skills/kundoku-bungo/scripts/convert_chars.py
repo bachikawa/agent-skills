@@ -11,10 +11,14 @@ and period (such as the full-width comma and full stop) are out of
 scope and left as they are.
 
 Usage:
-    python convert_chars.py to-bungo [options] --input FILE
-    python convert_chars.py to-modern [options] --input FILE
+    python convert_chars.py to-bungo [options] --input FILE [--remove-input]
+    python convert_chars.py to-modern [options] --input FILE [--remove-input]
 
-Without --input, the text is read from standard input.
+Without --input, the text is read from standard input. With
+--remove-input, the input file is deleted after a successful
+conversion, so that a temporary file holding the user's text does not
+stay behind. Only a file named kundoku-bungo-* directly in the
+temporary directory is deleted; any other file is kept with a warning.
 """
 
 from __future__ import annotations
@@ -22,8 +26,10 @@ from __future__ import annotations
 import argparse
 import csv
 import functools
+import os
 import re
 import sys
+import tempfile
 import unicodedata
 from pathlib import Path
 
@@ -31,6 +37,9 @@ KANJI_TABLE = (
     Path(__file__).resolve().parent.parent / "references" / "kanji.tsv"
 )
 _COMPAT_KIND = "compat"
+# --remove-input deletes only temporary files whose names start with
+# this prefix (see removal_problem).
+REMOVABLE_PREFIX = "kundoku-bungo-"
 
 _HIRAGANA_START = 0x3041
 _HIRAGANA_END = 0x3096
@@ -404,6 +413,11 @@ def _build_parser() -> argparse.ArgumentParser:
             metavar="FILE",
             help="read the text from this UTF-8 file instead of stdin",
         )
+        subparser.add_argument(
+            "--remove-input",
+            action="store_true",
+            help="delete the --input file after reading it",
+        )
     return parser
 
 
@@ -422,7 +436,10 @@ def main(argv: list[str] | None = None) -> int:
     # is keeps the line endings the same on every platform.
     sys.stdout.reconfigure(encoding="utf-8", newline="\n")
     sys.stderr.reconfigure(encoding="utf-8")
-    args = _build_parser().parse_args(argv)
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+    if args.remove_input and args.input is None:
+        parser.error("--remove-input requires --input")
     if args.input is not None:
         try:
             # utf-8-sig drops the BOM that some Windows editors add.
@@ -450,8 +467,49 @@ def main(argv: list[str] | None = None) -> int:
     except KanjiTableError as error:
         print(error, file=sys.stderr)
         return 1
+    # Remove only after a successful conversion, so that a failed run
+    # leaves the input in place for another try.
+    if args.remove_input:
+        _remove_input(args.input)
     sys.stdout.write(result)
     return 0
+
+
+def removal_problem(path: str, temp_dir: str) -> str | None:
+    """Tells why an input file must not be removed, if it must not.
+
+    Only a regular file the agent wrote for this skill may be removed:
+    it must sit directly in the temporary directory and its name must
+    start with REMOVABLE_PREFIX. This keeps --remove-input from deleting
+    a user's own file passed by mistake.
+
+    Args:
+        path: The input file given with --input.
+        temp_dir: The temporary directory of the operating system.
+
+    Returns:
+        None when the file may be removed, otherwise the reason.
+    """
+    if not os.path.basename(path).startswith(REMOVABLE_PREFIX):
+        return f"the file name does not start with {REMOVABLE_PREFIX}"
+    if os.path.islink(path) or not os.path.isfile(path):
+        return "it is not a regular file"
+    folder = os.path.normcase(os.path.dirname(os.path.realpath(path)))
+    if folder != os.path.normcase(os.path.realpath(temp_dir)):
+        return "it is not directly in the temporary directory"
+    return None
+
+
+def _remove_input(path: str) -> None:
+    """Removes the input file, or warns on stderr why it was kept."""
+    problem = removal_problem(path, tempfile.gettempdir())
+    if problem is not None:
+        print(f"not removed {path}: {problem}", file=sys.stderr)
+        return
+    try:
+        os.remove(path)
+    except OSError as error:
+        print(f"cannot remove {path}: {error}", file=sys.stderr)
 
 
 if __name__ == "__main__":

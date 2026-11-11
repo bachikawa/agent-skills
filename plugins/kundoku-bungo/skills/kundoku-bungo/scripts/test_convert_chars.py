@@ -11,6 +11,8 @@ that normalizes Unicode cannot silently change what a test checks.
 
 from __future__ import annotations
 
+import io
+import os
 import re
 import subprocess
 import sys
@@ -18,6 +20,7 @@ import tempfile
 import unicodedata
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import convert_chars
 
@@ -386,6 +389,64 @@ class CommandLineTest(unittest.TestCase):
             completed.stdout.decode("utf-8"), "$(echo injected)カクセイ"
         )
 
+    def _temp_input(self, text: str, *, encoding: str = "utf-8") -> Path:
+        handle, name = tempfile.mkstemp(
+            prefix=convert_chars.REMOVABLE_PREFIX, suffix=".txt"
+        )
+        os.close(handle)
+        path = Path(name)
+        self.addCleanup(path.unlink, missing_ok=True)
+        path.write_text(text, encoding=encoding)
+        return path
+
+    def test_remove_input_deletes_the_temporary_file(self) -> None:
+        source = self._temp_input("がくせい")
+        completed = self._run(
+            "to-bungo", "--input", str(source), "--remove-input"
+        )
+        self.assertEqual(completed.returncode, 0)
+        self.assertEqual(completed.stdout.decode("utf-8"), "カクセイ")
+        self.assertFalse(source.exists())
+
+    def test_remove_input_works_for_to_modern(self) -> None:
+        source = self._temp_input("學生ハ")
+        completed = self._run(
+            "to-modern", "--input", str(source), "--remove-input"
+        )
+        self.assertEqual(completed.stdout.decode("utf-8"), "学生は")
+        self.assertFalse(source.exists())
+
+    def test_input_file_is_kept_without_remove_input(self) -> None:
+        source = self._temp_input("がくせい")
+        self._run("to-bungo", "--input", str(source))
+        self.assertTrue(source.exists())
+
+    def test_file_without_the_prefix_is_kept_with_a_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory, "input.txt")
+            source.write_text("がくせい", encoding="utf-8")
+            completed = self._run(
+                "to-bungo", "--input", str(source), "--remove-input"
+            )
+            self.assertTrue(source.exists())
+        self.assertEqual(completed.returncode, 0)
+        self.assertEqual(completed.stdout.decode("utf-8"), "カクセイ")
+        self.assertIn(b"not removed", completed.stderr)
+
+    def test_unreadable_file_is_kept(self) -> None:
+        source = self._temp_input("がくせい", encoding="shift_jis")
+        completed = self._run(
+            "to-bungo", "--input", str(source), "--remove-input"
+        )
+        self.assertEqual(completed.returncode, 1)
+        self.assertIn(b"cannot read", completed.stderr)
+        self.assertTrue(source.exists())
+
+    def test_remove_input_without_input_is_a_usage_error(self) -> None:
+        completed = self._run("to-bungo", "--remove-input", given="がくせい")
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn(b"--remove-input requires --input", completed.stderr)
+
     def test_input_file_with_bom_does_not_leak_the_bom(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory, "input.txt")
@@ -445,6 +506,106 @@ class CommandLineTest(unittest.TestCase):
 
     def test_unknown_direction_exits_with_usage_error(self) -> None:
         self.assertEqual(self._run("to-latin").returncode, 2)
+
+
+class RemovalProblemTest(unittest.TestCase):
+    def test_prefixed_file_in_the_temporary_directory_may_be_removed(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, convert_chars.REMOVABLE_PREFIX + "a.txt")
+            path.write_text("x", encoding="utf-8")
+            self.assertIsNone(
+                convert_chars.removal_problem(str(path), directory)
+            )
+
+    def test_file_outside_the_temporary_directory_is_kept(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            with tempfile.TemporaryDirectory() as other:
+                path = Path(directory, convert_chars.REMOVABLE_PREFIX + "a")
+                path.write_text("x", encoding="utf-8")
+                self.assertIsNotNone(
+                    convert_chars.removal_problem(str(path), other)
+                )
+
+    def test_directory_is_kept(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, convert_chars.REMOVABLE_PREFIX + "dir")
+            path.mkdir()
+            self.assertIsNotNone(
+                convert_chars.removal_problem(str(path), directory)
+            )
+
+    def test_symbolic_link_is_kept(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory, "target.txt")
+            target.write_text("x", encoding="utf-8")
+            link = Path(directory, convert_chars.REMOVABLE_PREFIX + "link")
+            try:
+                link.symlink_to(target)
+            except OSError:
+                self.skipTest("creating symbolic links is not permitted")
+            self.assertIsNotNone(
+                convert_chars.removal_problem(str(link), directory)
+            )
+
+
+class MainInProcessTest(unittest.TestCase):
+    """Runs main() in this process to replace parts that cannot fail
+    on demand in a subprocess."""
+
+    def _run_main(self, argv: list[str]) -> tuple[int, str, str]:
+        stdout = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
+        stderr = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
+        with mock.patch.object(sys, "stdout", stdout), mock.patch.object(
+            sys, "stderr", stderr
+        ):
+            code = convert_chars.main(argv)
+            stdout.flush()
+            stderr.flush()
+        return (
+            code,
+            stdout.buffer.getvalue().decode("utf-8"),
+            stderr.buffer.getvalue().decode("utf-8"),
+        )
+
+    def _temp_input(self, text: str) -> Path:
+        handle, name = tempfile.mkstemp(
+            prefix=convert_chars.REMOVABLE_PREFIX, suffix=".txt"
+        )
+        os.close(handle)
+        path = Path(name)
+        self.addCleanup(path.unlink, missing_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def test_failed_removal_warns_and_still_converts(self) -> None:
+        source = self._temp_input("がくせい")
+        with mock.patch.object(
+            convert_chars.os, "remove", side_effect=PermissionError("denied")
+        ):
+            code, out, err = self._run_main(
+                ["to-bungo", "--input", str(source), "--remove-input"]
+            )
+        self.assertEqual(code, 0)
+        self.assertEqual(out, "カクセイ")
+        self.assertIn("cannot remove", err)
+        self.assertTrue(source.exists())
+
+    def test_failed_conversion_keeps_the_input(self) -> None:
+        source = self._temp_input("がくせい")
+        with mock.patch.object(
+            convert_chars,
+            "to_bungo",
+            side_effect=convert_chars.KanjiTableError("broken table"),
+        ):
+            code, out, err = self._run_main(
+                ["to-bungo", "--input", str(source), "--remove-input"]
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(out, "")
+        self.assertIn("broken table", err)
+        self.assertTrue(source.exists())
 
 
 if __name__ == "__main__":
