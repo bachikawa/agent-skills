@@ -173,11 +173,19 @@ class ClassifyTest(unittest.TestCase):
                 )
 
     def test_page_of_the_law_as_amended_today_is_left_out(self) -> None:
-        content = law_with_notes(1907, "{{現行法令掲載}}")
-        self.assertEqual(
-            fetch_corpus.classify("刑法 (日本)", [], content),
-            (None, "current-version"),
+        notes = (
+            "{{現行法令掲載}}",
+            "*最終改正: 平成三〇年六月二〇日法律第五九号",
+            "*最終改正：平成30年法律第29号",
+            "*最終改正年月日:平成一六年六月九日法律第八四号",
         )
+        for note in notes:
+            with self.subTest(note=note):
+                content = law_with_notes(1907, note)
+                self.assertEqual(
+                    fetch_corpus.classify("某法", [], content),
+                    (None, "current-version"),
+                )
 
     def test_law_quoting_a_rescript_is_used_everywhere(self) -> None:
         usage, rule = fetch_corpus.classify(
@@ -467,6 +475,7 @@ class ApiTest(unittest.TestCase):
             "network": urllib.error.URLError("down"),
             "timeout": TimeoutError(),
             "not JSON": b"<html>busy</html>",
+            "not an object": b"[1, 2]",
         }
         for name, failure in failures.items():
             with self.subTest(failure=name):
@@ -633,8 +642,27 @@ class ReclassifyCommandTest(unittest.TestCase):
             work = Path(directory)
             fetch_corpus.save_page(work, page)
             fetch_corpus.save_page_index(work, [page], [])
-            with self.assertRaises(fetch_corpus.CorpusError):
+            with mock.patch.object(
+                fetch_corpus, "_write_classification"
+            ) as write, self.assertRaises(fetch_corpus.CorpusError):
                 fetch_corpus._command_reclassify(work)
+            write.assert_not_called()
+
+    def test_index_without_sha1_asks_for_revisions_again(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            fetch_corpus.save_page(work, Page("刑法", 1, law(1880), []))
+            index = {"pinned": [{"title": "刑法", "oldid": 1}], "listed": []}
+            Path(work, "pages.json").write_text(json.dumps(index), "utf-8")
+            with self.assertRaisesRegex(fetch_corpus.CorpusError, "SHA-1"):
+                fetch_corpus.load_page_index(work)
+
+    def test_index_of_another_form_is_a_corpus_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            Path(work, "pages.json").write_text('{"pinned": 1}', "utf-8")
+            with self.assertRaises(fetch_corpus.CorpusError):
+                fetch_corpus.load_page_index(work)
 
 
 class ListTitlesTest(unittest.TestCase):

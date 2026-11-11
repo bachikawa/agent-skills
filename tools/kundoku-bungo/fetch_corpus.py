@@ -110,8 +110,7 @@ IMPERIAL_LAW_NUMBER = re.compile("皇室令第|宮内省達|宮內省達")
 # documents of governments other than Japan's. The place name 満洲 alone
 # is not enough: Japanese laws about offices there are kept.
 _FOREIGN_WORDS = (
-    "満洲国|滿洲國|滿洲国|満州国|滿州國|条約|條約|協約|協定|議定書|覚書"
-    "|覺書|降伏文書"
+    "[満滿][洲州][国國]|条約|條約|協約|協定|議定書|覚書|覺書|降伏文書"
 )
 FOREIGN_OR_TREATY = re.compile(_FOREIGN_WORDS)
 # A title that ends with 宣言 is an international declaration. A category
@@ -128,7 +127,7 @@ POST_WAR_TITLE = re.compile(
 # Pages that show the law as amended today, such as 刑法 (日本).
 # A link text such as 「最終改正版」 in a note is not enough; the marker is
 # 「最終改正:」 followed by the date.
-CURRENT_VERSION = re.compile("現行法令掲載|最終改正\\s*[:：]")
+CURRENT_VERSION = re.compile("現行法令掲載|最終改正(?:年月日)?\\s*[:：]")
 HEADER_YEAR = re.compile(r"\|\s*year\s*=\s*(\d{4})")
 FIRST_YEAR, LAST_YEAR = 1868, 1945
 
@@ -261,6 +260,10 @@ class WikisourceApi:
             except (OSError, http.client.HTTPException, ValueError):
                 # Network errors, cut responses and bodies that are not
                 # JSON (such as an HTML error page) are worth a retry.
+                self._sleep(DEFAULT_RETRY_WAIT)
+                continue
+            if not isinstance(response, dict):
+                # JSON that is not an object is as broken as no JSON.
                 self._sleep(DEFAULT_RETRY_WAIT)
                 continue
             self._sleep(REQUEST_INTERVAL)
@@ -854,6 +857,10 @@ def load_page_index(work: Path) -> tuple[list[Page], list[Page]]:
     def pages(key: str) -> list[Page]:
         result = []
         for entry in index[key]:
+            if "sha1" not in entry:
+                raise CorpusError(
+                    "pages.json has no SHA-1; run revisions again"
+                )
             content = read_saved_page(work, entry["oldid"])
             if content is None:
                 raise CorpusError(f"saved page not found: {entry['oldid']}")
@@ -868,12 +875,15 @@ def load_page_index(work: Path) -> tuple[list[Page], list[Page]]:
             )
             # Without this check, a file changed after fetching would put
             # its own SHA-1 into corpus_revisions.tsv.
-            if page.sha1 != entry.get("sha1"):
+            if page.sha1 != entry["sha1"]:
                 raise CorpusError(f"saved page has changed: {page.oldid}")
             result.append(page)
         return result
 
-    return pages("pinned"), pages("listed")
+    try:
+        return pages("pinned"), pages("listed")
+    except (KeyError, TypeError) as error:
+        raise CorpusError(f"unexpected form of {path}") from error
 
 
 def recent_edits(
