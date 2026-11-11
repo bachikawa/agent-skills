@@ -18,6 +18,7 @@
 | `build_kanji_table.py` | 字の表（`kanji.tsv`）を作る。`--check` で、今の表と同じになるかを確かめる |
 | `build_vocabulary.py` | 語の表（`vocabulary.tsv`）を作る。`--check` で、今の表と同じになるかを確かめる |
 | `find_vocabulary.py` | 本文によく出てくる語を数え、語の表に足す候補を書き出す |
+| `check_examples.py` | 用例集（`examples.md`）の「文語」が、出典の版の本文のとおりかを確かめる |
 | `corpus_revisions.tsv` | 表に使うページの名前・版・ハッシュ値・使い道の一覧。入力を固定する正本 |
 | `kanji_overrides.tsv` | 字の表の手で書く部分（語によって選ぶ字の印と説明、官報の画像で確かめた字の形の行） |
 | `vocabulary_entries.tsv` | 語の表の手で書く部分（語・読み・種類・意味と、同じ形の別の語を避ける条件） |
@@ -41,7 +42,7 @@
 | `all` | 字の表・語の表・用例集のすべてに使う |
 | `kanji_only` | 字の表の典拠だけに使う（詔書・勅語・勅諭・憲法・皇室典範・皇室令・華族令、皇室についてのお知らせ）。語の表と用例集には使わない |
 | `text_only` | 語の表と用例集だけに使う。政府の文書でない演説・新聞（`NON_GOVERNMENT_PAGES`）。字の表の典拠にはしない |
-| `examples_only` | 用例集の出典の版を固定するためだけに置く。表を作るスクリプトは読まない |
+| `examples_only` | 用例集の出典の版を固定するためだけに置く。表を作るスクリプトは読まない。用例集が引かなくなっても、人が行を消すまで残る（「株熱の余症恐るべし」など） |
 
 ### 使い道の決め方
 
@@ -82,7 +83,7 @@ python -I tools/kundoku-bungo/fetch_corpus.py unihan --work "$WORK"
 
 - 本文は `WORK/pages/<oldid>.wiki` に保存する。取った版は、SHA-1 が `corpus_revisions.tsv` と同じことを確かめる。違えば止まる。ページが改名されて題名だけが違う時は、警告を出して続ける（版はページと一緒に動くため）。
 - すでに保存した版は、SHA-1 が合えば取り直さない。合わない（書き換わった・途中で切れた）版は取り直す。
-- 空の作業用のディレクトリで実行すると、標準エラーに「1501 fetched, 1501 in total」と出る。もう一度実行すると「0 fetched, 1501 in total」になる。
+- 空の作業用のディレクトリで実行すると、標準エラーに「1504 fetched, 1504 in total」と出る（数は `corpus_revisions.tsv` のデータの行の数）。もう一度実行すると「0 fetched, 1504 in total」になる。
 - 50 版ずつ保存するので、途中で止まっても、取れた分は残る。
 - Unihan は、UCD 18.0.0 の `Unihan.zip`（https://www.unicode.org/Public/18.0.0/ucd/Unihan.zip ）を取り、SHA-256 を確かめる。
 
@@ -152,6 +153,21 @@ python -I tools/kundoku-bungo/find_vocabulary.py --work "$WORK"
 | `meaning` | 今の意味 |
 | `exclude_prev` | 語のすぐ前に来たら、その場所を用例にしない字。同じ形の別の語を避ける（「〜ニ及ヒ」の動詞と、接続の「及ヒ」など） |
 | `exclude_next` | 語のすぐ後ろに来たら、その場所を用例にしない字（「若シク」と「若シ」など） |
+
+### 用例集を確かめる
+
+用例集（`examples.md`）は、人が一節を選んで書く。取った版で、各節の「文語」が出典の版の本文のとおりかを確かめる。違う節があると、終了コード 1 になる。
+
+```bash
+python -I tools/kundoku-bungo/check_examples.py --work "$WORK"
+```
+
+- 「文語」が、出典の版の 1 つの行の中に、そのままあるかを見る。
+- 行は `clean_text.vocabulary_lines()` のもので、語の表と同じ決まりで作る。速記の注は取り除き、編集者の注・半角のかっこ・天皇の名義でだけ使う言い方を含む行と、`line_exclusions.tsv` の範囲の行は除く。
+- 出典の版は、`corpus_revisions.tsv` で使い道が `all`・`text_only`・`examples_only` のものでなければならない。
+- 新しい版を引く節を足した時は、`fetch_corpus.py list`・`revisions` からやり直す（`revisions` は `list` が書く `WORK/titles.json` を使う。`reclassify` は、取っていない版を引いていると止まる）。用例集だけが引く版は `examples_only` になる。
+- `revisions` は、カテゴリのページを最新の版で取り直す。その間にウィキソースで編集されたページがあると、用例集と関係のない行も変わる。`corpus_revisions.tsv` の差分を確かめ、`build_kanji_table.py --check` と `build_vocabulary.py --check` も実行する。
+- 演説・新聞のページは、`fetch_corpus.py` の `NON_GOVERNMENT_PAGES` にも名前を書く（使い道を手で変えても、字の表の典拠にならないようにするため）。
 
 ### 典拠を広げる時
 
