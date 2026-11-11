@@ -5,18 +5,21 @@ Run from the repository root after fetch_corpus.py fetch:
     python -I tools/kundoku-bungo/find_vocabulary.py --work WORK
 
 Writes WORK/vocabulary_candidates.tsv, which a person reads to choose the
-words of vocabulary_entries.tsv. Two kinds of candidates are counted:
+words of vocabulary_entries.tsv. Three kinds of rows are written:
 
-- words that start a clause: one or two kanji followed by katakana, at
-  the start of a line or after 。, a space or a comma, and followed by a
-  kanji. Adverbs and conjunctions of kanbun kundoku, such as 苟モ and
-  加之, are found this way, mixed with verbs that a person leaves out.
-- the words already in vocabulary_entries.tsv, so that their counts can
-  be compared.
+- entry: the words already in vocabulary_entries.tsv, with the number of
+  documents that give an example of them.
+- fixed: one or two kanji whose following kana is the same in nine
+  tenths of their uses or more (only the first kana is compared), not
+  counting the particles that follow nouns. Adverbs and conjunctions of
+  kanbun kundoku, such as 悉ク and 毫モ, rank high this way.
+- clause: one or two kanji followed by katakana, at the start of a line
+  or after 。, a space or a comma, and followed by a kanji. Most of them
+  are nouns with a particle; a person picks the few useful ones.
 
-The count is the number of distinct texts a word appears in, not the
-number of times: the corpus holds many amended versions of the same law,
-and counting every occurrence would rank their wording too high.
+The count is the number of documents a word appears in, not the number
+of times: the corpus holds many amended versions of the same law (see
+law_key()), and counting every version would rank their wording too high.
 """
 
 from __future__ import annotations
@@ -129,9 +132,20 @@ def fixed_kana_words(
     return words
 
 
-def text_key(lines: list[str]) -> str:
-    """Returns a key that is the same for pages with the same text."""
-    return "\n".join(lines)
+def law_key(title: str) -> str:
+    """Returns a key that is the same for the versions of one document.
+
+    Amended versions of a law have titles such as 「國債整理基金特別會計法
+    (大正八年…)」 and 「地所質入書入規則/公布時」, so the part before 「 (」
+    or 「/」 names the document.
+
+    Args:
+        title: A page title.
+
+    Returns:
+        The title without the part that tells the version.
+    """
+    return re.split(r" \(|/", title, maxsplit=1)[0]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -151,15 +165,17 @@ def main(argv: list[str] | None = None) -> int:
         work = fetch_corpus.check_work_dir(args.work)
         rows = fetch_corpus.read_revisions()
         pages = build_vocabulary.text_pages(work, rows)
-        counts = count_texts((text_key(p.lines), p.lines) for p in pages)
-        fixed = fixed_kana_words((text_key(p.lines), p.lines) for p in pages)
+        counts = count_texts((law_key(p.row.title), p.lines) for p in pages)
+        fixed = fixed_kana_words(
+            (law_key(p.row.title), p.lines) for p in pages
+        )
         entries = build_vocabulary.read_entries()
         kanji = build_vocabulary.kanji_variants()
         known = {}
         for entry in entries:
             forms = build_vocabulary.forms_of(entry.word, kanji)
             keys = {
-                text_key(p.lines)
+                law_key(p.row.title)
                 for p in pages
                 if build_vocabulary.find_in(p.lines, forms, entry) is not None
             }

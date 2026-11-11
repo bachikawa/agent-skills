@@ -168,13 +168,21 @@ def read_overrides(
 
 
 def evidence_pages(
-    work: Path, rows: Iterable[fetch_corpus.Revision]
+    work: Path,
+    rows: Iterable[fetch_corpus.Revision],
+    one_to_one: Iterable[tuple[str, str]] = (),
 ) -> list[tuple[fetch_corpus.Revision, str]]:
     """Reads the revisions that may attest kanji forms.
+
+    A revision whose text an editor wrote over in new kanji forms (see
+    clean_text.looks_modernized()) is left out: its few old forms cannot
+    show how the original was written.
 
     Args:
         work: The work directory of fetch_corpus.py.
         rows: The rows of corpus_revisions.tsv.
+        one_to_one: (modern, old) pairs with one old form each, to tell a
+            modernized text.
 
     Returns:
         Each usable row with its lines joined, sorted by year, title and
@@ -193,7 +201,10 @@ def evidence_pages(
                 f"revision {row.oldid} is not fetched;"
                 " run fetch_corpus.py fetch"
             )
-        pages.append((row, "\n".join(clean_text.kanji_lines(content))))
+        text = "\n".join(clean_text.kanji_lines(content))
+        if clean_text.looks_modernized(text, one_to_one):
+            continue
+        pages.append((row, text))
     pages.sort(key=lambda p: (p[0].year, p[0].title, p[0].oldid))
     return pages
 
@@ -336,10 +347,11 @@ def main(argv: list[str] | None = None) -> int:
     try:
         work = fetch_corpus.check_work_dir(args.work)
         unihan = fetch_corpus.download_unihan(work, opener=_no_download)
-        pages = evidence_pages(work, fetch_corpus.read_revisions())
-        rows, missing, counts = build_rows(
-            unihan_pairs(unihan), pages, read_overrides()
-        )
+        pairs = unihan_pairs(unihan)
+        one_to_one = [(m, o) for m, o, several in pairs if not several]
+        revisions = fetch_corpus.read_revisions()
+        pages = evidence_pages(work, revisions, one_to_one)
+        rows, missing, counts = build_rows(pairs, pages, read_overrides())
         text = render(rows)
         if args.check:
             if KANJI_FILE.read_text(encoding="utf-8") != text:

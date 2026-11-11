@@ -183,6 +183,25 @@ def kanji_variants(path: Path | None = None) -> dict[str, list[str]]:
     return variants
 
 
+def one_to_one_pairs(path: Path | None = None) -> list[tuple[str, str]]:
+    """Reads the pairs of kanji.tsv that are converted one to one.
+
+    Args:
+        path: The file to read (KANJI_FILE when None).
+
+    Returns:
+        (modern, old) for each joyo row whose one_to_many is 0.
+    """
+    path = KANJI_FILE if path is None else path
+    with open(path, encoding="utf-8", newline="") as source:
+        reader = csv.DictReader(source, delimiter="\t", quoting=csv.QUOTE_NONE)
+        return [
+            (row["modern"], row["old"])
+            for row in reader
+            if row["kind"] == "joyo" and row["one_to_many"] == "0"
+        ]
+
+
 def search_key(word: str) -> str:
     """Returns the part of a headword that must appear in its example.
 
@@ -214,13 +233,21 @@ def forms_of(word: str, kanji: dict[str, list[str]]) -> list[str]:
 
 
 def text_pages(
-    work: Path, rows: Iterable[fetch_corpus.Revision]
+    work: Path,
+    rows: Iterable[fetch_corpus.Revision],
+    one_to_one: Iterable[tuple[str, str]] = (),
 ) -> list[TextPage]:
     """Reads the revisions that may give examples, in the order to search.
+
+    A page has new forms when its only transcription is in a 新字体
+    section, or when its text looks written over in new forms
+    (clean_text.looks_modernized()), as 政体 is without any heading.
 
     Args:
         work: The work directory of fetch_corpus.py.
         rows: The rows of corpus_revisions.tsv.
+        one_to_one: (modern, old) pairs with one old form each
+            (one_to_one_pairs()).
 
     Returns:
         The pages whose usage is all or text_only, sorted by whether the
@@ -244,8 +271,10 @@ def text_pages(
         original = clean_text.remove_editor_sections(
             rest, keep_only_new_forms=False
         )
-        new_forms = not clean_text.has_text(original)
         lines = clean_text.vocabulary_lines(content, ranges.get(row.title, ()))
+        new_forms = not clean_text.has_text(
+            original
+        ) or clean_text.looks_modernized("\n".join(lines), one_to_one)
         pages.append(TextPage(row, new_forms, lines))
     pages.sort(
         key=lambda p: (p.new_forms, p.row.year, p.row.title, p.row.oldid)
@@ -260,6 +289,12 @@ def _segment(line: str, position: int, form: str, entry: Entry) -> str:
     segment = line[start:end]
     offset = position - start
     cut = max(segment.rfind(ch, 0, offset) for ch in _SENTENCE_BREAKS)
+    # An earlier match that was skipped (part of a longer word, or a word
+    # of the same form) must not come first in the example, so that the
+    # first occurrence of the form is the one chosen.
+    earlier = segment.rfind(form, 0, offset)
+    if earlier != -1:
+        cut = max(cut, earlier + len(form) - 1)
     if cut != -1:
         segment = segment[cut + 1 :]
     return segment.strip(" " + SPACE)
@@ -408,7 +443,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         work = fetch_corpus.check_work_dir(args.work)
-        pages = text_pages(work, fetch_corpus.read_revisions())
+        revisions = fetch_corpus.read_revisions()
+        pages = text_pages(work, revisions, one_to_one_pairs())
         rows, missing = build_rows(read_entries(), pages, kanji_variants())
         if missing:
             raise VocabularyError(f"words without an example: {missing}")

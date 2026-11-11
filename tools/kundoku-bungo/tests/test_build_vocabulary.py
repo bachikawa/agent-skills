@@ -16,6 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import build_vocabulary as build  # noqa: E402
+import fetch_corpus  # noqa: E402
 import find_vocabulary  # noqa: E402
 from fetch_corpus import Revision  # noqa: E402
 
@@ -72,8 +73,28 @@ class FindInTest(unittest.TestCase):
     def test_word_inside_a_longer_kanji_word_is_skipped(self) -> None:
         line = "其事故ニ因リ之ヲ罰ス故ニ人々之ヲ守ル"
         form, example = build.find_in([line], ["故ニ"], entry("故ニ"))
-        self.assertTrue(example.startswith("其事故ニ因リ之ヲ罰ス故ニ"))
+        # The example starts after the skipped 事故ニ, so that its first
+        # 故ニ is the word.
+        self.assertEqual(example, "因リ之ヲ罰ス故ニ人々之ヲ守ル")
         self.assertEqual(form, "故ニ")
+
+    def test_excluded_next_character_skips_a_longer_word(self) -> None:
+        lines = ["若シク之ヲ犯ス者アラハ", "然ルニ若シ之ヲ犯ス者アラハ罰ス"]
+        found = build.find_in(lines, ["若シ"], entry("若シ", exclude_next="ク"))
+        self.assertEqual(found[1], "然ルニ若シ之ヲ犯ス者アラハ罰ス")
+
+    def test_construction_shows_forty_characters_after_it(self) -> None:
+        after = "一二三四五六七八九十" * 5
+        line = "之ヲ以テ" + after
+        plain = build.find_in([line], ["ヲ以テ"], entry("以テ"))
+        construction = build.find_in([line], ["ヲ以テ"], entry("〜ヲ以テ"))
+        self.assertEqual(len(plain[1]), len("之ヲ以テ") + 20)
+        self.assertEqual(len(construction[1]), len("之ヲ以テ") + 40)
+
+    def test_example_starts_after_a_space(self) -> None:
+        line = "前ノ文ナリ" + chr(0x3000) + "苟モ國アレハ則チ兵備アリ"
+        found = build.find_in([line], ["苟モ"], entry("苟モ"))
+        self.assertEqual(found[1], "苟モ國アレハ則チ兵備アリ")
 
     def test_excluded_neighbours_skip_a_word_of_the_same_form(self) -> None:
         conjunction = entry("及ヒ", exclude_prev="ニ")
@@ -117,8 +138,6 @@ class BuildRowsTest(unittest.TestCase):
     def test_pages_in_new_forms_come_after_the_others(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
-            import fetch_corpus
-
             new = "{{Header|year=1872}}\n== 新字体 ==\n苟モ国アレハ則チ兵備アリ"
             old = "{{Header|year=1890}}\n苟モ國アレハ則チ兵備アリ"
             pages = [
@@ -137,6 +156,34 @@ class BuildRowsTest(unittest.TestCase):
             ordered = build.text_pages(work, rows)
         self.assertEqual([p.row.oldid for p in ordered], [2, 1])
         self.assertEqual([p.new_forms for p in ordered], [False, True])
+
+    def test_page_written_over_in_new_forms_comes_after_too(self) -> None:
+        pairs = [("国", "國"), ("体", "體"), ("会", "會"), ("従", "從")]
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            new = "{{Header|year=1868}}\n広ク会議ヲ興シ国是ヲ定メ政体ヲ立テ従前ノ国法ヲ改ム"
+            old = "{{Header|year=1890}}\n國是ヲ定メ政體ヲ立テ從前ノ國法ヲ改メ會議ヲ興ス"
+            items = [
+                fetch_corpus.Page("政体", 1, new, []),
+                fetch_corpus.Page("某法", 2, old, []),
+            ]
+            rows = []
+            for item, year in zip(items, (1868, 1890)):
+                fetch_corpus.save_page(work, item)
+                rows.append(
+                    Revision(
+                        item.title, item.oldid, item.sha1, year, "all",
+                        "listed", "rule",
+                    )
+                )
+            ordered = build.text_pages(work, rows, pairs)
+        self.assertEqual([p.row.oldid for p in ordered], [2, 1])
+
+
+class RenderTest(unittest.TestCase):
+    def test_tab_in_a_value_is_an_error(self) -> None:
+        with self.assertRaises(build.VocabularyError):
+            build.render([["苟モ\t", "", "", "", "", "", "", ""]])
 
 
 class EntriesFileTest(unittest.TestCase):
@@ -178,6 +225,31 @@ class FindVocabularyTest(unittest.TestCase):
         counts = find_vocabulary.fixed_kana_words(texts)
         self.assertEqual(counts["悉ク"], 2)
         self.assertNotIn("本令ハ", counts)
+
+    def test_stem_after_a_kanji_is_not_counted(self) -> None:
+        texts = [("a", ["其事故ニ因リ"]), ("b", ["故ニ之ヲ定ム"])]
+        counts = find_vocabulary.fixed_kana_words(texts)
+        self.assertEqual(counts["故ニ"], 1)
+        self.assertNotIn("事故ニ", counts)
+
+    def test_fixed_share_is_nine_tenths(self) -> None:
+        at_limit = [("a", ["悉ク"] * 9 + ["悉ニ"])]
+        below = [("a", ["悉ク"] * 8 + ["悉ニ", "悉ニ"])]
+        self.assertIn("悉ク", find_vocabulary.fixed_kana_words(at_limit))
+        self.assertNotIn("悉ク", find_vocabulary.fixed_kana_words(below))
+
+    def test_versions_of_one_law_share_a_key(self) -> None:
+        titles = (
+            "國債整理基金特別會計法 (大正八年三月二十四日法律第十四号)",
+            "國債整理基金特別會計法",
+        )
+        self.assertEqual(
+            {find_vocabulary.law_key(t) for t in titles},
+            {"國債整理基金特別會計法"},
+        )
+        self.assertEqual(
+            find_vocabulary.law_key("地所質入書入規則/公布時"), "地所質入書入規則"
+        )
 
     def test_clause_words_need_a_break_before_and_a_kanji_after(self) -> None:
         lines = ["苟モ國アレハ兵備アリ。加之其內不都合アリ"]
