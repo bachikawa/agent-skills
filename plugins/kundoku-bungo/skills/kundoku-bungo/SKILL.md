@@ -76,7 +76,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時
 2. [grammar.md](references/grammar.md) を読み、文を書き換える。
    - 動詞・形容詞を文語の活用に戻す（2 節）。
    - 文末・否定・条件・使役の言い方を、表に従って選ぶ（3〜6 節）。
-   - 漢文訓読の構文と接続の言葉を使う（7・8 節）。
+   - 漢文訓読の構文と接続の言葉を使う（7・8 節）。語を選ぶ時は、[references/vocabulary.tsv](references/vocabulary.tsv) の `meaning`（今の意味）と `example`（当時の用例）を見て、使い方が合うものを選ぶ。
    - 送り仮名・助詞・助動詞を、歴史的仮名遣いにする（9 節）。
    - 一人称・呼びかけは、10 節の「使ってよい」表から選ぶ。
    - 文書の形と結びは、11 節に従う。ただし、末尾の書き添え「（現代の作文。史料ではない）」は、この時点では付けない（手順 6 で付ける）。
@@ -98,7 +98,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時
    - 大きく書いた「ケ」「カ」（「三ケ月」「一ケ所」）は、「け」「か」になる。数字と助数詞の間のものは「箇」の意味なので、「三か月」「一か所」と読む。
 2. 濁点を補って読む（「妨け」→「妨げ」、「及ひ」→「及び」、「あらさる」→「あらざる」）。文脈で決める。
 3. 表にない旧字体・異体字は、新字体に読み替える。
-4. [grammar.md](references/grammar.md) の表を逆に引いて、文末・否定・条件・構文・接続の言葉を、現代語にする。
+4. [grammar.md](references/grammar.md) の表を逆に引いて、文末・否定・条件・構文・接続の言葉を、現代語にする。漢文訓読から来た語（「加之」「苟モ」「就中」など）は、[references/vocabulary.tsv](references/vocabulary.tsv) で読みと今の意味を引く。表にない語は、推測で意味を埋めない。
 5. 依頼に合わせて、次のどれか、または全部を返す。
    - 現代語訳
    - 読み下し（ひらがな・濁点付き・現代仮名遣い）
@@ -127,4 +127,5 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時
 | --- | --- | --- |
 | [references/grammar.md](references/grammar.md) | 活用・文末・否定・条件・構文・接続の言葉・歴史的仮名遣い・使わない言い方・文書の形 | 変換する時は毎回 |
 | [references/kanji.tsv](references/kanji.tsv) | 新字体と旧字体の対応（典拠付き）。`one_to_many` が `1` の行は、`note` を見て語ごとに選ぶ | 文語にする時の手順 4（Python がない時）と手順 5 |
+| [references/vocabulary.tsv](references/vocabulary.tsv) | 漢文訓読から来た語の読み・今の意味・当時の用例（出典付き） | 文語にする時の手順 2 と、現代語にする時の手順 4 |
 | [scripts/convert_chars.py](scripts/convert_chars.py) | 字体・仮名・濁点・小書きの仮名・句読点の機械的な変換 | 文語にする時の手順 4 と、現代語にする時の手順 1 |
