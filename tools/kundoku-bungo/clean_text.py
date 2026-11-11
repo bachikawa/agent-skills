@@ -8,8 +8,8 @@ This module removes it and keeps the original text.
 
 The functions are used by the scripts that build the tables:
 
-- strip_markup() and body() give the text for the kanji table. Kanji
-  written as character references (such as &#xFA45;) come back as the
+- kanji_lines() gives the lines for the kanji table. Kanji written as
+  character references (such as &#xFA45;) come back as the
   compatibility ideographs they name, because MediaWiki stores literal
   compatibility ideographs only after normalizing them to NFC.
 - vocabulary_lines() gives the lines that may be quoted in the
@@ -173,29 +173,38 @@ def _remove_sections(wikitext: str, heading: re.Pattern[str]) -> str:
     return "".join(kept)
 
 
-def remove_editor_sections(wikitext: str) -> str:
+def remove_editor_sections(
+    wikitext: str, *, keep_only_new_forms: bool = True
+) -> str:
     """Removes the sections that editors wrote.
 
     Sections matching EDITOR_SECTION (such as 関連項目 or 現代語訳) are
     always removed. Sections matching NEW_FORM_SECTION (such as 新字体)
     are removed when the rest of the page still has a transcription;
-    otherwise they are the only transcription and are kept.
+    otherwise they are the only transcription and are kept, unless
+    keep_only_new_forms is False.
 
     Args:
         wikitext: Wikitext without the header.
+        keep_only_new_forms: Keep NEW_FORM_SECTION sections when they
+            are the only transcription. The kanji table passes False:
+            a version whose kanji an editor replaced cannot attest how a
+            character was written.
 
     Returns:
         The wikitext without those sections.
     """
     text = _remove_sections(wikitext, EDITOR_SECTION)
     without_new_forms = _remove_sections(text, NEW_FORM_SECTION)
+    if not keep_only_new_forms:
+        return without_new_forms
     plain = strip_markup(without_new_forms)
     if _TEXT_CHAR.search(plain):
         return without_new_forms
     return text
 
 
-def body(wikitext: str) -> str:
+def body(wikitext: str, *, keep_only_new_forms: bool = True) -> str:
     """Returns the part of a page that holds the original document.
 
     Removes the page header template (Header) and the sections written by
@@ -203,11 +212,14 @@ def body(wikitext: str) -> str:
 
     Args:
         wikitext: The wikitext of a whole page.
+        keep_only_new_forms: See remove_editor_sections().
 
     Returns:
         The wikitext of the original document, with markup.
     """
-    return remove_editor_sections(split_header(wikitext)[1])
+    return remove_editor_sections(
+        split_header(wikitext)[1], keep_only_new_forms=keep_only_new_forms
+    )
 
 
 def strip_markup(wikitext: str, *, mark_removed: bool = False) -> str:
@@ -382,8 +394,10 @@ def kanji_lines(wikitext: str) -> list[str]:
     """Returns the lines of a page that may attest kanji forms.
 
     The same lines as vocabulary_lines(), except that lines with wording
-    only for the emperor are kept and no ranges are removed: a rescript
-    may still show how a character was written.
+    only for the emperor are kept and no ranges of line_exclusions.tsv are
+    removed, since a rescript still shows how a character was written;
+    and sections of new kanji forms (such as 新字体) are always removed,
+    since an editor replaced their kanji.
 
     Args:
         wikitext: The wikitext of a whole page.
@@ -391,7 +405,9 @@ def kanji_lines(wikitext: str) -> list[str]:
     Returns:
         The lines in the order of the page.
     """
-    text = strip_markup(body(wikitext), mark_removed=True)
+    text = strip_markup(
+        body(wikitext, keep_only_new_forms=False), mark_removed=True
+    )
     return list(_usable_lines(remove_stenography_notes(text)))
 
 
