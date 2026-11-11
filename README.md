@@ -1,4 +1,8 @@
 <p align="center">
+  <b>現代語</b> ・ <a href="README.bungo.md">文語（お遊び版）</a>
+</p>
+
+<p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.png">
     <img src="docs/assets/banner-light.png" alt="agent-skills — AI エージェントのためのスキル集" width="100%">
@@ -12,7 +16,8 @@
 </p>
 
 <p align="center">
-  AI エージェント用のスキル集（<a href="https://agentskills.io/">Agent Skills</a> の <code>SKILL.md</code> 形式）。スキルを 1 つずつ Claude Code のプラグインにしてあるので、使いたいスキルだけを入れられる。
+  AI エージェント用のスキル集（<a href="https://agentskills.io/">Agent Skills</a> の <code>SKILL.md</code> 形式）<br>
+  使いたいスキルだけを、Claude Code のプラグインとして入れられる
 </p>
 
 <p align="center">
@@ -20,7 +25,7 @@
   <a href="#インストール">インストール</a> ・
   <a href="#ほかのエージェントnpx-skills">npx skills</a> ・
   <a href="#更新と外し方">更新と外し方</a> ・
-  <a href="#開発する人へ">開発する人へ</a> ・
+  <a href="#開発者向け">開発者向け</a> ・
   <a href="#ライセンス">ライセンス</a>
 </p>
 
@@ -126,7 +131,7 @@ npx skills@1.8.1 add bachikawa/agent-skills --skill kundoku-bungo
 
 </details>
 
-## 開発する人へ
+## 開発者向け
 
 <details>
 <summary>リポジトリの構成</summary>
@@ -179,5 +184,6 @@ agent-skills/
 
 [MIT](LICENSE)
 
-- `kundoku-bungo` は、Unicode の Unihan データベースから作った字の表を含む。この表には Unicode License v3 も当てはまる（[LICENSE-UNICODE](plugins/kundoku-bungo/skills/kundoku-bungo/LICENSE-UNICODE)、出典は [NOTICE.md](plugins/kundoku-bungo/skills/kundoku-bungo/NOTICE.md)）。
+- `kundoku-bungo` は、Unicode の Unihan データベースから作った字の表（`plugins/kundoku-bungo/skills/kundoku-bungo/references/kanji.tsv`）を含む。この表にだけ、Unicode License v3 も当てはまる（[LICENSE-UNICODE](LICENSE-UNICODE)、出典は [NOTICE.md](plugins/kundoku-bungo/skills/kundoku-bungo/NOTICE.md)）。
+- リポジトリの一番上の `LICENSE-UNICODE` は、スキルの中の `LICENSE-UNICODE` の写しである。GitHub のトップページで、ライセンスを見やすくするために置いた。2 つは同じ中身に保つ。
 - 見出しの絵の文字は、Noto Sans JP と Noto Serif JP（SIL Open Font License 1.1）で書いた。

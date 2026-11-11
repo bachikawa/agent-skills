@@ -25,7 +25,7 @@
 
 ## 手順
 
-1. スキルを足す Issue と、開発ブランチ `dev_<Issue 番号>` を作る（→ README の「[開発する人へ](../README.md#開発する人へ)」の「ブランチ運用」）。
+1. スキルを足す Issue と、開発ブランチ `dev_<Issue 番号>` を作る（→ README の「[開発者向け](../README.md#開発者向け)」の「ブランチ運用」）。
 2. 次のディレクトリとファイルを作る。
 
    ```text
@@ -42,7 +42,7 @@
 5. README の「スキル」に、`kundoku-bungo` と同じ形の節を足す。中身は、README の並びのとおり、見出し（`### <スキル名>`）・版のバッジ・説明・例・特徴の箇条書き・注意書き（要る時）・プラグイン ID（`<スキル名>@bachikawa-skills`）と、Releases・権利の表示（`NOTICE.md` を置いたスキルだけ）へのリンクである。
    - 版のバッジは、shields.io の dynamic JSON（外部の JSON の値を読んで表示するバッジ）で、`main` の `plugins/<スキル名>/.claude-plugin/plugin.json` の `version` を読む。版を README に固定で書かない（版を書く場所は `plugin.json` だけ）。利用者が入れる `main` の版を示すので、スキルが `main` に入る（リリース PR がマージされる）までは値が出ない。
    - 「インストール」の、スキルの名前を書いた 1 行（`/plugin install <スキル名> --marketplace bachikawa/agent-skills`）と呼び出し方、「ほかのエージェント（npx skills）」のコマンドに、そのスキルの分を足す。足した後、「検証」の `claude plugin validate .` で、「This README has no line that installs」の助言が出ないことを確かめる。
-   - スキルのデータを作るツール（`tools/<スキル名>/`）がある時は「開発する人へ」の「資料」の表に、第三者のデータを含む時は「ライセンス」に、そのスキルの項を足す。
+   - スキルのデータを作るツール（`tools/<スキル名>/`）がある時は「開発者向け」の「資料」の表に、第三者のデータを含む時は「ライセンス」に、そのスキルの項を足す。
    - README の目次（見出しの絵の下のリンクの行）は、スキルごとには足さない。
 6. 下の「検証」を行う。
 
