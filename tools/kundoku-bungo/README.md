@@ -16,8 +16,11 @@
 | `fetch_corpus.py` | ウィキソースのページ一覧・本文と、Unihan（Unicode の漢字のデータベース）を取る |
 | `clean_text.py` | 翻刻の本文（wikitext）から、編集者の注・テンプレート・番号を除く |
 | `build_kanji_table.py` | 字の表（`kanji.tsv`）を作る。`--check` で、今の表と同じになるかを確かめる |
+| `build_vocabulary.py` | 語の表（`vocabulary.tsv`）を作る。`--check` で、今の表と同じになるかを確かめる |
+| `find_vocabulary.py` | 本文によく出てくる語を数え、語の表に足す候補を書き出す |
 | `corpus_revisions.tsv` | 表に使うページの名前・版・ハッシュ値・使い道の一覧。入力を固定する正本 |
 | `kanji_overrides.tsv` | 字の表の手で書く部分（語によって選ぶ字の印と説明、官報の画像で確かめた字の形の行） |
+| `vocabulary_entries.tsv` | 語の表の手で書く部分（語・読み・種類・意味と、同じ形の別の語を避ける条件） |
 | `line_exclusions.tsv` | 詔書の部分を含む法令のページで、除く行の範囲（手で書く） |
 | `tests/` | テスト（ネットワークは使わない） |
 
@@ -108,6 +111,45 @@ python -I tools/kundoku-bungo/build_kanji_table.py --work "$WORK"
 | `one_to_many` | `1` なら、スクリプトは変換せず、エージェントが語を見て選ぶ。新字体の字が戦前から別の字としても使われていた組（虫と蟲、勅と敕など）に付ける |
 | `note` | 選び方の説明 |
 | `evidence`・`evidence_url` | `design` の行の典拠 |
+
+### 語の表を作る
+
+取った版から、語の表を作る。`--check` の使い方は、字の表と同じ。
+
+```bash
+python -I tools/kundoku-bungo/build_vocabulary.py --work "$WORK" --check
+python -I tools/kundoku-bungo/build_vocabulary.py --work "$WORK"
+```
+
+- 語・読み・種類・意味は、`vocabulary_entries.tsv` から取る。スクリプトは用例と出典だけを選ぶ。`vocabulary.tsv` は手で直さない。
+- 用例は、使い道が `all` か `text_only` の版の行（`clean_text.vocabulary_lines()`）から探す。
+- 探す順は、当時の字の形の翻刻を先に、編集者が字の形を新字体に直した翻刻（学制など、ほかに翻刻がない文書）を後にする。その中で、年・題名・版の番号の順。最初に見つかった一節を引く。
+- 一節は、語の前 20 字と後ろ 20 字（構文〈〜を含む語〉は 40 字）を目安に、前の文の切れ目（「。」や空白）で切る。漢字で始まる語は、前が漢字の時は長い語の一部とみなして飛ばす（「事故ニ」の「故ニ」など）。算用数字や章の番号で始まる一節も飛ばす。
+- 用例が見つからない語があると止まる。
+- 表を作り直した後は、字の表と同じく `fetch_corpus.py reclassify` を実行する。
+
+### 語の表に語を足す
+
+```bash
+python -I tools/kundoku-bungo/find_vocabulary.py --work "$WORK"
+```
+
+- `WORK/vocabulary_candidates.tsv` に、次の 3 つを書き出す。数は、語が出てくる文書の数（同じ本文の版は 1 つと数える。同じ法令の改正後の版が多いため）。
+  - `entry`: `vocabulary_entries.tsv` の語
+  - `fixed`: 漢字の後ろの仮名がいつも同じ語（9 割以上）。副詞・接続の語（悉ク・毫モ など）が上に来る。名詞に付く助詞（ノ・ハ・ヲ・ト・ヘ）は除く
+  - `clause`: 文の頭の「漢字＋仮名」の語。名詞と助詞の組が多い
+- 候補から、漢文訓読から来た語を人が選び、読み・意味を `vocabulary_entries.tsv` に書く。2 つ以上の文書に用例がある語だけを足す（1 つの文書だけだと、翻刻の誤りのことがあるため）。用例を読んで、意味の欄と合うことを確かめる。
+
+### vocabulary_entries.tsv の列
+
+| 列 | 内容 |
+| --- | --- |
+| `word` | 見出し語。新字体・カタカナ・濁点なしで書く。「〜」は構文の前後の言葉 |
+| `reading` | 読み（今のひらがな） |
+| `kind` | 種類（接続・副詞・構文・名詞・連体詞・助動詞、または「接続・副詞」など） |
+| `meaning` | 今の意味 |
+| `exclude_prev` | 語のすぐ前に来たら、その場所を用例にしない字。同じ形の別の語を避ける（「〜ニ及ヒ」の動詞と、接続の「及ヒ」など） |
+| `exclude_next` | 語のすぐ後ろに来たら、その場所を用例にしない字（「若シク」と「若シ」など） |
 
 ### 典拠を広げる時
 
