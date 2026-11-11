@@ -127,7 +127,6 @@ title	oldid	sha1	year	usage	source	rule
 切支丹宗門及ヒ邪宗門禁止ノ制札ヲ改ム	143515	c1bf1e6939785d4064b4902b6e4e8bf4f0a15ef3	1868	all	pinned	pinned
 刑事交渉法 (大正10年法律第90号)	244743	e3f81d2429ea19c2ca00b620ef091b184c609f83	1907	all	listed	default
 刑法 (明治13年太政官布告第36号)	216438	bb15980626aee1de97d3686b79290b7b4d522a73	1880	all	pinned	pinned
-刑法施行法	241185	a1a12fe3f20f7051a35b8481456b0b77a2283ee2	1908	all	pinned	pinned
 判事懲戒法	174990	479415330f0fb86a378da64d29324f66654a3473	1890	all	listed	default
 判事檢事登用試驗規則	192370	557c53d03c81cd5d2eb8eb89d3a8d823fe7b3688	1891	all	listed	default
 判決ノ正本謄本及抄本ノ手數料ニ關スル件	111758	8af16bfbacc86b42ef242814a1d070f594c1af0c	1906	all	listed	default
@@ -904,7 +903,7 @@ title	oldid	sha1	year	usage	source	rule
 砂防法	239716	17ec276fca4bcf6236a2aac7932dc7f474cc375f	1897	all	listed	default
 社寺菊御紋濫用禁止ノ件	143327	1248abb88869ffbc005d1d9208a860010c272c3f	1869	kanji_only	listed	imperial-title
 祝日大祭日歌詞並楽譜	161396	0aeddbd198b04b4f0c489f7a8b41ae6994b0badf	1893	all	listed	default
-祝東京專門学校之開校	236502	242732bf89cf661d72a0e883632a858e0a950e5d	1882	all	pinned	pinned
+祝東京專門学校之開校	236502	242732bf89cf661d72a0e883632a858e0a950e5d	1882	text_only	pinned	non-government
 神奈川縣下郡廢置法律	100882	6c8e15a7f276b96a51bed66b6c103dc9306b6cd1	1896	all	listed	default
 神武天皇御即位日紀元節ト稱セラル	98181	7e91b40ec9c4e71e8d2339ebf5f6c1ebba72a826	1873	kanji_only	listed	imperial-title
 神社財産ニ関スル法律	233570	45be3a00c1ef1df5a679ad13d853e153ea34078e	1908	all	listed	default

@@ -94,7 +94,6 @@ modern	old	old_codepoint	kind	one_to_many	note	evidence	evidence_url
 庁	廳	U+5EF3	joyo	0		太政官規則（1869）	https://ja.wikisource.org/w/index.php?oldid=143485
 広	廣	U+5EE3	joyo	0		太政官日誌ヲ發刊シ天下ニ布吿セシム（1868）	https://ja.wikisource.org/w/index.php?oldid=143631
 廃	廢	U+5EE2	joyo	0		京都東京大坂ヲ除クノ外諸府ヲ廢シテ縣ト爲ス（1869）	https://ja.wikisource.org/w/index.php?oldid=143533
-弁	瓣	U+74E3	joyo	1	「花瓣」「瓣膜」など、花びら・弁膜の意味は瓣	行政裁判法 (公布時)（1890）	https://ja.wikisource.org/w/index.php?oldid=111540
 弁	辨	U+8FA8	joyo	1	「辨別」「辨償」「辨明」「辨理」などは辨	德川慶喜征討ノ大號令ヲ發シ諸侯ヲシテ去就ヲ決セシム（1868）	https://ja.wikisource.org/w/index.php?oldid=168786
 弁	辯	U+8FAF	joyo	1	「辯護」「辯論」「辯士」「雄辯」などは辯。「合弁」など辦に当たる語はそのまま	刑法 (明治13年太政官布告第36号)（1880）	https://ja.wikisource.org/w/index.php?oldid=216438
 弐	貳	U+8CB3	joyo	0		新貨條例（1871）	https://ja.wikisource.org/w/index.php?oldid=111357
@@ -114,7 +113,6 @@ modern	old	old_codepoint	kind	one_to_many	note	evidence	evidence_url
 惨	慘	U+6158	joyo	0		刑法 (明治13年太政官布告第36号)（1880）	https://ja.wikisource.org/w/index.php?oldid=216438
 慎	愼	U+613C	joyo	0		軍律ヲ定ム（1869）	https://ja.wikisource.org/w/index.php?oldid=143297
 慨	慨	U+FA3E	compat	0		廢藩置縣ノ詔書（1871）	https://ja.wikisource.org/w/index.php?oldid=215290
-懐	懷	U+61F7	joyo	0		刑法施行法（1908）	https://ja.wikisource.org/w/index.php?oldid=241185
 懲	懲	U+FA40	compat	0		行政官吏服務紀律（1882）	https://ja.wikisource.org/w/index.php?oldid=111427
 戦	戰	U+6230	joyo	0		德川慶喜征討ノ大號令ヲ發シ諸侯ヲシテ去就ヲ決セシム（1868）	https://ja.wikisource.org/w/index.php?oldid=168786
 戯	戲	U+6232	joyo	0		芸妓酌婦芸妓置屋営業取締規則（1916）	https://ja.wikisource.org/w/index.php?oldid=225115
@@ -160,8 +158,8 @@ modern	old	old_codepoint	kind	one_to_many	note	evidence	evidence_url
 権	權	U+6B0A	joyo	0		集議院規則（1869）	https://ja.wikisource.org/w/index.php?oldid=218192
 横	橫	U+6A6B	joyo	0		鐵道略則 (明治5年太政官布告第61号)（1872）	https://ja.wikisource.org/w/index.php?oldid=180947
 欄	欄	U+F91D	compat	0		皇統譜令/公布時 (大正15年皇室令第6号)（1926）	https://ja.wikisource.org/w/index.php?oldid=243722
-欠	缺	U+7F3A	joyo	1	「かける」「缺席」「缺員」などは缺。「欠伸（あくび）」はそのまま	学制（1872）	https://ja.wikisource.org/w/index.php?oldid=206658
-欧	歐	U+6B50	joyo	0		祝東京專門学校之開校（1882）	https://ja.wikisource.org/w/index.php?oldid=236502
+欠	缺	U+7F3A	joyo	1	「かける」「缺席」「缺員」などは缺。「欠伸（あくび）」はそのまま	刑法 (明治13年太政官布告第36号)（1880）	https://ja.wikisource.org/w/index.php?oldid=216438
+欧	歐	U+6B50	joyo	0		議會竝議員保護ノ件（1889）	https://ja.wikisource.org/w/index.php?oldid=111525
 歩	步	U+6B65	joyo	0		太陰暦ヲ廃シ太陽暦ヲ頒行ス（1872）	https://ja.wikisource.org/w/index.php?oldid=246692
 歴	歷	U+6B77	joyo	0		古器舊物ヲ保全セシム（1871）	https://ja.wikisource.org/w/index.php?oldid=170094
 残	殘	U+6B98	joyo	0		藩制（1870）	https://ja.wikisource.org/w/index.php?oldid=143309
@@ -256,7 +254,6 @@ modern	old	old_codepoint	kind	one_to_many	note	evidence	evidence_url
 薫	薰	U+85B0	joyo	0		教育ニ関スル勅語（1890）	https://ja.wikisource.org/w/index.php?oldid=228702
 薬	藥	U+85E5	joyo	0		鐵道略則（1872）	https://ja.wikisource.org/w/index.php?oldid=111250
 虚	虛	U+865B	joyo	0		集議院規則（1869）	https://ja.wikisource.org/w/index.php?oldid=218192
-虫	蟲	U+87F2	joyo	1	ふつうは蟲（「害蟲」「昆蟲」）	祝東京專門学校之開校（1882）	https://ja.wikisource.org/w/index.php?oldid=236502
 蚕	蠶	U+8836	joyo	1	ふつうは蠶（「養蠶」「蠶絲」）	鐵道略則（1872）	https://ja.wikisource.org/w/index.php?oldid=111250
 衆	眾	U+773E	design	1	ふつうは衆（「衆議院」）。眾の用例は詔書の「有眾」「眾庶」で、天皇の名義の言い方なので使わない	官報 号外 1941-12-08（米國及英國ニ對スル宣戰ノ詔書）	https://dl.ndl.go.jp/pid/2960976/1/18
 衛	衞	U+885E	joyo	0		日田縣ヲ置ク（1868）	https://ja.wikisource.org/w/index.php?oldid=143356
@@ -301,7 +298,7 @@ modern	old	old_codepoint	kind	one_to_many	note	evidence	evidence_url
 陥	陷	U+9677	joyo	0		刑法 (明治13年太政官布告第36号)（1880）	https://ja.wikisource.org/w/index.php?oldid=216438
 険	險	U+96AA	joyo	0		刑法 (明治13年太政官布告第36号)（1880）	https://ja.wikisource.org/w/index.php?oldid=216438
 隆	隆	U+F9DC	compat	0		整理公債条例中追加ノ件（1886）	https://ja.wikisource.org/w/index.php?oldid=208170
-随	隨	U+96A8	joyo	0		学制（1872）	https://ja.wikisource.org/w/index.php?oldid=206658
+随	隨	U+96A8	joyo	0		鐵道略則（1872）	https://ja.wikisource.org/w/index.php?oldid=111250
 隠	隱	U+96B1	joyo	0		隱岐縣ヲ廢シ大森縣ヲ置ク（1869）	https://ja.wikisource.org/w/index.php?oldid=143288
 雑	雜	U+96DC	joyo	0		藩制（1870）	https://ja.wikisource.org/w/index.php?oldid=143309
 難	難	U+FA68	compat	0		德川慶喜征討ノ大號令ヲ發シ諸侯ヲシテ去就ヲ決セシム（1868）	https://ja.wikisource.org/w/index.php?oldid=168786
@@ -316,7 +313,6 @@ modern	old	old_codepoint	kind	one_to_many	note	evidence	evidence_url
 騒	騷	U+9A37	joyo	0		自動車取締令（1919）	https://ja.wikisource.org/w/index.php?oldid=192440
 験	驗	U+9A57	joyo	0		各地ノ風習舊慣ヲ私法ト爲ス等申禁解禁ノ條件（1872）	https://ja.wikisource.org/w/index.php?oldid=98091
 髄	髓	U+9AD3	joyo	0		宮內傳染病豫防令（1908）	https://ja.wikisource.org/w/index.php?oldid=192295
-髪	髮	U+9AEE	joyo	0		小学校令施行規則（1900）	https://ja.wikisource.org/w/index.php?oldid=206787
 麦	麥	U+9EA5	joyo	0		田畑夫食取入ノ余ハ諸物品勝手作ヲ許ス（1871）	https://ja.wikisource.org/w/index.php?oldid=143332
 黄	黃	U+9EC3	joyo	0		古器舊物ヲ保全セシム（1871）	https://ja.wikisource.org/w/index.php?oldid=170094
 黒	黑	U+9ED1	joyo	0		七戶八戶斗南黑石館ノ五縣ヲ弘前縣ニ併ス（1871）	https://ja.wikisource.org/w/index.php?oldid=143633
