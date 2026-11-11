@@ -57,6 +57,23 @@ class CorpusRevisionsTest(unittest.TestCase):
                 found = fetch_corpus.IMPERIAL_TITLE.search(row.title)
                 self.assertIsNone(found)
 
+    def test_no_post_war_or_foreign_title_is_left(self) -> None:
+        # Written apart from the patterns in fetch_corpus.py, so that a
+        # gap in those patterns shows up here.
+        words = (
+            "平成", "令和", "昭和二十一", "昭和二十二", "昭和三十",
+            "昭和四十", "昭和五十", "昭和六十", "降伏", "條約", "条約",
+            "協定", "満洲", "滿洲",
+        )
+        for row in self.rows:
+            with self.subTest(title=row.title):
+                self.assertFalse(any(w in row.title for w in words))
+
+    def test_every_row_has_a_sha1(self) -> None:
+        for row in self.rows:
+            with self.subTest(title=row.title):
+                self.assertRegex(row.sha1, "^[0-9a-f]{40}$")
+
     def test_mixed_pages_have_line_exclusions(self) -> None:
         ranges = clean_text.read_line_exclusions()
         mixed = {row.title for row in self.rows if row.rule == "mixed"}
