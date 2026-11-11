@@ -720,9 +720,11 @@ class PinnedOldidsTest(unittest.TestCase):
     ) -> None:
         pinned = fetch_corpus.pinned_oldids()
         self.assertGreater(len(pinned), 0)
+        # 218223 (株熱の余症恐るべし) is no longer cited, but a pinned row
+        # stays until a person removes it.
         self.assertEqual(
             sorted(o for o, u in pinned.items() if u == "examples_only"),
-            [218223, 218225],
+            [201608, 218223, 218225, 236790, 236821],
         )
 
 
