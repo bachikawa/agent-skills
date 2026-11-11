@@ -16,6 +16,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import clean_text  # noqa: E402
 import fetch_corpus  # noqa: E402
 
+CITED = re.compile(r"oldid=(\d+)")
+
 
 class CorpusRevisionsTest(unittest.TestCase):
     @classmethod
@@ -32,9 +34,29 @@ class CorpusRevisionsTest(unittest.TestCase):
         titles = [row.title for row in self.rows]
         self.assertEqual(titles, sorted(titles))
 
-    def test_every_revision_cited_by_the_tables_is_pinned(self) -> None:
+    def test_every_revision_cited_by_a_table_is_pinned_for_it(self) -> None:
+        allowed = {
+            "kanji.tsv": {"all", "kanji_only"},
+            "vocabulary.tsv": {"all", "text_only"},
+            "examples.md": {"all", "text_only", "examples_only"},
+        }
+        rows = {row.oldid: row for row in self.rows}
+        for name, usages in allowed.items():
+            text = (fetch_corpus.REFERENCES / name).read_text(encoding="utf-8")
+            for oldid in sorted({int(m) for m in CITED.findall(text)}):
+                with self.subTest(table=name, oldid=oldid):
+                    self.assertEqual(rows[oldid].source, "pinned")
+                    self.assertIn(rows[oldid].usage, usages)
+
+    def test_pinned_rows_are_what_pinned_oldids_keeps(self) -> None:
         pinned = {row.oldid for row in self.rows if row.source == "pinned"}
         self.assertEqual(pinned, set(fetch_corpus.pinned_oldids()))
+
+    def test_non_government_pages_are_not_kanji_evidence(self) -> None:
+        for row in self.rows:
+            if row.title in fetch_corpus.NON_GOVERNMENT_PAGES:
+                with self.subTest(title=row.title):
+                    self.assertIn(row.usage, {"text_only", "examples_only"})
 
     def test_years_are_in_the_period(self) -> None:
         for row in self.rows:
@@ -79,7 +101,7 @@ class CorpusRevisionsTest(unittest.TestCase):
         cited = set()
         for name in ("vocabulary.tsv", "examples.md"):
             text = (fetch_corpus.REFERENCES / name).read_text(encoding="utf-8")
-            cited.update(int(m) for m in re.findall(r"oldid=(\d+)", text))
+            cited.update(int(m) for m in CITED.findall(text))
         usage = {row.oldid: row.usage for row in self.rows}
         for oldid in sorted(cited):
             with self.subTest(oldid=oldid):

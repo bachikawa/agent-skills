@@ -63,7 +63,7 @@ REVISION_COLUMNS = [
     "source",
     "rule",
 ]
-USAGES = ("all", "kanji_only", "examples_only")
+USAGES = ("all", "kanji_only", "text_only", "examples_only")
 SHA1_PATTERN = re.compile("[0-9a-f]{40}")
 
 API_URL = "https://ja.wikisource.org/w/api.php"
@@ -92,6 +92,12 @@ CATEGORY_DEPTH = 2
 # Pages of a law that quote a rescript. They are used everywhere, with the
 # rescript removed by line_exclusions.tsv.
 MIXED_PAGES = frozenset({"徵兵令詔書及ヒ徵兵吿諭"})
+# Speeches and newspaper articles. They are not documents of the
+# government, so they are used for the vocabulary table and the examples
+# but not as evidence of official kanji forms.
+NON_GOVERNMENT_PAGES = frozenset(
+    {"祝東京專門学校之開校", "株熱の余症恐るべし", "財産保存増殖の安全法"}
+)
 # Rescripts, the constitution, the imperial house laws (皇室典範,
 # 皇室令, 華族令) and notices about the imperial family. Their wording is
 # tied to the emperor even where no line has 朕, so they give kanji forms
@@ -148,9 +154,9 @@ class Revision:
         sha1: The SHA-1 of the revision's wikitext in UTF-8, as the API
             gives it.
         year: The year in the page header.
-        usage: all, kanji_only or examples_only.
-        source: pinned (used by the current tables) or listed (found in
-            the categories).
+        usage: all, kanji_only, text_only or examples_only.
+        source: pinned (cited by a table now or before; see
+            pinned_oldids()) or listed (found in the categories).
         rule: The rule that decided the usage (see classify()).
     """
 
@@ -515,6 +521,8 @@ def classify(
     categories = list(categories)
     if title in MIXED_PAGES:
         return "all", "mixed"
+    if title in NON_GOVERNMENT_PAGES:
+        return "text_only", "non-government"
     if FOREIGN_TITLE.search(title) or any(
         FOREIGN_OR_TREATY.search(c) for c in categories
     ):
@@ -534,7 +542,7 @@ def classify(
 
 
 def pinned_oldids(
-    references: Path = REFERENCES, revisions: Path = REVISIONS_FILE
+    references: Path | None = None, revisions: Path | None = None
 ) -> dict[int, str]:
     """Reads the revisions that must stay in corpus_revisions.tsv.
 
@@ -544,14 +552,19 @@ def pinned_oldids(
     table never shrinks the corpus it is built from.
 
     Args:
-        references: The references directory of the skill.
-        revisions: corpus_revisions.tsv; skipped when it does not exist.
+        references: The references directory of the skill (REFERENCES
+            when None).
+        revisions: corpus_revisions.tsv (REVISIONS_FILE when None);
+            skipped when it does not exist.
 
     Returns:
         Each revision ID with the usage it needs: examples_only when only
-        examples.md cites it (or it was examples_only), otherwise all (an
-        imperial page still becomes kanji_only; see build_revisions()).
+        examples.md cites it and it was not pinned for another use,
+        otherwise all. build_revisions() still makes an imperial page
+        kanji_only and a non-government page text_only.
     """
+    references = REFERENCES if references is None else references
+    revisions = REVISIONS_FILE if revisions is None else revisions
     pattern = re.compile(r"oldid=(\d+)")
     tables = set()
     for name in ("kanji.tsv", "vocabulary.tsv"):
@@ -563,14 +576,17 @@ def pinned_oldids(
             (references / "examples.md").read_text(encoding="utf-8")
         )
     }
-    result = {oldid: "all" for oldid in tables}
-    for oldid in examples - tables:
-        result[oldid] = "examples_only"
+    result: dict[int, str] = {}
     if revisions.exists():
         for row in read_revisions(revisions):
-            if row.source == "pinned" and row.oldid not in result:
-                usage = row.usage
-                result[row.oldid] = "all" if usage == "kanji_only" else usage
+            if row.source == "pinned":
+                kept = row.usage == "examples_only"
+                result[row.oldid] = "examples_only" if kept else "all"
+    # A table that cites a revision needs it for more than the examples.
+    for oldid in tables:
+        result[oldid] = "all"
+    for oldid in examples:
+        result.setdefault(oldid, "examples_only")
     return result
 
 
@@ -586,14 +602,15 @@ def build_revisions(
 ) -> tuple[list[Revision], list[tuple[str, str]]]:
     """Decides the rows of corpus_revisions.tsv.
 
-    A pinned revision is always kept, so that the current tables keep
-    their sources; when the same page is also listed, the pinned revision
-    wins. kanji_only wins over the other usages. A pinned page is checked
-    for imperial wording apart from its year, so that a rescript without
-    a year in its header still becomes kanji_only.
+    A pinned revision is kept, so that the current tables keep their
+    sources; when the same page is also listed, the pinned revision wins.
+    kanji_only wins over the other usages. The rules of classify() apply
+    to pinned revisions too: a pinned revision that they leave out is an
+    error for a person to settle, by changing the table that cites it and
+    removing its row from corpus_revisions.tsv.
 
     Args:
-        pinned: The revisions the current tables cite.
+        pinned: The revisions that must stay (see pinned_oldids()).
         pinned_usage: The usage each pinned revision needs.
         listed: The latest revisions of the pages found in the categories.
 
@@ -602,19 +619,26 @@ def build_revisions(
         page that was left out.
 
     Raises:
-        CorpusError: Two pinned revisions belong to the same page.
+        CorpusError: Two pinned revisions belong to the same page, or the
+            rules leave a pinned revision out.
     """
     rows: dict[str, Revision] = {}
     for page in pinned:
         if page.title in rows:
             raise CorpusError(f"two pinned revisions of {page.title}")
-        rule = imperial_rule(page.title, page.categories, page.content)
-        if page.title in MIXED_PAGES:
-            usage, rule = pinned_usage[page.oldid], "mixed"
-        elif rule is not None:
-            usage = "kanji_only"
-        else:
-            usage, rule = pinned_usage[page.oldid], "pinned"
+        usage, rule = classify(page.title, page.categories, page.content)
+        if usage is None:
+            raise CorpusError(
+                f"pinned revision {page.oldid} ({page.title}) is left out"
+                f" by the rule {rule}"
+            )
+        wanted = pinned_usage[page.oldid]
+        if usage == "kanji_only":
+            pass
+        elif wanted == "examples_only":
+            usage, rule = wanted, "pinned"
+        elif rule not in ("mixed", "non-government"):
+            usage, rule = wanted, "pinned"
         rows[page.title] = _revision(page, usage, "pinned", rule)
     left_out = []
     for page in listed:
@@ -971,10 +995,10 @@ def _command_revisions(api: WikisourceApi, work: Path) -> None:
 def _command_reclassify(work: Path) -> None:
     saved_pinned, saved_listed = load_page_index(work)
     usage = pinned_oldids()
-    # The tables may now cite revisions that were found in the categories
-    # (the kanji table is built from them), so the pinned revisions are
-    # the cited ones from either list. A revision that was pinned but is
-    # no longer cited is dropped; its page is still listed.
+    # The kanji table cites revisions found in the categories, so a
+    # revision to pin may be in either list of pages.json. pinned_oldids()
+    # also returns every revision pinned in corpus_revisions.tsv, so a
+    # revision is dropped only when a person removes its pinned row.
     by_oldid = {page.oldid: page for page in saved_listed + saved_pinned}
     missing = set(usage) - set(by_oldid)
     if missing:
