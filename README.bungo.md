@@ -16,12 +16,12 @@
 </p>
 
 <p align="center">
-  AI 代理者ノ爲ノスキル集（<a href="https://agentskills.io/">Agent Skills</a> ノ <code>SKILL.md</code> 形式）<br>
+  AI 代理機關ノ爲ノスキル集（<a href="https://agentskills.io/">Agent Skills</a> ノ <code>SKILL.md</code> 形式）<br>
   使ヒタキスキルノミヲ Claude Code ノ擴張トシテ入ルルコトヲ得
 </p>
 
 > [!NOTE]
-> 此ノ文書ハ現代語ノ README ヲ本スキルニテ文語ニ改メタル戯レノ版ニシテ史料ニ非ス　正シキ内容ハ現代語ノ版ニ據ルヘシ
+> 此ノ文書ハ現代語ノ README ヲ本スキルニテ文語ニ改メタル戲レノ版ニシテ史料ニ非ス　正シキ内容ハ現代語ノ版ニ據ルヘシ
 
 <p align="center">
   <a href="#スキルノ一覽">スキルノ一覽</a> ・
@@ -64,7 +64,7 @@ Claude Code ニ於テ次ノ 1 行ヲ實行スヘシ（`claude plugin validate` �
 /plugin install kundoku-bungo --marketplace bachikawa/agent-skills
 ```
 
-- 入レタルスキルハ `/kundoku-bungo:kundoku-bungo` ヲ以テ呼ヒ出スコトヲ得　依賴ノ内容ニ適ヘハ代理者自ラ之ヲ用ヰルコトモ亦アリ
+- 入レタルスキルハ `/kundoku-bungo:kundoku-bungo` ヲ以テ呼ヒ出スコトヲ得　依賴ノ内容ニ適ヘハ代理機關自ラ之ヲ用ヰルコトモ亦アリ
 - 古キ版ノ Claude Code ヲ用ヰル時又ハ端末ヨリ入ルル時ハ下ノ「他ノ入レ方」ヲ開クヘシ
 
 <details>
@@ -90,7 +90,7 @@ claude plugin install <スキル名> --marketplace bachikawa/agent-skills
 
 ### 他ノ代理機關（npx skills）
 
-Claude Code 以外ノ代理者ニハ [skills](https://www.npmjs.com/package/skills)（`npx skills`）ヲ以テ入ルルコトヲ得　skills 1.8.1 ニ於テ之ヲ確カメタリ　1.8.1 ハ Node.js 22.20 以降ヲ要ス
+Claude Code 以外ノ代理機關ニハ [skills](https://www.npmjs.com/package/skills)（`npx skills`）ヲ以テ入ルルコトヲ得　skills 1.8.1 ニ於テ之ヲ確カメタリ　1.8.1 ハ Node.js 22.20 以降ヲ要ス
 
 ```bash
 npx skills@1.8.1 add bachikawa/agent-skills --skill kundoku-bungo
@@ -100,7 +100,7 @@ npx skills@1.8.1 add bachikawa/agent-skills --skill kundoku-bungo
 <summary>npx skills ノ注意（入ルル先・使用ノ記錄ノ送信）</summary>
 
 - 版（`@1.8.1`）ヲ附スレハ確カメタル版ノママニ實行スルコトヲ得　之ヲ附セサレハ其ノ時ノ最新ノ版ヲ取リ來リテ實行ス
-- 既定ニ於テハ現在ノ目錄（卽チ作業中ノ案件）ニ入ル　利用者全體ニ入ルル時ハ `-g` ヲ附スヘシ　入ルヘキ代理者ハ `--agent` ヲ以テ選フコトヲ得
+- 既定ニ於テハ現在ノ目錄（卽チ作業中ノ案件）ニ入ル　利用者全體ニ入ルル時ハ `-g` ヲ附スヘシ　入ルヘキ代理機關ハ `--agent` ヲ以テ選フコトヲ得
 - 入ルモノハスキルノ目錄（`plugins/<スキル名>/skills/<スキル名>/`）ノ中身ノミナリ　`kundoku-bungo` ハ權利ノ表示（`LICENSE`・`LICENSE-UNICODE`・`NOTICE.md`）ヲ此ノ中ニ置キタルヲ以テ共ニ入ルナリ
 - `npx skills` ハ使用ノ記錄ヲ匿名ニテ送ル　之ヲ送ラシメサル時ハ環境變數 `DISABLE_TELEMETRY=1`（又ハ `DO_NOT_TRACK=1`）ヲ設定シテ實行スヘシ　bash ニ於テハ `DISABLE_TELEMETRY=1 npx skills@1.8.1 add …` トシ PowerShell ニ於テハ先ツ `$env:DISABLE_TELEMETRY = "1"` ヲ實行スヘシ
 
@@ -172,14 +172,14 @@ agent-skills/
 <details>
 <summary>枝ノ運用</summary>
 
-| 枝 | 役割 | 分岐ノ元 | 併合ノ先 |
+| 枝 | 役割 | 分岐ノ元 | 倂合ノ先 |
 | --- | --- | --- | --- |
 | `main` | 前回ノ公開ノ狀態ナリ　利用者ハ此處ヨリ導入ス | — | — |
 | `release_yyyymm` | 其ノ月ノ公開ノ準備（例: `release_202611`） | `main` | `main` |
 | `dev_<Issue 番号>` | 1 箇ノ Issue ノ作業 | 公開ノ枝 | 公開ノ枝 |
 
 - `main` 及ヒ公開ノ枝ニ直接變更ヲ書キ込ムヘカラス　變更ハ必ス PR ヲ經ヘシ
-- 月ノ改マル時ニ公開ノ枝ヲ `main` ニ併合シ版ノ上リタルスキル及ヒ新タニ加ヘタルスキルヲ公開ス（→ [公開ノ手順](docs/releasing.md#リリースの手順)）
+- 月ノ改マル時ニ公開ノ枝ヲ `main` ニ倂合シ版ノ上リタルスキル及ヒ新タニ加ヘタルスキルヲ公開ス（→ [公開ノ手順](docs/releasing.md#リリースの手順)）
 
 </details>
 
