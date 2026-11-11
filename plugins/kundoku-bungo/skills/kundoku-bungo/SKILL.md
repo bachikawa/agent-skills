@@ -54,14 +54,16 @@ compatibility: 字の機械的な変換に Python 3.10 以上（標準ライブ�
 1. 変換する文を、一時ファイルに UTF-8 で書く。ファイルを書くツール（Claude Code では Write）を使い、シェルの `echo` やコマンドの引数には文を入れない。
    - 文は、利用者が貼った第三者の文のことがある。シェルのコマンドに文を入れると、文の中の `$(...)`・バッククォート・`$変数` が実行・展開されるおそれがあるため。
    - 一時ファイルは、作業中のリポジトリの外（OS の一時ディレクトリなど）に置く。リポジトリの中に置くと、誤ってコミットされるおそれがあるため。
-2. そのファイルのパスを `--input` で渡す。
-3. 変換が終わったら、一時ファイルを必ず消す。
+   - Windows では、`~1` を含む短い形（8.3 形式。例: `C:/Users/EXAMPL~1/...`）のパスを使わず、長い形のパスで書く。短い形は、Claude Code が確認を求めることがあるため。
+2. そのファイルのパスを `--input` で渡し、`--remove-input` を付ける。スクリプトが、読み終えた一時ファイルを消す。
+   - 一時ファイルは、作業ディレクトリの外にあるので、エージェントが別のコマンドで消そうとすると、権限で止まることがある。スクリプトに消させるのは、そのためである。
+3. スクリプトが「cannot remove」と出した時と、変換の前に止まった時は、一時ファイルが残っている。利用者にそのパスを伝える。
 
 ```bash
 # Windows（python）
-python "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時ファイルのパス>"
+python "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時ファイルのパス>" --remove-input
 # macOS・Linux（python3）
-python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時ファイルのパス>"
+python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時ファイルのパス>" --remove-input
 ```
 
 - `${CLAUDE_SKILL_DIR}` は、この `SKILL.md` があるディレクトリである。Claude Code は、スキルを読み込む時に実際のパスに置き換える。Claude Code 以外では、このディレクトリのパスに置き換える。
