@@ -22,7 +22,7 @@ from __future__ import annotations
 import csv
 import html
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
 
 LINE_EXCLUSIONS_FILE = Path(__file__).resolve().parent / "line_exclusions.tsv"
@@ -365,6 +365,36 @@ def read_line_exclusions(
     return ranges
 
 
+def _usable_lines(text: str) -> Iterator[str]:
+    """Yields the trimmed lines that hold only the original text."""
+    for line in text.split("\n"):
+        if line.lstrip().startswith(("=", "{|", "|", "!", "----", "__")):
+            continue
+        line = HEADING_NUMBER.sub("", line.strip(_LINE_MARKS))
+        if not line:
+            continue
+        if HALF_WIDTH_BRACKET.search(line) or _LEFTOVER_MARKUP.search(line):
+            continue
+        yield line
+
+
+def kanji_lines(wikitext: str) -> list[str]:
+    """Returns the lines of a page that may attest kanji forms.
+
+    The same lines as vocabulary_lines(), except that lines with wording
+    only for the emperor are kept and no ranges are removed: a rescript
+    may still show how a character was written.
+
+    Args:
+        wikitext: The wikitext of a whole page.
+
+    Returns:
+        The lines in the order of the page.
+    """
+    text = strip_markup(body(wikitext), mark_removed=True)
+    return list(_usable_lines(remove_stenography_notes(text)))
+
+
 def vocabulary_lines(
     wikitext: str, ranges: Iterable[tuple[str, str]] = ()
 ) -> list[str]:
@@ -387,14 +417,8 @@ def vocabulary_lines(
     text = strip_markup(body(wikitext), mark_removed=True)
     text = remove_stenography_notes(text)
     lines = apply_line_exclusions(text.split("\n"), ranges)
-    result = []
-    for line in lines:
-        if line.lstrip().startswith(("=", "{|", "|", "!", "----", "__")):
-            continue
-        line = HEADING_NUMBER.sub("", line.strip(_LINE_MARKS))
-        if not line or IMPERIAL_WORDS.search(line):
-            continue
-        if HALF_WIDTH_BRACKET.search(line) or _LEFTOVER_MARKUP.search(line):
-            continue
-        result.append(line)
-    return result
+    return [
+        line
+        for line in _usable_lines("\n".join(lines))
+        if not IMPERIAL_WORDS.search(line)
+    ]

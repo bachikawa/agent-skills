@@ -260,6 +260,14 @@ class LineExclusionsTest(unittest.TestCase):
                 clean_text.read_line_exclusions(path)
 
 
+class KanjiLinesTest(unittest.TestCase):
+    def test_lines_with_imperial_wording_are_kept(self) -> None:
+        page = "朕惟フニ\n{{傍点|甲}}乙\n凡ソ人タル者ハ"
+        self.assertEqual(
+            clean_text.kanji_lines(page), ["朕惟フニ", "凡ソ人タル者ハ"]
+        )
+
+
 class VocabularyLinesTest(unittest.TestCase):
     def test_lines_with_imperial_wording_are_left_out(self) -> None:
         page = "朕惟フニ\n汝等之ヲ守レ敕\n凡ソ人タル者ハ"
