@@ -1,0 +1,15 @@
+{
+  "name": "bachikawa-skills",
+  "owner": {
+    "name": "bachikawa",
+    "url": "https://github.com/bachikawa"
+  },
+  "description": "AI エージェント用のスキル集。スキルごとにインストールできる。",
+  "plugins": [
+    {
+      "name": "kundoku-bungo",
+      "source": "./plugins/kundoku-bungo",
+      "description": "現代の日本語と、明治〜昭和 20 年ごろの公の書き言葉（漢文訓読体の普通文）を相互に変換する。"
+    }
+  ]
+}

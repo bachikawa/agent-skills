@@ -1,0 +1,62 @@
+<!doctype html>
+<!--
+  Source of docs/assets/banner-light.png and banner-dark.png.
+  Fonts: Noto Sans JP and Noto Serif JP (SIL Open Font License 1.1), installed
+  on the machine that renders the page. Get them from
+    https://fonts.google.com/noto/specimen/Noto+Sans+JP
+    https://fonts.google.com/noto/specimen/Noto+Serif+JP
+  Without them, the browser falls back to another font without a warning,
+  so compare the result with the committed images.
+  Render (1280x320) with a headless Chromium browser. Pass the page as an
+  absolute file URL, with #light or #dark:
+    msedge --headless --disable-gpu --hide-scrollbars --force-device-scale-factor=1
+      --window-size=1280,320 --screenshot=<absolute path>/banner-light.png
+      "file:///<absolute path>/banner.html#light"
+    (and #dark for banner-dark.png)
+-->
+<html lang="ja">
+<meta charset="utf-8">
+<title>agent-skills banner</title>
+<style>
+  :root {
+    --paper: #f6f2e7; --ink: #23201b; --sub: #5f584c; --rule: #d9d0bd; --seal: #b23a28;
+  }
+  :root.dark {
+    --paper: #16181b; --ink: #ece6d6; --sub: #a59e8f; --rule: #34363a; --seal: #e0745d;
+  }
+  html, body { margin: 0; width: 1280px; height: 320px; overflow: hidden; background: var(--paper); }
+  .frame { position: relative; width: 1280px; height: 320px; box-sizing: border-box; padding: 64px 72px; }
+  .frame::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 8px; background: var(--seal); }
+  h1 { margin: 0; font: 700 76px/1 "Noto Sans JP", sans-serif; letter-spacing: -0.01em; color: var(--ink); }
+  p { margin: 22px 0 0; font: 500 30px/1.4 "Noto Sans JP", sans-serif; color: var(--sub); }
+  .tag { margin-top: 30px; display: flex; gap: 14px; font: 500 22px/1 "Noto Sans JP", sans-serif; color: var(--sub); }
+  .tag span { border: 2px solid var(--rule); border-radius: 999px; padding: 8px 18px; }
+  .cols {
+    position: absolute; right: 150px; top: 26px; height: 272px;
+    writing-mode: vertical-rl; font: 600 31px/1.55 "Noto Serif JP", serif; letter-spacing: .1em; color: var(--ink);
+    border-left: 2px solid var(--rule); border-right: 2px solid var(--rule); padding: 0 14px;
+  }
+  .cols .faint { color: var(--sub); }
+  .skill {
+    position: absolute; right: 110px; top: 30px; writing-mode: vertical-rl;
+    font: 600 16px/1 "Noto Sans JP", sans-serif; color: var(--sub); letter-spacing: .06em; white-space: nowrap;
+  }
+  .skill b { font-weight: 500; font-size: 11px; letter-spacing: .2em; margin-bottom: 9px; }
+  .seal {
+    position: absolute; right: 74px; bottom: 30px; width: 58px; height: 58px; box-sizing: border-box;
+    border: 4px solid var(--seal); border-radius: 6px; color: var(--seal);
+    display: grid; place-items: center; font: 700 34px/1 "Noto Serif JP", serif;
+  }
+</style>
+<div class="frame">
+  <h1>agent-skills</h1>
+  <p>AI エージェントのためのスキル集</p>
+  <div class="tag"><span>Claude Code plugin</span><span>Agent Skills</span></div>
+  <div class="cols"><span>現代語ヲ文語ニ</span><br><span class="faint">文語ヲ現代語ニ</span></div>
+  <div class="seal">訓</div>
+  <div class="skill"><b>SKILL</b>kundoku-bungo</div>
+</div>
+<script>
+  if (location.hash === "#dark") document.documentElement.classList.add("dark");
+</script>
+</html>
