@@ -18,7 +18,7 @@ AI エージェント用のスキル（[Agent Skills](https://agentskills.io/) �
 | --- | --- | --- |
 | `kundoku-bungo` | 現代の日本語と、明治〜昭和 20 年ごろの公の書き言葉（漢文訓読体の普通文。法令・告諭・演説などの文体）を相互に変換する | `kundoku-bungo@bachikawa-skills` |
 
-<!-- スキルを足したら、ここに行を足す（→ docs/adding-a-skill.md） -->
+<!-- スキルを足したら、上の表に行を足す（→ docs/adding-a-skill.md） -->
 
 インストールの方法は、下の「インストール」にある。
 
