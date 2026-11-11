@@ -41,6 +41,7 @@ title	oldid	sha1	year	usage	source	rule
 五節ヲ廃シ祝日ヲ定ム	98186	8b36f1a20dfc8eea576725ab1e935b7202c85ca4	1873	all	listed	default
 京城帝國大學ニ關スル件	102297	d7c304027163912d8e74de364b87d1dc6aa74b83	1924	all	listed	default
 京都東京大坂ヲ除クノ外諸府ヲ廢シテ縣ト爲ス	143533	5f2cfe1e21c872b1e157e283628875235ab520ee	1869	all	listed	default
+人事訴訟手続法	111691	a9202d4b7bc84d47bf139a11b3c8a16bed5e24c4	1898	all	listed	default
 人吉市設置	103086	9cdc4b6f000262b18a9d0132f32da78730729915	1942	all	listed	default
 人身賣買ヲ禁シ諸奉公人年限ヲ定メ藝娼妓ヲ解放シ之ニ付テノ貸借訴訟ハ取上ケス	207879	c42fa40266ef746ed645d0bb7c36d2dfbc82a7c3	1872	all	listed	default
 仙臺縣ヲ宮城縣盛岡縣ヲ岩手縣ト改稱	98082	4dd94ccdb86a85968d494a9028d5644c574433b8	1872	all	listed	default
@@ -95,6 +96,7 @@ title	oldid	sha1	year	usage	source	rule
 公文ニ洋製ノ墨汁「インキ」ヲ用ルヲ禁ス	111321	1cf01b3fb99fe0f571ce4738c5fcd9c98058e176	1876	all	listed	default
 公文式	100471	4c780268aacbc51b7869049d8e35b30de117a525	1886	all	listed	default
 公文式 (公布時)	100470	599122037419da16123caaadd98b22722479e224	1886	all	pinned	pinned
+公文式中改正ノ件	100526	bfdda521653de6b2ef67673aca9b9537d6c63589	1889	all	listed	default
 公用文書ニ姓尸ヲ除キ苗字実名ノミヲ用フ	143524	225080b11dd17001a80311bec08af4987d1a7365	1871	all	listed	default
 公立私立学校認定ニ関スル規則	206939	6ad5559282e189f9d1d2c25d4d9c39c6ce2a1d54	1899	all	listed	default
 公立私立専門学校規程	206938	576ee58cde6733d9e97f4a340ed43ca5e942636d	1903	all	listed	default
@@ -679,6 +681,7 @@ title	oldid	sha1	year	usage	source	rule
 日本銀行法 (昭和17年法律第67号)	239592	eeb6a4e0908dd00b310706f1c717e52c361f91e6	1942	all	listed	default
 日田市設置	103052	0d84980725b842e09da7ba9188328589f84db41c	1940	all	listed	default
 日田縣ヲ置ク	143356	2d4e16c98cc40243752f4a83f40f7941be4797d0	1868	all	listed	default
+旧不動産登記法	111718	f3131a7e0e6d31e1af74d60de2baa10a3be24f73	1899	all	listed	default
 明治22年青森県令第15号	223125	e0b2dce82298e60e29d31966d3ccb4e871fd562b	1889	all	listed	default
 明治22年青森県令第16号	223126	27fde287835ae77a1c02a32f8b213081599cf6ff	1889	all	listed	default
 明治22年鹿児島県令第26号	174480	9e0dd7199cf2dd0021da48bf49e75f900a842500	1889	all	listed	default
@@ -843,6 +846,7 @@ title	oldid	sha1	year	usage	source	rule
 煙草製造營業者煙草稅現金收納ニ關スル法律	240000	5bcfa6a0f7d36e2c174377fdcd0c9bbafe2a8bb5	1897	all	listed	default
 熾仁親王ヲ鹿兒島縣逆徒征討總督ニ任スルノ勅語	207011	bf9c6d4b9b4ed1a73072a717ec9aab74be2b8505	1877	kanji_only	pinned	imperial-title
 爆發物取締罰則 (公布時)	111446	3931fe00d1f1ee4a96aa98d4fb8dbf5d6ee84fc5	1884	all	listed	default
+爆發物取締罰則 (大正7年法律第34号による改正)	111447	bceb7a8bd82cc7d3c826e8315e1fcd6a3d4888ab	1884	all	listed	default
 爆發物取締罰則 (明治41年法律第29号による改正)	111448	eef2564dccce787fca2d266d33b56a61bf0f3a94	1884	all	listed	default
 爆發物取締罰則中改正法律	101939	8a42c033606afecc54cc308c1c6aa3a1be6b9bb4	1918	all	listed	default
 特別保護建造物指定	102630	2cea907a937143a488a10066036e05596f0bb4cc	1929	all	listed	default
@@ -900,6 +904,7 @@ title	oldid	sha1	year	usage	source	rule
 石炭輸出移出取締規則	101991	fec2e554ffc6951ed1a1ad57747164e3fa0f8d78	1920	all	listed	default
 石炭輸出移出取締規則廃止ノ件	102237	8313219a526012c43560e94ea016af9e3eb65684	1921	all	listed	default
 砂防法	239716	17ec276fca4bcf6236a2aac7932dc7f474cc375f	1897	all	listed	default
+破産法 (大正十一年四月二十五日法律第七十一号)	222839	1c2faa94490f0367be0f910dba4d53ace7242435	1922	all	listed	default
 社寺菊御紋濫用禁止ノ件	143327	1248abb88869ffbc005d1d9208a860010c272c3f	1869	kanji_only	listed	imperial-title
 祝日大祭日歌詞並楽譜	161396	0aeddbd198b04b4f0c489f7a8b41ae6994b0badf	1893	all	listed	default
 祝東京專門学校之開校	236502	242732bf89cf661d72a0e883632a858e0a950e5d	1882	all	pinned	pinned
@@ -1085,6 +1090,7 @@ title	oldid	sha1	year	usage	source	rule
 華族令 (明治二十七年宮内省達甲第二号)	111580	8326ba162588e20aec21b3171cd7b66ab7bb199e	1894	kanji_only	listed	imperial-title
 華族令 (明治十七年宮内省達無号)	111449	dafdee9920227f6977d07e4eab12f81a0be8808d	1884	kanji_only	listed	imperial-title
 華族令中改正	111581	ab0f294d379ac72b2b5af2510cdbf4b6ac2fd48e	1894	kanji_only	listed	imperial-title
+著作権法 (明治32年法律第39号)	219616	6140f85e7b7705524bf004f1b5006235773bbd48	1899	all	listed	default
 著作権法中改正法律 (明治43年法律第63号)	207974	6bbbc0ca89a0a13fad7ca388f5a775e12dd05f54	1910	all	listed	default
 著作權法ヲ朝鮮ニ施行スルコトニ關スル件	160121	fbd78e3912ec65e4623dcf0311e7df1bd62dd7e7	1910	all	listed	default
 著作權法ヲ樺太ニ施行スルノ件	102620	b5c43a4e782668b71f8d5eedc2fd453016a691fc	1928	all	listed	default
@@ -1379,6 +1385,7 @@ title	oldid	sha1	year	usage	source	rule
 關東戒嚴司令部條例	153656	8d08ad7d1595b0f33b67aff6670818b2cf65f33f	1923	all	listed	default
 關東都督府公布式	101689	1b6040957db27c0b12fb0147d7ba5b6fa913e291	1906	all	listed	default
 關東都督府法院令	111808	d4708b42544a701b1254d8bc77a582f01363e73c	1906	all	listed	default
+關東都督府郵便電信局官制施行ノ際滿州ニ現在スル野戰郵便局所及軍用通信所ノ事務繼承ノ件	101688	3c6f1657c02278ec59ab10be1594b5d134bee06d	1906	all	listed	default
 關東都督府高等法院、同地方法院金州出張所ノ事務取扱所	101690	ad68ff771a9aeba8a1c5fc05f1c740d8a114687a	1906	all	listed	default
 阿片法	242331	e682a31541477414d364f7cfc4136d59f82f8031	1897	all	listed	default
 陪審法ノ停止ニ關スル法律	207059	26242f1f79577fae2afaaa0b0f1e966cd8c24a5a	1943	all	listed	default

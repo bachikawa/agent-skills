@@ -6,6 +6,7 @@ Run from the repository root with:
 
 from __future__ import annotations
 
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -61,13 +62,28 @@ class CorpusRevisionsTest(unittest.TestCase):
         # Written apart from the patterns in fetch_corpus.py, so that a
         # gap in those patterns shows up here.
         words = (
-            "平成", "令和", "昭和二十一", "昭和二十二", "昭和三十",
-            "昭和四十", "昭和五十", "昭和六十", "降伏", "條約", "条約",
-            "協定", "満洲", "滿洲",
+            "平成", "令和", "昭和二十一", "昭和二十二", "昭和二十三",
+            "昭和二十四", "昭和二十五", "昭和二十六", "昭和二十七",
+            "昭和二十八", "昭和二十九", "昭和三十", "昭和四十", "昭和五十",
+            "昭和六十", "昭和21", "昭和22", "昭和23", "昭和24", "昭和25",
+            "昭和26", "昭和27", "昭和28", "昭和29", "降伏", "條約", "条約",
+            "協定", "満洲国", "滿洲國",
         )
         for row in self.rows:
             with self.subTest(title=row.title):
                 self.assertFalse(any(w in row.title for w in words))
+
+    def test_vocabulary_and_examples_cite_no_kanji_only_page(self) -> None:
+        # The completion condition of #9: pages kept for kanji forms only
+        # must not give examples.
+        cited = set()
+        for name in ("vocabulary.tsv", "examples.md"):
+            text = (fetch_corpus.REFERENCES / name).read_text(encoding="utf-8")
+            cited.update(int(m) for m in re.findall(r"oldid=(\d+)", text))
+        usage = {row.oldid: row.usage for row in self.rows}
+        for oldid in sorted(cited):
+            with self.subTest(oldid=oldid):
+                self.assertNotEqual(usage[oldid], "kanji_only")
 
     def test_every_row_has_a_sha1(self) -> None:
         for row in self.rows:
