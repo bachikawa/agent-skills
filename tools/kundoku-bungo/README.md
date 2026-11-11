@@ -18,6 +18,7 @@
 | `build_kanji_table.py` | 字の表（`kanji.tsv`）を作る。`--check` で、今の表と同じになるかを確かめる |
 | `build_vocabulary.py` | 語の表（`vocabulary.tsv`）を作る。`--check` で、今の表と同じになるかを確かめる |
 | `find_vocabulary.py` | 本文によく出てくる語を数え、語の表に足す候補を書き出す |
+| `check_examples.py` | 用例集（`examples.md`）の「文語」が、出典の版の本文のとおりかを確かめる |
 | `corpus_revisions.tsv` | 表に使うページの名前・版・ハッシュ値・使い道の一覧。入力を固定する正本 |
 | `kanji_overrides.tsv` | 字の表の手で書く部分（語によって選ぶ字の印と説明、官報の画像で確かめた字の形の行） |
 | `vocabulary_entries.tsv` | 語の表の手で書く部分（語・読み・種類・意味と、同じ形の別の語を避ける条件） |
@@ -152,6 +153,18 @@ python -I tools/kundoku-bungo/find_vocabulary.py --work "$WORK"
 | `meaning` | 今の意味 |
 | `exclude_prev` | 語のすぐ前に来たら、その場所を用例にしない字。同じ形の別の語を避ける（「〜ニ及ヒ」の動詞と、接続の「及ヒ」など） |
 | `exclude_next` | 語のすぐ後ろに来たら、その場所を用例にしない字（「若シク」と「若シ」など） |
+
+### 用例集を確かめる
+
+用例集（`examples.md`）は、人が一節を選んで書く。取った版で、各節の「文語」が出典の版の本文のとおりかを確かめる。違う節があると、終了コード 1 になる。
+
+```bash
+python -I tools/kundoku-bungo/check_examples.py --work "$WORK"
+```
+
+- 「文語」が、出典の版の 1 つの行（`clean_text.vocabulary_lines()`。語の表と同じく、編集者の注・速記の注・半角のかっこ・天皇の名義でだけ使う言い方を含む行を除いたもの）の中に、そのままあるかを見る。
+- 出典の版は、`corpus_revisions.tsv` で使い道が `all`・`text_only`・`examples_only` のものでなければならない。
+- 新しい版を引く節を足した時は、`fetch_corpus.py revisions` からやり直す（`reclassify` は、取っていない版を引いていると止まる）。用例集だけが引く版は `examples_only` になり、字の表・語の表は変わらない。
 
 ### 典拠を広げる時
 
