@@ -148,6 +148,8 @@ def read_overrides(
         for row in reader:
             override = Override(**{c: row[c] or "" for c in OVERRIDE_COLUMNS})
             key = (override.modern, override.old)
+            if len(override.modern) != 1 or len(override.old) != 1:
+                raise TableError(f"not one character each: {key}")
             if key in overrides:
                 raise TableError(f"two overrides for {key}")
             if override.kind not in OVERRIDE_KINDS:
@@ -370,10 +372,12 @@ def write_report(
         missing: The pairs not found in the corpus.
         counts: The number of pages each found pair appears in.
     """
-    with open(work / "kanji_missing.tsv", "w", encoding="utf-8") as target:
+    missing_path = work / "kanji_missing.tsv"
+    with open(missing_path, "w", encoding="utf-8", newline="\n") as target:
         for modern, old in missing:
             target.write(f"{modern}\t{old}\tU+{ord(old):04X}\n")
-    with open(work / "kanji_counts.tsv", "w", encoding="utf-8") as target:
+    counts_path = work / "kanji_counts.tsv"
+    with open(counts_path, "w", encoding="utf-8", newline="\n") as target:
         for (modern, old), count in sorted(counts.items(), key=_by_count):
             target.write(f"{modern}\t{old}\t{count}\n")
 

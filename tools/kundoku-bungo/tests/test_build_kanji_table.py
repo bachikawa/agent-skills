@@ -229,6 +229,8 @@ class OverridesFileTest(unittest.TestCase):
                 "衆\t眾\tdesign\t1\t説明\t官報\thttps://example.com/x"
             ],
             "exclude without a reason": ["国\t國\texclude\t\t\t\t"],
+            "empty old form": [f"衆\t\tdesign\t1\t説明\t官報\t{url}"],
+            "two characters": ["国\t國國\t\t1\t説明\t\t"],
         }
         for name, lines in cases.items():
             with self.subTest(case=name):
