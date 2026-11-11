@@ -1,0 +1,9 @@
+{
+  "name": "bachikawa-skills",
+  "owner": {
+    "name": "bachikawa",
+    "url": "https://github.com/bachikawa"
+  },
+  "description": "AI エージェント用のスキル集。スキルごとにインストールできる。",
+  "plugins": []
+}
