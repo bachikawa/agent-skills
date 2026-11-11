@@ -14,19 +14,25 @@ AI エージェント用のスキル（[Agent Skills](https://agentskills.io/) �
 
 ## スキルの一覧
 
-まだスキルはない。
+| スキル | 説明 | インストール |
+| --- | --- | --- |
+| `kundoku-bungo` | 現代の日本語と、明治〜昭和 20 年ごろの公の書き言葉（漢文訓読体の普通文。法令・告諭・演説などの文体）を相互に変換する | `/plugin install kundoku-bungo --marketplace bachikawa/agent-skills` |
 
-<!-- スキルを足したら、ここに行を足す（→ docs/adding-a-skill.md）
-| スキル | 説明 |
-| --- | --- |
-| `foo` | 〜する |
--->
+<!-- スキルを足したら、ここに行を足す（→ docs/adding-a-skill.md） -->
 
 各スキルの最新の版と変更は、[Releases](https://github.com/bachikawa/agent-skills/releases) で確かめられる。
 
 ## インストール
 
 Claude Code で、このリポジトリをマーケットプレイスとして登録してから、使いたいスキルを選んでインストールする。マーケットプレイスの名前は `bachikawa-skills` である。
+
+Claude Code 2.1.275 以降では、登録とインストールを 1 行でできる。
+
+```text
+/plugin install <スキル名> --marketplace bachikawa/agent-skills
+```
+
+それより前の版では、2 行に分けて行う。
 
 ```text
 /plugin marketplace add bachikawa/agent-skills
