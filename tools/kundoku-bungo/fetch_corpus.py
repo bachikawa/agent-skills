@@ -98,7 +98,14 @@ MIXED_PAGES = frozenset(
 # government, so they are used for the vocabulary table and the examples
 # but not as evidence of official kanji forms.
 NON_GOVERNMENT_PAGES = frozenset(
-    {"祝東京專門学校之開校", "株熱の余症恐るべし", "財産保存増殖の安全法"}
+    {
+        "祝東京專門学校之開校",
+        "株熱の余症恐るべし",
+        "財産保存増殖の安全法",
+        "明治大学の主義",
+        "亜細亜諸国との和戦は我栄辱に関するなきの説",
+        "商法学校設ケザル可ラス",
+    }
 )
 # Rescripts, the constitution, the imperial house laws (皇室典範,
 # 皇室令, 華族令) and notices about the imperial family. Their wording is
