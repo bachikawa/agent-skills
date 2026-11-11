@@ -34,7 +34,7 @@ REMOVED = chr(0xFFFC)
 # Wording used only in the name of the emperor; a line that has it is not
 # quoted in the vocabulary table or the examples.
 IMPERIAL_WORDS = re.compile(
-    "朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|宸|休命|大御心|詔|勅|敕"
+    "朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|宸|思召|休命|大御心|詔|勅|敕"
 )
 # Notes of stenographers in speeches, such as （拍手） and （大喝采）. A
 # bracket is removed only when everything in it is such a note, so that
@@ -173,6 +173,18 @@ def _remove_sections(wikitext: str, heading: re.Pattern[str]) -> str:
     return "".join(kept)
 
 
+def has_text(wikitext: str) -> bool:
+    """Tells whether wikitext holds any kana or kanji after its markup.
+
+    Args:
+        wikitext: Wikitext, such as the result of remove_editor_sections().
+
+    Returns:
+        True when at least one kana or kanji remains.
+    """
+    return bool(_TEXT_CHAR.search(strip_markup(wikitext)))
+
+
 def remove_editor_sections(
     wikitext: str, *, keep_only_new_forms: bool = True
 ) -> str:
@@ -198,8 +210,7 @@ def remove_editor_sections(
     without_new_forms = _remove_sections(text, NEW_FORM_SECTION)
     if not keep_only_new_forms:
         return without_new_forms
-    plain = strip_markup(without_new_forms)
-    if _TEXT_CHAR.search(plain):
+    if has_text(without_new_forms):
         return without_new_forms
     return text
 

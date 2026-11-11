@@ -279,9 +279,15 @@ class KanjiLinesTest(unittest.TestCase):
         )
 
 
+class HasTextTest(unittest.TestCase):
+    def test_markup_alone_is_not_text(self) -> None:
+        self.assertFalse(clean_text.has_text("{{Header|year=1}}\n<div></div>"))
+        self.assertTrue(clean_text.has_text("<div>凡ソ</div>"))
+
+
 class VocabularyLinesTest(unittest.TestCase):
     def test_lines_with_imperial_wording_are_left_out(self) -> None:
-        page = "朕惟フニ\n汝等之ヲ守レ敕\n凡ソ人タル者ハ"
+        page = "朕惟フニ\n汝等之ヲ守レ敕\n思召ヲ以テ御遲延\n凡ソ人タル者ハ"
         self.assertEqual(clean_text.vocabulary_lines(page), ["凡ソ人タル者ハ"])
 
     def test_lines_with_half_width_brackets_are_left_out(self) -> None:
