@@ -107,11 +107,17 @@ IMPERIAL_CATEGORY = re.compile("詔勅|皇室令|勅語|敕語")
 # link titles of nobility such as 伯爵 to 華族令.
 IMPERIAL_LAW_NUMBER = re.compile("皇室令第|宮内省達|宮內省達")
 # Treaties and other documents made with foreign governments, and
-# documents of governments other than Japan's.
-FOREIGN_OR_TREATY = re.compile(
-    "満洲|滿洲|満州|滿州|条約|條約|協約|協定|議定書|覚書|覺書|降伏文書"
-    "|宣言(?:/公布時)?$"
+# documents of governments other than Japan's. The place name 満洲 alone
+# is not enough: Japanese laws about offices there are kept.
+_FOREIGN_WORDS = (
+    "満洲国|滿洲國|滿洲国|満州国|滿州國|条約|條約|協約|協定|議定書|覚書"
+    "|覺書|降伏文書"
 )
+FOREIGN_OR_TREATY = re.compile(_FOREIGN_WORDS)
+# A title that ends with 宣言 is an international declaration. A category
+# may end with it too (such as one about the Potsdam Declaration) while
+# holding Japanese laws, so this is used for titles only.
+FOREIGN_TITLE = re.compile(f"{_FOREIGN_WORDS}|宣言(?:/公布時)?$")
 _KANJI_DIGIT = "一二三四五六七八九"
 # A date after 1945 in the title marks a later revision, even when the
 # header still gives the year of the first version.
@@ -120,7 +126,9 @@ POST_WAR_TITLE = re.compile(
     "|2[1-9]|[3-6][0-9])年|平成|令和"
 )
 # Pages that show the law as amended today, such as 刑法 (日本).
-CURRENT_VERSION = re.compile("現行法令掲載|最終改正")
+# A link text such as 「最終改正版」 in a note is not enough; the marker is
+# 「最終改正:」 followed by the date.
+CURRENT_VERSION = re.compile("現行法令掲載|最終改正\\s*[:：]")
 HEADER_YEAR = re.compile(r"\|\s*year\s*=\s*(\d{4})")
 FIRST_YEAR, LAST_YEAR = 1868, 1945
 
@@ -436,7 +444,9 @@ def _collect_pages(responses: Iterable[dict]) -> list[Page]:
                 list(categories.get(title, [])),
                 revision.get("timestamp", ""),
                 revision.get("user", ""),
-                bool(revision.get("anon")),
+                # Edits without an account are saved under temporary
+                # accounts, which the API marks with "temp".
+                bool(revision.get("anon") or revision.get("temp")),
             )
             if revision.get("sha1") != page.sha1:
                 raise CorpusError(f"SHA-1 does not match: {oldid}")
@@ -502,7 +512,7 @@ def classify(
     categories = list(categories)
     if title in MIXED_PAGES:
         return "all", "mixed"
-    if FOREIGN_OR_TREATY.search(title) or any(
+    if FOREIGN_TITLE.search(title) or any(
         FOREIGN_OR_TREATY.search(c) for c in categories
     ):
         return None, "foreign-or-treaty"
@@ -628,7 +638,7 @@ def write_revisions(rows: Iterable[Revision], path: Path) -> None:
     """
     lines = ["\t".join(REVISION_COLUMNS)]
     for row in rows:
-        values = [
+        values: list[str] = [
             row.title,
             str(row.oldid),
             row.sha1,
@@ -644,6 +654,8 @@ def write_revisions(rows: Iterable[Revision], path: Path) -> None:
     try:
         with os.fdopen(handle, "w", encoding="utf-8", newline="\n") as target:
             target.write("\n".join(lines) + "\n")
+        # mkstemp makes the file readable by its owner only.
+        os.chmod(temporary, 0o644)
         os.replace(temporary, path)
     except BaseException:
         Path(temporary).unlink(missing_ok=True)
@@ -719,7 +731,7 @@ def page_path(work: Path, oldid: int) -> Path:
 
 
 def save_page(work: Path, page: Page) -> None:
-    """Saves a revision as WORK/pages/<oldid>.wiki.
+    """Saves a revision as WORK/pages/<oldid>.wiki, byte for byte.
 
     Args:
         work: The work directory.
@@ -727,7 +739,7 @@ def save_page(work: Path, page: Page) -> None:
     """
     path = page_path(work, page.oldid)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(page.content, encoding="utf-8", newline="")
+    path.write_bytes(page.content.encode("utf-8"))
 
 
 def read_saved_page(work: Path, oldid: int) -> str | None:
@@ -738,12 +750,16 @@ def read_saved_page(work: Path, oldid: int) -> str | None:
         oldid: The revision ID.
 
     Returns:
-        The wikitext, or None when it has not been saved.
+        The wikitext, or None when it has not been saved or is not valid
+        UTF-8 (a file cut in the middle of a character).
     """
     path = page_path(work, oldid)
     if not path.exists():
         return None
-    return path.read_text(encoding="utf-8", newline="")
+    try:
+        return path.read_bytes().decode("utf-8")
+    except UnicodeDecodeError:
+        return None
 
 
 def download_unihan(
@@ -797,6 +813,7 @@ def save_page_index(
         return {
             "title": page.title,
             "oldid": page.oldid,
+            "sha1": page.sha1,
             "categories": page.categories,
             "timestamp": page.timestamp,
             "user": page.user,
@@ -822,13 +839,17 @@ def load_page_index(work: Path) -> tuple[list[Page], list[Page]]:
         The pinned and the listed revisions.
 
     Raises:
-        CorpusError: The revisions command has not been run, or a saved
-            page is missing.
+        CorpusError: The revisions command has not been run, pages.json
+            is broken, or a saved page is missing or has changed since it
+            was fetched.
     """
     path = work / "pages.json"
     if not path.exists():
         raise CorpusError("run the revisions command first")
-    index = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        index = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as error:
+        raise CorpusError(f"broken {path}") from error
 
     def pages(key: str) -> list[Page]:
         result = []
@@ -836,17 +857,20 @@ def load_page_index(work: Path) -> tuple[list[Page], list[Page]]:
             content = read_saved_page(work, entry["oldid"])
             if content is None:
                 raise CorpusError(f"saved page not found: {entry['oldid']}")
-            result.append(
-                Page(
-                    entry["title"],
-                    entry["oldid"],
-                    content,
-                    entry["categories"],
-                    entry.get("timestamp", ""),
-                    entry.get("user", ""),
-                    entry.get("anonymous", False),
-                )
+            page = Page(
+                entry["title"],
+                entry["oldid"],
+                content,
+                entry["categories"],
+                entry.get("timestamp", ""),
+                entry.get("user", ""),
+                entry.get("anonymous", False),
             )
+            # Without this check, a file changed after fetching would put
+            # its own SHA-1 into corpus_revisions.tsv.
+            if page.sha1 != entry.get("sha1"):
+                raise CorpusError(f"saved page has changed: {page.oldid}")
+            result.append(page)
         return result
 
     return pages("pinned"), pages("listed")
@@ -870,7 +894,9 @@ def recent_edits(
     picked = []
     for page in pages:
         try:
-            saved = datetime.datetime.fromisoformat(page.timestamp)
+            # fromisoformat() reads a trailing Z only from Python 3.11.
+            stamp = page.timestamp.replace("Z", "+00:00")
+            saved = datetime.datetime.fromisoformat(stamp)
         except ValueError:
             picked.append(page)
             continue
@@ -921,7 +947,12 @@ def _command_revisions(api: WikisourceApi, work: Path) -> None:
 
 def _command_reclassify(work: Path) -> None:
     pinned, listed = load_page_index(work)
-    _write_classification(work, pinned_oldids(), pinned, listed)
+    usage = pinned_oldids()
+    if set(usage) != {page.oldid for page in pinned}:
+        raise CorpusError(
+            "the tables cite other revisions now; run revisions again"
+        )
+    _write_classification(work, usage, pinned, listed)
 
 
 def _write_classification(
@@ -937,21 +968,35 @@ def _write_classification(
     print(f"{len(rows)} rows, {len(left_out)} left out", file=sys.stderr)
 
 
-def check_fetched(rows: Iterable[Revision], pages: Iterable[Page]) -> None:
+def check_fetched(
+    rows: Iterable[Revision], pages: Iterable[Page]
+) -> list[str]:
     """Checks fetched revisions against corpus_revisions.tsv.
+
+    A revision is identified by its ID and SHA-1. Its title may differ,
+    because a revision moves with its page when the page is renamed.
 
     Args:
         rows: The rows of corpus_revisions.tsv.
         pages: The fetched revisions.
 
+    Returns:
+        A warning for each revision whose page has another title now.
+
     Raises:
-        CorpusError: A revision has another title or SHA-1 than its row.
+        CorpusError: A revision is not in the rows or has another SHA-1.
     """
     by_oldid = {row.oldid: row for row in rows}
+    warnings = []
     for page in pages:
         row = by_oldid.get(page.oldid)
-        if row is None or row.title != page.title or row.sha1 != page.sha1:
+        if row is None or row.sha1 != page.sha1:
             raise CorpusError(f"fetched revision does not match: {page.oldid}")
+        if row.title != page.title:
+            warnings.append(
+                f"page renamed: {page.oldid} {row.title} -> {page.title}"
+            )
+    return warnings
 
 
 def _command_fetch(api: WikisourceApi, work: Path) -> None:
@@ -964,7 +1009,8 @@ def _command_fetch(api: WikisourceApi, work: Path) -> None:
             wanted.append(row.oldid)
 
     def check_and_save(pages: list[Page]) -> None:
-        check_fetched(rows, pages)
+        for warning in check_fetched(rows, pages):
+            print(warning, file=sys.stderr)
         for page in pages:
             save_page(work, page)
 
@@ -1006,7 +1052,8 @@ def main(argv: list[str] | None = None) -> int:
             _command_fetch(api, work)
         else:
             download_unihan(work, user_agent=args.user_agent)
-    except CorpusError as error:
+    except (CorpusError, OSError, ValueError) as error:
+        # ValueError covers broken JSON files and line_exclusions.tsv.
         print(error, file=sys.stderr)
         return 1
     return 0

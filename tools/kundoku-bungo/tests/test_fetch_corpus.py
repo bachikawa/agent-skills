@@ -200,8 +200,23 @@ class ClassifyTest(unittest.TestCase):
 
     def test_law_about_the_potsdam_declaration_is_kept(self) -> None:
         title = "「ポツダム」宣言ノ受諾ニ伴ヒ發スル命令ニ關スル件"
+        categories = ["ポツダム宣言"]
         self.assertEqual(
-            fetch_corpus.classify(title, [], law(1945)), ("all", "default")
+            fetch_corpus.classify(title, categories, law(1945)),
+            ("all", "default"),
+        )
+
+    def test_japanese_law_naming_manchuria_as_a_place_is_kept(self) -> None:
+        title = "關東都督府郵便電信局官制施行ノ際滿州ニ現在スル件"
+        self.assertEqual(
+            fetch_corpus.classify(title, [], law(1906)), ("all", "default")
+        )
+
+    def test_link_text_saying_latest_revision_is_not_a_marker(self) -> None:
+        content = law_with_notes(1884, "（[[法例#a1|最終改正版]]）")
+        self.assertEqual(
+            fetch_corpus.classify("爆發物取締罰則 (改正)", [], content),
+            ("all", "default"),
         )
 
     def test_pages_without_a_year_or_out_of_period_are_left_out(self) -> None:
@@ -349,6 +364,24 @@ class PageIndexTest(unittest.TestCase):
             with self.assertRaises(fetch_corpus.CorpusError):
                 fetch_corpus.load_page_index(Path(directory))
 
+    def test_saved_page_changed_after_fetching_is_an_error(self) -> None:
+        page = Page("刑法", 1, law(1880), [])
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            fetch_corpus.save_page(work, page)
+            fetch_corpus.save_page_index(work, [page], [])
+            fetch_corpus.save_page(work, Page("刑法", 1, "書き換えた", []))
+            with self.assertRaises(fetch_corpus.CorpusError):
+                fetch_corpus.load_page_index(work)
+
+    def test_cut_file_reads_as_not_saved(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            path = fetch_corpus.page_path(work, 1)
+            path.parent.mkdir()
+            path.write_bytes("本文".encode("utf-8")[:-1])
+            self.assertIsNone(fetch_corpus.read_saved_page(work, 1))
+
 
 class RecentEditsTest(unittest.TestCase):
     NOW = datetime.datetime(2026, 11, 12, tzinfo=datetime.timezone.utc)
@@ -362,6 +395,19 @@ class RecentEditsTest(unittest.TestCase):
         ]
         picked = fetch_corpus.recent_edits(pages, self.NOW)
         self.assertEqual([p.title for p in picked], ["不明", "匿名", "新しい"])
+
+    def test_temporary_accounts_count_as_without_an_account(self) -> None:
+        revision = api_revision(
+            7,
+            "本文",
+            user="~2025-1",
+            temp=True,
+            timestamp="2020-01-01T00:00:00Z",
+        )
+        fake = FakeApi([api_pages({"title": "法", "revisions": [revision]})])
+        pages = fetch_corpus.fetch_pages(fake.api(), revids=[7])
+        self.assertTrue(pages[0].anonymous)
+        self.assertEqual(fetch_corpus.recent_edits(pages, self.NOW), pages)
 
 
 class WorkDirTest(unittest.TestCase):
@@ -566,11 +612,29 @@ class FetchCommandTest(unittest.TestCase):
                 fetch_corpus.read_saved_page(work, 2), "乙の本文"
             )
 
-    def test_fetched_revision_with_another_title_is_an_error(self) -> None:
+    def test_renamed_page_gives_a_warning_only(self) -> None:
         page = Page("甲", 1, "本文", [])
-        rows = [Revision("乙", 1, page.sha1, 1900, "all", "listed", "default")]
+        rows = [Revision("乙", 1, page.sha1, 1900, "all", "listed", "rule")]
+        warnings = fetch_corpus.check_fetched(rows, [page])
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("renamed", warnings[0])
+
+    def test_fetched_revision_with_another_sha1_is_an_error(self) -> None:
+        page = Page("甲", 1, "本文", [])
+        rows = [Revision("甲", 1, "0" * 40, 1900, "all", "listed", "rule")]
         with self.assertRaises(fetch_corpus.CorpusError):
             fetch_corpus.check_fetched(rows, [page])
+
+
+class ReclassifyCommandTest(unittest.TestCase):
+    def test_index_from_older_tables_is_an_error(self) -> None:
+        page = Page("刑法", 1, law(1880), [])
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            fetch_corpus.save_page(work, page)
+            fetch_corpus.save_page_index(work, [page], [])
+            with self.assertRaises(fetch_corpus.CorpusError):
+                fetch_corpus._command_reclassify(work)
 
 
 class ListTitlesTest(unittest.TestCase):
