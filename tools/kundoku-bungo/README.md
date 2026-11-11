@@ -15,7 +15,9 @@
 | --- | --- |
 | `fetch_corpus.py` | ウィキソースのページ一覧・本文と、Unihan（Unicode の漢字のデータベース）を取る |
 | `clean_text.py` | 翻刻の本文（wikitext）から、編集者の注・テンプレート・番号を除く |
+| `build_kanji_table.py` | 字の表（`kanji.tsv`）を作る。`--check` で、今の表と同じになるかを確かめる |
 | `corpus_revisions.tsv` | 表に使うページの名前・版・ハッシュ値・使い道の一覧。入力を固定する正本 |
+| `kanji_overrides.tsv` | 字の表の手で書く部分（語によって選ぶ字の印と説明、官報の画像で確かめた字の形の行） |
 | `line_exclusions.tsv` | 詔書の部分を含む法令のページで、除く行の範囲（手で書く） |
 | `tests/` | テスト（ネットワークは使わない） |
 
@@ -53,7 +55,7 @@
 | 8 | 見出しの公布番号が「皇室令第 n 号」か「宮内省達」のもの。本文は見ない（編集者が「伯爵」などを華族令にリンクしているため） | `kanji_only` | `imperial-number` | `IMPERIAL_LAW_NUMBER` |
 | 9 | ほか | `all` | `default` | — |
 
-- 今の表が典拠にしている版（`pinned`）は、カテゴリで新しい版が見つかっても、そのまま残す。規則の名前は `pinned` になる。ただし、6〜8 に当たる版は、年に関係なく `kanji_only` にする（規則の名前は 6〜8 のもの）。
+- 今の表が典拠にしている版と、前に `pinned` だった版は、`pinned` として残す。カテゴリで新しい版が見つかっても、表が引かなくなっても残す。表を作り直すたびに、表の材料が減らないようにするため。規則の名前は `pinned` になる。ただし、6〜8 に当たる版は、年に関係なく `kanji_only` にする（規則の名前は 6〜8 のもの）。
 - 使い道が食い違う時は `kanji_only` を優先する。用例集だけが引く版（`examples_only`）でも、6〜8 に当たれば `kanji_only` になる。
 - 一覧に入れなかったページは、作業用のディレクトリの `left_out.tsv` に、規則の名前と一緒に書き出す。
 
@@ -78,7 +80,29 @@ python -I tools/kundoku-bungo/fetch_corpus.py unihan --work "$WORK"
 - 50 版ずつ保存するので、途中で止まっても、取れた分は残る。
 - Unihan は、UCD 18.0.0 の `Unihan.zip`（https://www.unicode.org/Public/18.0.0/ucd/Unihan.zip ）を取り、SHA-256 を確かめる。
 
-表を作るスクリプトは、#9 の PR 2・PR 3 で足す。
+取った版から、字の表を作る。`--check` を付けると、作った表がリポジトリの `kanji.tsv` と同じかを確かめ、違えば終了コード 1 になる。
+
+```bash
+python -I tools/kundoku-bungo/build_kanji_table.py --work "$WORK" --check
+python -I tools/kundoku-bungo/build_kanji_table.py --work "$WORK"
+```
+
+- 字の組は、Unihan の `kJapaneseOldVariant`（常用漢字表の旧字体）から取る。
+- 使い道が `all` か `kanji_only` の版の本文（`clean_text.kanji_lines()`。天皇の名義の言い方の行も含める）に旧字体が見つかった組だけを、表に入れる。
+- 典拠は、見つかった版のうち、年・題名・版の番号の順でいちばん前のもの。今の表には頼らないので、何度作っても同じ表になる。
+- `one_to_many` は、Unihan で旧字体が 2 つ以上ある組と、`kanji_overrides.tsv` で `1` にした組が `1` になる。`1` の組には、`kanji_overrides.tsv` の `note` が要る（ないと止まる）。
+- `kind` が `design` の行（衆→眾）は、`kanji_overrides.tsv` から入れる。
+- 見つからなかった組は、`WORK/kanji_missing.tsv` に書き出す。
+
+### kanji_overrides.tsv の列
+
+| 列 | 内容 |
+| --- | --- |
+| `modern`・`old` | 新字体と旧字体 |
+| `kind` | 空か `design`。`design` は、Unihan にない字の形の行 |
+| `one_to_many` | `1` なら、スクリプトは変換せず、エージェントが語を見て選ぶ。新字体の字が戦前から別の字としても使われていた組（虫と蟲、勅と敕など）に付ける |
+| `note` | 選び方の説明 |
+| `evidence`・`evidence_url` | `design` の行の典拠 |
 
 ### 典拠を広げる時
 
