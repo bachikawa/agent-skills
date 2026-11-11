@@ -91,7 +91,9 @@ CATEGORY_DEPTH = 2
 
 # Pages of a law that quote a rescript. They are used everywhere, with the
 # rescript removed by line_exclusions.tsv.
-MIXED_PAGES = frozenset({"徵兵令詔書及ヒ徵兵吿諭"})
+MIXED_PAGES = frozenset(
+    {"徵兵令詔書及ヒ徵兵吿諭", "政体 (慶応四年太政官達第三百三十一号)"}
+)
 # Speeches and newspaper articles. They are not documents of the
 # government, so they are used for the vocabulary table and the examples
 # but not as evidence of official kanji forms.

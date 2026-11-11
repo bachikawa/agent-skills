@@ -40,7 +40,15 @@ KINDS = {
 SOURCE_URL = re.compile(r"https://ja\.wikisource\.org/w/index\.php\?oldid=\d+")
 SOURCE_YEAR = re.compile(r"（(\d{4})）$")
 # Wording used only in the name of the emperor; the table must not teach it.
-IMPERIAL_WORDS = re.compile(r"朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|詔|勅|敕")
+IMPERIAL_WORDS = re.compile(
+    r"朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|宸|思召|休命|大御心|詔|勅|敕"
+    r"|御誓文|御沙汰|朝威|皇基|皇政|皇居"
+)
+# Stenographers' notes in speeches, such as （拍手） and （大喝采）.
+STENOGRAPHY_NOTE = re.compile(
+    r"（[^（）]*(?:拍手|喝采|喝釆|謹聴|謹聼|謹聽|笑声|笑聲|大笑|異議ナシ|賛成|贊成"
+    r"|ヒヤ|ノー)[^（）]*）"
+)
 # Section and paragraph numbers in Arabic digits are added by transcribers.
 DIGITS = re.compile(r"[0-9０-９]")
 # Chapter numbers of the original text are left out of examples.
@@ -144,6 +152,11 @@ class VocabularyTest(unittest.TestCase):
         for row in self.rows:
             with self.subTest(word=row["word"]):
                 self.assertIsNone(DIGITS.search(row["example"]))
+
+    def test_examples_have_no_stenographers_notes(self) -> None:
+        for row in self.rows:
+            with self.subTest(word=row["word"]):
+                self.assertIsNone(STENOGRAPHY_NOTE.search(row["example"]))
 
     def test_examples_do_not_start_with_a_chapter_number(self) -> None:
         for row in self.rows:

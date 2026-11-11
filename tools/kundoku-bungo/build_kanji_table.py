@@ -167,14 +167,53 @@ def read_overrides(
     return overrides
 
 
+def modernizing_pairs(
+    pairs: Iterable[tuple[str, str, bool]],
+    overrides: dict[tuple[str, str], Override],
+) -> list[tuple[str, str]]:
+    """Returns the pairs whose modern form shows a replaced old form.
+
+    These are the pairs that tell a text written over in new forms. Left
+    out are pairs with several old forms, pairs with a compatibility
+    ideograph (MediaWiki keeps those only as character references, so the
+    plain modern form appears in period texts too), and pairs chosen by
+    word in kanji_overrides.tsv (勅 was also the usual form of the
+    period).
+
+    Args:
+        pairs: The pairs from unihan_pairs().
+        overrides: The rows of kanji_overrides.tsv.
+
+    Returns:
+        (modern, old) pairs for clean_text.looks_modernized().
+    """
+    result = []
+    for modern, old, several in pairs:
+        override = overrides.get((modern, old))
+        if several or 0xF900 <= ord(old) <= 0xFAFF:
+            continue
+        if override is not None and override.one_to_many == "1":
+            continue
+        result.append((modern, old))
+    return result
+
+
 def evidence_pages(
-    work: Path, rows: Iterable[fetch_corpus.Revision]
+    work: Path,
+    rows: Iterable[fetch_corpus.Revision],
+    one_to_one: Iterable[tuple[str, str]] = (),
 ) -> list[tuple[fetch_corpus.Revision, str]]:
     """Reads the revisions that may attest kanji forms.
+
+    A revision whose text an editor wrote over in new kanji forms (see
+    clean_text.looks_modernized()) is left out: its few old forms cannot
+    show how the original was written.
 
     Args:
         work: The work directory of fetch_corpus.py.
         rows: The rows of corpus_revisions.tsv.
+        one_to_one: (modern, old) pairs with one old form each, to tell a
+            modernized text.
 
     Returns:
         Each usable row with its lines joined, sorted by year, title and
@@ -183,6 +222,7 @@ def evidence_pages(
     Raises:
         TableError: A revision is not saved or has another SHA-1.
     """
+    one_to_one = list(one_to_one)
     pages = []
     for row in rows:
         if row.usage not in EVIDENCE_USAGES:
@@ -193,7 +233,10 @@ def evidence_pages(
                 f"revision {row.oldid} is not fetched;"
                 " run fetch_corpus.py fetch"
             )
-        pages.append((row, "\n".join(clean_text.kanji_lines(content))))
+        text = "\n".join(clean_text.kanji_lines(content))
+        if clean_text.looks_modernized(text, one_to_one):
+            continue
+        pages.append((row, text))
     pages.sort(key=lambda p: (p[0].year, p[0].title, p[0].oldid))
     return pages
 
@@ -336,10 +379,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         work = fetch_corpus.check_work_dir(args.work)
         unihan = fetch_corpus.download_unihan(work, opener=_no_download)
-        pages = evidence_pages(work, fetch_corpus.read_revisions())
-        rows, missing, counts = build_rows(
-            unihan_pairs(unihan), pages, read_overrides()
+        pairs = unihan_pairs(unihan)
+        overrides = read_overrides()
+        pages = evidence_pages(
+            work,
+            fetch_corpus.read_revisions(),
+            modernizing_pairs(pairs, overrides),
         )
+        rows, missing, counts = build_rows(pairs, pages, overrides)
         text = render(rows)
         if args.check:
             if KANJI_FILE.read_text(encoding="utf-8") != text:

@@ -116,7 +116,10 @@ class CorpusRevisionsTest(unittest.TestCase):
         ranges = clean_text.read_line_exclusions()
         mixed = {row.title for row in self.rows if row.rule == "mixed"}
         self.assertEqual(mixed, set(fetch_corpus.MIXED_PAGES))
-        self.assertEqual(set(ranges), mixed)
+        # Other pages may have ranges too, such as a line with a slip.
+        self.assertLessEqual(mixed, set(ranges))
+        titles = {row.title for row in self.rows}
+        self.assertLessEqual(set(ranges), titles)
 
 
 if __name__ == "__main__":
