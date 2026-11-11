@@ -21,7 +21,7 @@
 
 - 小文字の英数字とハイフンだけを使う。64 文字以内にする。
 - 先頭と末尾にハイフンを置かない。ハイフンを続けない（`--`）。
-- `claude-`・`anthropic-` で始めない。
+- `claude`・`anthropic` を名前に含めない。Claude Code は、Anthropic の公式のプラグインと紛らわしい名前を、検証でエラーか警告にする（[Marketplace reference](https://code.claude.com/docs/en/plugins/marketplace-reference.md#validation-messages)）。
 
 ## 手順
 
@@ -39,7 +39,7 @@
 
 3. `plugin.json` と `SKILL.md` を、下の雛形から書く。最初の `version` は `0.1.0` にする（→ [リリースの決まり](releasing.md)）。
 4. `.claude-plugin/marketplace.json` の `plugins` に、エントリを足す。
-5. README の「スキルの一覧」に、行を足す。
+5. README の「スキルの一覧」に、行を足す。最初のスキルの時は、「まだスキルはない。」の行を消し、コメントの中の表をコメントの外に出す。
 6. 下の「検証」を行う。
 
 ## 雛形
@@ -59,7 +59,7 @@
 }
 ```
 
-- `version` は、このファイルだけに書く。マーケットプレイスのエントリにも書くと、こちらが優先され、検証で警告が出る。
+- `version` は、このファイルだけに書く。マーケットプレイスのエントリにも書くと、`plugin.json` の値が優先され、検証で警告が出る。
 
 ### `plugins/<スキル名>/skills/<スキル名>/SKILL.md`
 
@@ -76,6 +76,15 @@ description: <何をするスキルか、いつ使うか（1,024 文字以内）
 
 - `description` は、エージェントがスキルを使うかを決める手がかりになる。何をするか・どんな依頼で使うかを具体的に書く。
 - frontmatter には、Agent Skills の仕様にある項目（`name`・`description`・`license`・`compatibility`・`metadata`・`allowed-tools`）だけを書く。Claude Code だけの項目を書くと、ほかのツールで使えなくなることがある。
+
+### 安全のための決まり
+
+スキルは、利用者の環境でエージェントが読んで動く。次を守る。
+
+- `allowed-tools` は、スキルに要るツールとコマンドだけに絞る（例: `Bash(git status:*)`）。制限のない `Bash` などを付けない。
+- `SKILL.md` と同梱のファイルに、秘密情報（キー・トークン・パスワード・接続情報）を書かない。
+- 外部から取ってきたスクリプトなどを、そのまま動かす手順を書かない。
+- スキルを足す PR のレビューでも、この 3 点を確かめる。
 
 ### `.claude-plugin/marketplace.json` のエントリ
 
@@ -102,12 +111,17 @@ claude plugin validate ./plugins/<スキル名>
 
 ### インストールの確かめ
 
-作業ツリーをマーケットプレイスとして登録し、インストールできるかを確かめる。確かめた後は、登録を外す。
+作業ツリーをマーケットプレイスとして登録し、インストールできるかを確かめる。
+
+普段の設定のまま行わず、一時の設定ディレクトリ（`CLAUDE_CONFIG_DIR`）で行う。普段の設定に GitHub 版の `bachikawa-skills` を登録していると、名前が衝突する。最後の `remove` で、普段使っている登録まで外れる。
 
 ```bash
+export CLAUDE_CONFIG_DIR="$(mktemp -d)"
 claude plugin marketplace add ./
 claude plugin install <スキル名>@bachikawa-skills
+claude plugin list
 # 確かめた後
-claude plugin uninstall <スキル名>@bachikawa-skills
-claude plugin marketplace remove bachikawa-skills
+unset CLAUDE_CONFIG_DIR
 ```
+
+- 一時の設定ディレクトリは、確かめた後に消してよい。
