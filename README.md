@@ -51,6 +51,19 @@ claude plugin install <スキル名> --marketplace bachikawa/agent-skills
 - インストールしたスキルは、`/<スキル名>:<スキル名>` で呼び出せる。依頼の内容に合えば、エージェントが自分で使うこともある。
 - 外す時は `claude plugin uninstall <スキル名>@bachikawa-skills` を実行する。
 
+### ほかのエージェント（npx skills）
+
+Claude Code 以外のエージェントには、[skills](https://www.npmjs.com/package/skills)（`npx skills`）で入れられる。Node.js が要る。
+
+```bash
+npx skills add bachikawa/agent-skills --skill <スキル名>
+```
+
+- 既定では、今のディレクトリ（プロジェクト）に入れる。ユーザー全体に入れる時は `-g` を付ける。入れるエージェントは `--agent` で選べる。
+- スキルのディレクトリ（`plugins/<スキル名>/skills/<スキル名>/`）だけが写される。`LICENSE`・`NOTICE.md` などの権利の表示も、その中にあるので一緒に写る。
+- `npx skills` は、使った記録を匿名で送る。送らない時は、環境変数 `DISABLE_TELEMETRY=1` を付けて実行する。
+- 更新は `npx skills update`、外す時は `npx skills remove <スキル名>` で行う。
+
 ## 更新
 
 自動更新は、既定でオフである。次のどちらかで更新する。
