@@ -72,7 +72,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時
 
 ## 現代語から文語にする
 
-1. 依頼から、文書の種類（法令・告諭・演説・新聞など）と、選べる表記の指定を読み取る。種類が分からなければ、告諭の調子にする。
+1. 依頼から、文書の種類（法令・告諭・演説・新聞など）と、選べる表記の指定を読み取る。種類が分からなければ、告諭の調子にする。文書の種類ごとの調子は、[references/examples.md](references/examples.md) の対訳を手本にする。
 2. [grammar.md](references/grammar.md) を読み、文を書き換える。
    - 動詞・形容詞を文語の活用に戻す（2 節）。
    - 文末・否定・条件・使役の言い方を、表に従って選ぶ（3〜6 節）。
@@ -127,5 +127,6 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/convert_chars.py" to-bungo --input "<一時
 | --- | --- | --- |
 | [references/grammar.md](references/grammar.md) | 活用・文末・否定・条件・構文・接続の言葉・歴史的仮名遣い・使わない言い方・文書の形 | 変換する時は毎回 |
 | [references/kanji.tsv](references/kanji.tsv) | 新字体と旧字体の対応（典拠付き）。`one_to_many` が `1` の行は、`note` を見て語ごとに選ぶ | 文語にする時の手順 4（Python がない時）と手順 5 |
+| [references/examples.md](references/examples.md) | 公文書・演説・新聞の一節と現代語訳の対訳（出典付き） | 文書の種類ごとの調子をつかむ時と、変換の結果を見直す時 |
 | [references/vocabulary.tsv](references/vocabulary.tsv) | 漢文訓読から来た語の読み・今の意味・当時の用例（出典付き） | 文語にする時の手順 2 と、現代語にする時の手順 4 |
 | [scripts/convert_chars.py](scripts/convert_chars.py) | 字体・仮名・濁点・小書きの仮名・句読点の機械的な変換 | 文語にする時の手順 4 と、現代語にする時の手順 1 |
