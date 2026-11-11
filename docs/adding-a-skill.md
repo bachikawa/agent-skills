@@ -25,7 +25,7 @@
 
 ## 手順
 
-1. スキルを足す Issue と、開発ブランチ `dev_<Issue 番号>` を作る（→ [README の「ブランチ運用」](../README.md#ブランチ運用)）。
+1. スキルを足す Issue と、開発ブランチ `dev_<Issue 番号>` を作る（→ README の「[開発者向け](../README.md#開発者向け)」の「ブランチ運用」）。
 2. 次のディレクトリとファイルを作る。
 
    ```text
@@ -39,7 +39,14 @@
 
 3. `plugin.json` と `SKILL.md` を、下の雛形から書く。最初の `version` は `0.1.0` にする（→ [リリースの決まり](releasing.md)）。
 4. `.claude-plugin/marketplace.json` の `plugins` に、エントリを足す。
-5. README の「スキルの一覧」の表に、行を足す。列は「スキル」（`<スキル名>`）・「説明」・「プラグイン ID」（`<スキル名>@bachikawa-skills`）である。
+5. README の「スキル」に、`kundoku-bungo` と同じ形の節を足す。中身は、README の並びのとおり、見出し（`### <スキル名>`）・版のバッジ・説明・例・特徴の箇条書き・注意書き（要る時）・プラグイン ID（`<スキル名>@bachikawa-skills`）と、Releases・権利の表示（`NOTICE.md` を置いたスキルだけ）へのリンクである。
+   - 版のバッジは、shields.io の dynamic JSON（外部の JSON の値を読んで表示するバッジ）で、`main` の `plugins/<スキル名>/.claude-plugin/plugin.json` の `version` を読む。版を README に固定で書かない（版を書く場所は `plugin.json` だけ）。利用者が入れる `main` の版を示すので、スキルが `main` に入る（リリース PR がマージされる）までは値が出ない。
+   - 「インストール」の、スキルの名前を書いた 1 行（`/plugin install <スキル名> --marketplace bachikawa/agent-skills`）と呼び出し方、「ほかのエージェント（npx skills）」のコマンドに、そのスキルの分を足す。足した後、「検証」の `claude plugin validate .` で、「This README has no line that installs」の助言が出ないことを確かめる。
+   - スキルのデータを作るツール（`tools/<スキル名>/`）がある時は「開発者向け」の「資料」の表に、第三者のデータを含む時は「ライセンス」に、そのスキルの項を足す。
+   - README の目次（見出しの絵の下のリンクの行）は、スキルごとには足さない。
+   - 見出しの絵（`docs/assets/banner.html` と PNG 2 枚）は、右端に `kundoku-bungo` の名前を入れている。スキルを足す時は、絵を直すかを決め、直す時は HTML のコメントのコマンドで書き出し直す。
+   - 上の項で `README.md` に足した所は、すべて文語のお遊び版（`README.bungo.md`）にも足す。文は `kundoku-bungo` で文語にし、コマンド・コード・リンクの先（URL・パス）・ライセンスの文は現代語のまま残す。目次のリンクは、文語にした見出しに合わせる。
+   - スキルを足す時のほかにも、`README.md` を直した時（確かめた版の数字を変える時など）は、`README.bungo.md` の同じ所も直す。2 つのコマンド・コード・リンクの先がそろっていることは、`tools/kundoku-bungo/tests/test_readme_bungo.py` で確かめる。
 6. 下の「検証」を行う。
 
 ## 雛形

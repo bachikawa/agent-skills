@@ -228,3 +228,5 @@ python -I tools/kundoku-bungo/fetch_corpus.py reclassify --work "$WORK"
 ```bash
 python -m unittest discover -s tools/kundoku-bungo/tests
 ```
+
+- このテストは、リポジトリの一番上のファイルも確かめる。一番上の `LICENSE-UNICODE` がスキルの中の写しと同じこと（`test_license_copy.py`）と、`README.md` と文語のお遊び版 `README.bungo.md` のコマンド・コード・リンクの先がそろっていること（`test_readme_bungo.py`）である。片方を直した時は、もう片方も直す。
