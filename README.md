@@ -53,16 +53,17 @@ claude plugin install <スキル名> --marketplace bachikawa/agent-skills
 
 ### ほかのエージェント（npx skills）
 
-Claude Code 以外のエージェントには、[skills](https://www.npmjs.com/package/skills)（`npx skills`）で入れられる。Node.js が要る。
+Claude Code 以外のエージェントには、[skills](https://www.npmjs.com/package/skills)（`npx skills`）で入れられる。skills 1.8.1 で確かめた。1.8.1 は Node.js 22.20 以降が要る。
 
 ```bash
-npx skills add bachikawa/agent-skills --skill <スキル名>
+npx skills@1.8.1 add bachikawa/agent-skills --skill <スキル名>
 ```
 
+- 版（`@1.8.1`）を付けると、確かめた版のまま実行できる。付けないと、その時の最新の版を取ってきて実行する。
 - 既定では、今のディレクトリ（プロジェクト）に入れる。ユーザー全体に入れる時は `-g` を付ける。入れるエージェントは `--agent` で選べる。
-- スキルのディレクトリ（`plugins/<スキル名>/skills/<スキル名>/`）だけが写される。`LICENSE`・`NOTICE.md` などの権利の表示も、その中にあるので一緒に写る。
-- `npx skills` は、使った記録を匿名で送る。送らない時は、環境変数 `DISABLE_TELEMETRY=1` を付けて実行する。
-- 更新は `npx skills update`、外す時は `npx skills remove <スキル名>` で行う。
+- 入るのは、スキルのディレクトリ（`plugins/<スキル名>/skills/<スキル名>/`）の中身だけである。`kundoku-bungo` は、権利の表示（`LICENSE`・`LICENSE-UNICODE`・`NOTICE.md`）をこの中に置いているので、一緒に入る。
+- `npx skills` は、使った記録を匿名で送る。送らない時は、環境変数 `DISABLE_TELEMETRY=1`（または `DO_NOT_TRACK=1`）を設定して実行する。bash では `DISABLE_TELEMETRY=1 npx skills@1.8.1 add …`、PowerShell では先に `$env:DISABLE_TELEMETRY = "1"` を実行する。
+- 更新は `npx skills@1.8.1 update <スキル名>`、外す時は `npx skills@1.8.1 remove <スキル名>` で行う。`-g` で入れた時は、どちらにも `-g` を付ける。
 
 ## 更新
 
