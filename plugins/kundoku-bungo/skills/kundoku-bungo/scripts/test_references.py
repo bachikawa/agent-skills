@@ -165,5 +165,43 @@ class VocabularyTest(unittest.TestCase):
                     self.assertIsNone(IMPERIAL_WORDS.search(row[column]))
 
 
+EXAMPLES = REFERENCES / "examples.md"
+EXAMPLE_SECTION = re.compile(
+    r"^### (?P<id>[公演新])-\d+ .*?\n\n文語:\n\n```text\n(?P<bungo>.+?)\n```"
+    r"\n\n現代語訳:\n\n```text\n(?P<modern>.+?)\n```\n\n"
+    r"(?P<notes>.*?)(?=^### |\Z)",
+    re.S | re.M,
+)
+
+
+class ExamplesTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        text = EXAMPLES.read_text(encoding="utf-8")
+        cls.headings = re.findall(r"^### ", text, re.M)
+        cls.sections = list(EXAMPLE_SECTION.finditer(text))
+
+    def test_every_section_has_both_texts_and_a_source(self) -> None:
+        self.assertEqual(len(self.sections), len(self.headings))
+        for section in self.sections:
+            with self.subTest(section=section["id"]):
+                self.assertTrue(section["bungo"].strip())
+                self.assertTrue(section["modern"].strip())
+                urls = SOURCE_URL.findall(section["notes"])
+                self.assertEqual(len(urls), 1)
+
+    def test_each_genre_has_at_least_three_sections(self) -> None:
+        genres = [section["id"] for section in self.sections]
+        for genre in ("公", "演", "新"):
+            with self.subTest(genre=genre):
+                self.assertGreaterEqual(genres.count(genre), 3)
+
+    def test_no_section_uses_imperial_wording(self) -> None:
+        for section in self.sections:
+            with self.subTest(section=section["id"]):
+                self.assertIsNone(IMPERIAL_WORDS.search(section["bungo"]))
+                self.assertIsNone(IMPERIAL_WORDS.search(section["modern"]))
+
+
 if __name__ == "__main__":
     unittest.main()
