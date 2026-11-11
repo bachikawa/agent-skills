@@ -20,7 +20,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -33,6 +33,9 @@ import fetch_corpus  # noqa: E402
 
 EXAMPLES_FILE = fetch_corpus.REFERENCES / "examples.md"
 EXAMPLE_USAGES = frozenset({"all", "text_only", "examples_only"})
+# Keep the form of a section in step with EXAMPLE_SECTION in the skill's
+# scripts/test_references.py; the skill is shipped alone, so they cannot
+# share the pattern.
 SECTION = re.compile(
     r"^### (?P<id>[公演新]-\d+) .*?\n\n文語:\n\n```text\n(?P<bungo>.+?)\n```"
     r".*?(?P<notes>^- 出典: [^\n]*)",
@@ -85,6 +88,7 @@ def check(
     examples: Iterable[Example],
     rows: Iterable[fetch_corpus.Revision],
     work: Path,
+    ranges: Mapping[str, Sequence[tuple[str, str]]] | None = None,
 ) -> list[str]:
     """Checks each passage against its cited revision.
 
@@ -92,12 +96,15 @@ def check(
         examples: The sections of examples.md.
         rows: The rows of corpus_revisions.tsv.
         work: The work directory of fetch_corpus.py.
+        ranges: The ranges of lines to remove, by page title
+            (clean_text.read_line_exclusions() when None).
 
     Returns:
         A message for each section that fails; empty when all pass.
     """
     by_oldid = {row.oldid: row for row in rows}
-    ranges = clean_text.read_line_exclusions()
+    if ranges is None:
+        ranges = clean_text.read_line_exclusions()
     errors = []
     for example in examples:
         row = by_oldid.get(example.oldid)
