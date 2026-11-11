@@ -102,3 +102,5 @@ agent-skills/
 ## ライセンス
 
 [MIT](LICENSE)
+
+- `kundoku-bungo` は、Unicode の Unihan データベースから作った字の表を含む。この表には Unicode License v3 も当てはまる（[LICENSE-UNICODE](plugins/kundoku-bungo/skills/kundoku-bungo/LICENSE-UNICODE)、出典は [NOTICE.md](plugins/kundoku-bungo/skills/kundoku-bungo/NOTICE.md)）。
