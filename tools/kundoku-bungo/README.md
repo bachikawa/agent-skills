@@ -47,6 +47,7 @@
 | 順 | 当たるもの | 使い道 | 規則の名前 | 正本 |
 | --- | --- | --- | --- | --- |
 | 1 | 詔書の部分を含む法令のページ。詔書の行は `line_exclusions.tsv` で除く | `all` | `mixed` | `MIXED_PAGES` |
+| 1 | 政府の文書でない演説・新聞。名前で挙げたものだけで、2〜5 の規則は当てない（人が 1 件ずつ権利と年を確かめて足すため） | `text_only` | `non-government` | `NON_GOVERNMENT_PAGES` |
 | 2 | 条約・協約・協定・議定書・覚書・降伏文書と、満洲国など日本以外の政府の文書（題名かカテゴリで見る）。題名が「〜宣言」で終わる国際的な宣言（題名だけで見る）。地名の「満洲」だけでは外さない | 入れない | `foreign-or-treaty` | `FOREIGN_OR_TREATY`・`FOREIGN_TITLE` |
 | 3 | 今の時点まで改正を取り込んだ版（見出しに「現行法令掲載」か「最終改正:」「最終改正年月日:」がある） | 入れない | `current-version` | `CURRENT_VERSION` |
 | 4 | 見出しに年がないページ | 入れない | `no-year` | `HEADER_YEAR` |
@@ -78,7 +79,7 @@ python -I tools/kundoku-bungo/fetch_corpus.py unihan --work "$WORK"
 
 - 本文は `WORK/pages/<oldid>.wiki` に保存する。取った版は、SHA-1 が `corpus_revisions.tsv` と同じことを確かめる。違えば止まる。ページが改名されて題名だけが違う時は、警告を出して続ける（版はページと一緒に動くため）。
 - すでに保存した版は、SHA-1 が合えば取り直さない。合わない（書き換わった・途中で切れた）版は取り直す。
-- 空の作業用のディレクトリで実行すると、標準エラーに「1502 fetched, 1502 in total」と出る。もう一度実行すると「0 fetched, 1502 in total」になる。
+- 空の作業用のディレクトリで実行すると、標準エラーに「1501 fetched, 1501 in total」と出る。もう一度実行すると「0 fetched, 1501 in total」になる。
 - 50 版ずつ保存するので、途中で止まっても、取れた分は残る。
 - Unihan は、UCD 18.0.0 の `Unihan.zip`（https://www.unicode.org/Public/18.0.0/ucd/Unihan.zip ）を取り、SHA-256 を確かめる。
 
@@ -95,6 +96,7 @@ python -I tools/kundoku-bungo/build_kanji_table.py --work "$WORK"
 - `one_to_many` は、Unihan で旧字体が 2 つ以上ある組と、`kanji_overrides.tsv` で `1` にした組が `1` になる。`kanji_overrides.tsv` で `0` にすると、旧字体が 2 つ以上ある組も自動で変換する。`1` の組には、`kanji_overrides.tsv` の `note` が要る（ないと止まる）。
 - `kanji_overrides.tsv` で `kind` を `exclude` にした組は、表に入れない（翻刻の誤りでしか見つからない組など。`note` に理由を書く）。
 - `kind` が `design` の行（衆→眾）は、`kanji_overrides.tsv` から入れる。
+- 表を作り直して典拠の版が変わった時は、`fetch_corpus.py reclassify` を実行して、新しく引く版を `pinned` にする（`revisions` を実行した作業用のディレクトリが要る）。しないと、`tests/test_corpus_revisions.py` が落ちる。
 - 見つからなかった組は `WORK/kanji_missing.tsv` に、見つかった組ごとの版の数は `WORK/kanji_counts.tsv` に書き出す（`--check` の時は書き出さない）。1 つの版にしか見つからない組は、翻刻の誤りのことがあるので、原本で確かめるとよい。
 
 ### kanji_overrides.tsv の列
