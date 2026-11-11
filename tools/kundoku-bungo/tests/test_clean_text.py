@@ -68,6 +68,24 @@ class BodyTest(unittest.TestCase):
             with self.subTest(removed=removed):
                 self.assertNotIn(removed, text)
 
+    def test_new_form_section_is_removed_after_a_short_original(
+        self,
+    ) -> None:
+        page = "自今丁年ト定ム\n== 新字体 ==\n自今丁年と定む"
+        text = clean_text.body(page)
+        self.assertIn("自今丁年ト定ム", text)
+        self.assertNotIn("と定む", text)
+
+    def test_notes_do_not_count_as_a_transcription(self) -> None:
+        page = (
+            f"== 新字体 ==\n{self.ORIGINAL}\n"
+            "== 註 ==\n編集者ガ書イタ長イ説明ノ文ヲ此処ニ二十字以上書ク\n"
+            "== 底本 ==\n某全集"
+        )
+        text = clean_text.body(page)
+        self.assertIn(self.ORIGINAL, text)
+        self.assertNotIn("編集者", text)
+
     def test_new_form_section_is_kept_when_it_is_the_only_text(self) -> None:
         page = f"== 新字体 ==\n{self.ORIGINAL}\n== 関連項目 ==\n* [[刑法]]"
         text = clean_text.body(page)
@@ -274,6 +292,14 @@ class VocabularyLinesTest(unittest.TestCase):
         self.assertEqual(
             clean_text.vocabulary_lines(page), ["甲", "乙", "丙", "丁"]
         )
+
+    def test_line_with_an_unclosed_bold_is_left_out(self) -> None:
+        page = "'''第一條 本文\n乙ハ丙ナリ"
+        self.assertEqual(clean_text.vocabulary_lines(page), ["乙ハ丙ナリ"])
+
+    def test_long_run_of_note_words_is_handled_quickly(self) -> None:
+        text = "（" + "ヒヤ" * 40 + "ノー" * 40
+        self.assertEqual(clean_text.remove_stenography_notes(text), text)
 
     def test_page_layout_lines_are_left_out(self) -> None:
         page = "! 見出シ\n----\n__NOTOC__\n乙ハ丙ナリ"

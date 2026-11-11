@@ -40,8 +40,9 @@ IMPERIAL_WORDS = re.compile(
 # bracket is removed only when everything in it is such a note, so that
 # brackets of the original text, such as （別紙）, are kept.
 _NOTE_WORDS = (
-    "拍手|喝采|喝釆|謹聴|謹聼|謹聽|ヒヤヒヤ|ノーノー|笑声|笑聲|大笑|"
-    "異議ナシ|賛成|贊成|ノー|ヒヤ"
+    # ヒヤヒヤ and ノーノー are repeats of ヒヤ and ノー; listing them too
+    # would make the repeated group backtrack badly.
+    "拍手|喝采|喝釆|謹聴|謹聼|謹聽|笑声|笑聲|大笑|異議ナシ|賛成|贊成|ノー|ヒヤ"
 )
 _NOTE_MODIFIERS = "大満滿場一同再三起ル起ルアリ者、・ " + IDEOGRAPHIC_SPACE
 STENOGRAPHY_NOTE = re.compile(
@@ -54,7 +55,7 @@ _NOTE_WORD = re.compile(_NOTE_WORDS)
 HALF_WIDTH_BRACKET = re.compile(r"[()\[\]]")
 # Characters that mark editors' markup left after strip_markup(), or that
 # the original documents never have.
-_LEFTOVER_MARKUP = re.compile(f"[<>{{}}|={REMOVED}]")
+_LEFTOVER_MARKUP = re.compile(f"[<>{{}}|='{REMOVED}]")
 _KANJI_NUMBER = (
     "一二三四五六七八九十百千〇廿卅壹貳參肆伍陸柒捌玖拾"
     "0123456789０１２３４５６７８９"
@@ -75,21 +76,24 @@ _INVISIBLE = re.compile(
     f"{chr(0x2066)}-{chr(0x2069)}{chr(0xFEFF)}]"
 )
 _HEADER_START = re.compile(r"\{\{\s*[Hh]eader\s*[|}]")
-_SECTION_HEADING = re.compile(r"^(=+)\s*(.*?)\s*\1\s*$", re.M)
+_SECTION_HEADING = re.compile(r"^(=+)[ \t]*(.*?)[ \t]*\1[ \t]*$", re.M)
 # Sections written by editors: links, notes, information about the law,
 # and versions rewritten in hiragana or modern Japanese.
 EDITOR_SECTION = re.compile(
     "外部リンク|関連項目|関連資料|現代語訳|読み下し|平仮名|ひらがな|脚注"
-    "|注釈|註釈|注記|出典|参考|改廃経過|改正経過|沿革|解説|備考|凡例|法令情報"
+    "|注釈|註釈|注記|^註$|^注$|底本|校注|出典|参考|改廃経過|改正経過|沿革"
+    "|解説|備考|凡例|法令情報"
 )
 # Versions in which editors only replaced the kanji forms. Some pages, such
 # as 学制, have no other transcription, so these sections are removed only
 # when the page has the text in another section too.
 NEW_FORM_SECTION = re.compile("新字体|常用漢字|JIS")
-# The fewest kana and kanji a page must keep for its other sections to
-# count as a transcription.
-_MIN_TEXT = 20
-_TEXT_CHAR = re.compile("[ぁ-ゖァ-ヺ一-鿿㐀-䶿豈-龎々〆]")
+# Kana and kanji, including compatibility ideographs. On the pages fetched
+# in #9, the text outside the new-form sections was either none at all or
+# at least 53 of these, so any of them counts as a transcription.
+_TEXT_CHAR = re.compile(
+    f"[ぁ-ゖァ-ヺ一-鿿㐀-䶿{chr(0xF900)}-{chr(0xFAFF)}々〆]"
+)
 # Templates whose first argument is the text of the original document.
 _TEXT_TEMPLATE = re.compile(
     r"\{\{\s*(?:[Ll]ang\s*\|[^|{}]*|異体字|[Rr]|[Rr]uby)\s*\|([^{}|]*)[^{}]*\}\}"
@@ -186,7 +190,7 @@ def remove_editor_sections(wikitext: str) -> str:
     text = _remove_sections(wikitext, EDITOR_SECTION)
     without_new_forms = _remove_sections(text, NEW_FORM_SECTION)
     plain = strip_markup(without_new_forms)
-    if len(_TEXT_CHAR.findall(plain)) >= _MIN_TEXT:
+    if _TEXT_CHAR.search(plain):
         return without_new_forms
     return text
 
