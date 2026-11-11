@@ -128,7 +128,7 @@ class ToKyujitaiTest(unittest.TestCase):
             "台": "台",
             "民衆": "民衆",
             "勅令": "勅令",
-            "昆虫": "昆虫",
+            "政党": "政党",
         }
         for given, expected in cases.items():
             with self.subTest(given=given):
