@@ -37,8 +37,13 @@
     border-left: 2px solid var(--rule); border-right: 2px solid var(--rule); padding: 0 14px;
   }
   .cols .faint { color: var(--sub); }
+  .skill {
+    position: absolute; right: 30px; top: 26px; height: 272px; writing-mode: vertical-rl;
+    font: 600 17px/1 "Noto Sans JP", sans-serif; color: var(--ink); letter-spacing: .04em; white-space: nowrap;
+  }
+  .skill b { font-weight: 500; font-size: 12px; letter-spacing: .2em; color: var(--sub); margin-bottom: 12px; }
   .seal {
-    position: absolute; right: 72px; bottom: 44px; width: 58px; height: 58px; box-sizing: border-box;
+    position: absolute; right: 74px; bottom: 30px; width: 58px; height: 58px; box-sizing: border-box;
     border: 4px solid var(--seal); border-radius: 6px; color: var(--seal);
     display: grid; place-items: center; font: 700 34px/1 "Noto Serif JP", serif;
   }
@@ -49,6 +54,7 @@
   <div class="tag"><span>Claude Code plugin</span><span>Agent Skills</span></div>
   <div class="cols"><span>現代語ヲ文語ニ</span><br><span class="faint">文語ヲ現代語ニ</span></div>
   <div class="seal">訓</div>
+  <div class="skill"><b>SKILL</b>kundoku-bungo</div>
 </div>
 <script>
   if (location.hash === "#dark") document.documentElement.classList.add("dark");
