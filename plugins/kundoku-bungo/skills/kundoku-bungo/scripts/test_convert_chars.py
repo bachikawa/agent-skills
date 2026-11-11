@@ -11,9 +11,11 @@ that normalizes Unicode cannot silently change what a test checks.
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import tempfile
+import unicodedata
 import unittest
 from pathlib import Path
 
@@ -26,31 +28,90 @@ SPACING_VOICED = "\u309b"
 OLD_FORM_OF_SHA = "\ufa4c"  # CJK compatibility ideograph of 社
 
 
+EVIDENCE_URL = re.compile(
+    r"https://(ja\.wikisource\.org/w/index\.php\?oldid=\d+"
+    r"|dl\.ndl\.go\.jp/pid/[\d/]+)"
+)
+HAN = re.compile(r"[\u4e00-\u9fff\uf900-\ufaff]")
+
+
 class KanjiTableTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.rows = convert_chars.load_kanji_table()
+
+    def test_table_is_not_empty(self) -> None:
+        self.assertGreater(len(self.rows), 0)
+
     def test_every_row_is_well_formed(self) -> None:
-        for row in convert_chars.load_kanji_table():
+        for row in self.rows:
             with self.subTest(modern=row["modern"], old=row["old"]):
-                self.assertEqual(len(row["modern"]), 1)
-                self.assertEqual(len(row["old"]), 1)
+                self.assertRegex(row["modern"], HAN.pattern + "$")
+                self.assertRegex(row["old"], HAN.pattern + "$")
+                self.assertNotEqual(row["modern"], row["old"])
                 self.assertEqual(
                     row["old_codepoint"], f"U+{ord(row['old']):04X}"
                 )
                 self.assertIn(row["kind"], {"joyo", "compat", "design"})
                 self.assertIn(row["one_to_many"], {"0", "1"})
                 self.assertTrue(row["evidence"])
-                self.assertTrue(row["evidence_url"].startswith("https://"))
+                self.assertRegex(
+                    row["evidence_url"], EVIDENCE_URL.pattern + "$"
+                )
 
-    def test_one_to_one_rows_have_unique_modern_forms(self) -> None:
-        modern = [
-            row["modern"]
-            for row in convert_chars.load_kanji_table()
-            if row["one_to_many"] == "0"
-        ]
-        self.assertEqual(len(modern), len(set(modern)))
+    def test_compat_rows_normalize_to_their_modern_form(self) -> None:
+        compat = [row for row in self.rows if row["kind"] == "compat"]
+        self.assertGreater(len(compat), 0)
+        for row in compat:
+            with self.subTest(modern=row["modern"], old=row["old"]):
+                self.assertEqual(
+                    unicodedata.normalize("NFC", row["old"]), row["modern"]
+                )
 
-    def test_old_forms_are_unique(self) -> None:
-        old = [row["old"] for row in convert_chars.load_kanji_table()]
+    def test_other_rows_are_unchanged_by_normalization(self) -> None:
+        others = [row for row in self.rows if row["kind"] != "compat"]
+        for row in others:
+            with self.subTest(modern=row["modern"], old=row["old"]):
+                self.assertEqual(
+                    unicodedata.normalize("NFC", row["old"]), row["old"]
+                )
+
+    def test_shared_modern_forms_are_marked_one_to_many(self) -> None:
+        modern = [row["modern"] for row in self.rows]
+        shared = [row for row in self.rows if modern.count(row["modern"]) > 1]
+        for row in shared:
+            with self.subTest(modern=row["modern"], old=row["old"]):
+                self.assertEqual(row["one_to_many"], "1")
+
+    def test_one_to_many_rows_have_notes_and_are_not_converted(self) -> None:
+        one_to_many = [row for row in self.rows if row["one_to_many"] == "1"]
+        self.assertGreater(len(one_to_many), 0)
+        for row in one_to_many:
+            with self.subTest(modern=row["modern"], old=row["old"]):
+                self.assertTrue(row["note"])
+                self.assertEqual(
+                    convert_chars.to_kyujitai(row["modern"]), row["modern"]
+                )
+
+    def test_old_forms_are_unique_and_not_modern_forms(self) -> None:
+        old = [row["old"] for row in self.rows]
+        modern = {row["modern"] for row in self.rows}
         self.assertEqual(len(old), len(set(old)))
+        self.assertEqual(set(old) & modern, set())
+
+
+class LoadKanjiTableErrorTest(unittest.TestCase):
+    def test_missing_file_raises_table_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory, "missing.tsv")
+            with self.assertRaises(convert_chars.KanjiTableError):
+                convert_chars.load_kanji_table(missing)
+
+    def test_unexpected_columns_raise_table_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            table = Path(directory, "kanji.tsv")
+            table.write_text("modern\told\n学\t學\n", encoding="utf-8")
+            with self.assertRaises(convert_chars.KanjiTableError):
+                convert_chars.load_kanji_table(table)
 
 
 class ToKyujitaiTest(unittest.TestCase):
@@ -262,6 +323,16 @@ class ToBungoTest(unittest.TestCase):
             convert_chars.to_bungo("学生は", kyujitai=False), "学生ハ"
         )
 
+    def test_compatibility_ideographs_survive_every_step(self) -> None:
+        self.assertEqual(
+            convert_chars.to_bungo("社会が"), OLD_FORM_OF_SHA + "會カ"
+        )
+
+    def test_no_compat(self) -> None:
+        self.assertEqual(
+            convert_chars.to_bungo("社会は", compat=False), "社會ハ"
+        )
+
 
 class ToModernTest(unittest.TestCase):
     def test_kana_script_changes(self) -> None:
@@ -358,6 +429,12 @@ class CommandLineTest(unittest.TestCase):
     def test_to_bungo_shinjitai(self) -> None:
         completed = self._run("to-bungo", "--shinjitai", given="学生")
         self.assertEqual(completed.stdout.decode("utf-8"), "学生")
+
+    def test_to_bungo_writes_compatibility_ideographs(self) -> None:
+        completed = self._run("to-bungo", given="社会")
+        self.assertEqual(
+            completed.stdout.decode("utf-8"), OLD_FORM_OF_SHA + "會"
+        )
 
     def test_to_bungo_no_compat(self) -> None:
         completed = self._run("to-bungo", "--no-compat", given="社会")

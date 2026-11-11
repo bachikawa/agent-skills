@@ -12,7 +12,7 @@ scope and left as they are.
 
 Usage:
     python convert_chars.py to-bungo [options] --input FILE
-    python convert_chars.py to-modern --input FILE
+    python convert_chars.py to-modern [options] --input FILE
 
 Without --input, the text is read from standard input.
 """
@@ -86,19 +86,67 @@ def _is_kana(char: str) -> bool:
     )
 
 
-@functools.cache
-def load_kanji_table(path: Path = KANJI_TABLE) -> tuple[dict[str, str], ...]:
+_TABLE_COLUMNS = (
+    "modern",
+    "old",
+    "old_codepoint",
+    "kind",
+    "one_to_many",
+    "note",
+    "evidence",
+    "evidence_url",
+)
+
+
+class KanjiTableError(Exception):
+    """Raised when the kanji table cannot be read or is malformed."""
+
+
+def load_kanji_table(path: Path = KANJI_TABLE) -> list[dict[str, str]]:
     """Reads the table of modern and old kanji forms.
 
     Args:
         path: The TSV file with the columns modern, old, old_codepoint,
-            kind, one_to_many, evidence and evidence_url.
+            kind, one_to_many, note, evidence and evidence_url.
 
     Returns:
-        One dict per row, keyed by the column names.
+        One dict per row, keyed by the column names. The list is new on
+        every call, so callers may change it.
+
+    Raises:
+        KanjiTableError: The file cannot be read or lacks a column.
     """
-    with open(path, encoding="utf-8", newline="") as source:
-        return tuple(csv.DictReader(source, delimiter="\t"))
+    try:
+        with open(path, encoding="utf-8", newline="") as source:
+            reader = csv.DictReader(
+                source, delimiter="\t", quoting=csv.QUOTE_NONE
+            )
+            rows = list(reader)
+            columns = tuple(reader.fieldnames or ())
+    except (OSError, UnicodeDecodeError) as error:
+        raise KanjiTableError(f"cannot read {path}: {error}") from error
+    if columns != _TABLE_COLUMNS:
+        raise KanjiTableError(f"unexpected columns in {path}: {columns}")
+    return rows
+
+
+@functools.cache
+def _kyujitai_table(compat: bool) -> dict[int, str]:
+    return str.maketrans(
+        {
+            row["modern"]: row["old"]
+            for row in load_kanji_table()
+            if row["one_to_many"] == "0"
+            and (compat or row["kind"] != _COMPAT_KIND)
+        }
+    )
+
+
+@functools.cache
+def _shinjitai_table() -> dict[int, str]:
+    return str.maketrans(
+        {row["old"]: row["modern"] for row in load_kanji_table()}
+    )
 
 
 def to_kyujitai(text: str, *, compat: bool = True) -> str:
@@ -116,14 +164,11 @@ def to_kyujitai(text: str, *, compat: bool = True) -> str:
 
     Returns:
         The text with convertible kanji in their old forms.
+
+    Raises:
+        KanjiTableError: The kanji table cannot be read.
     """
-    mapping = {
-        row["modern"]: row["old"]
-        for row in load_kanji_table()
-        if row["one_to_many"] == "0"
-        and (compat or row["kind"] != _COMPAT_KIND)
-    }
-    return "".join(mapping.get(char, char) for char in text)
+    return text.translate(_kyujitai_table(compat))
 
 
 def to_shinjitai(text: str) -> str:
@@ -137,9 +182,11 @@ def to_shinjitai(text: str) -> str:
 
     Returns:
         The text with old kanji forms replaced by modern ones.
+
+    Raises:
+        KanjiTableError: The kanji table cannot be read.
     """
-    mapping = {row["old"]: row["modern"] for row in load_kanji_table()}
-    return "".join(mapping.get(char, char) for char in text)
+    return text.translate(_shinjitai_table())
 
 
 def to_katakana(text: str) -> str:
@@ -387,18 +434,22 @@ def main(argv: list[str] | None = None) -> int:
     else:
         sys.stdin.reconfigure(encoding="utf-8-sig")
         text = sys.stdin.read()
-    if args.direction == "to-bungo":
-        result = to_bungo(
-            text,
-            kyujitai=not args.shinjitai,
-            compat=not args.no_compat,
-            katakana=not args.hiragana,
-            keep_voicing=args.keep_voicing,
-            keep_small_kana=args.keep_small_kana,
-            keep_punctuation=args.keep_punctuation,
-        )
-    else:
-        result = to_modern(text, shinjitai=not args.keep_kyujitai)
+    try:
+        if args.direction == "to-bungo":
+            result = to_bungo(
+                text,
+                kyujitai=not args.shinjitai,
+                compat=not args.no_compat,
+                katakana=not args.hiragana,
+                keep_voicing=args.keep_voicing,
+                keep_small_kana=args.keep_small_kana,
+                keep_punctuation=args.keep_punctuation,
+            )
+        else:
+            result = to_modern(text, shinjitai=not args.keep_kyujitai)
+    except KanjiTableError as error:
+        print(error, file=sys.stderr)
+        return 1
     sys.stdout.write(result)
     return 0
 
