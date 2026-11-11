@@ -256,6 +256,7 @@ def text_pages(
     Raises:
         VocabularyError: A revision is not saved or has another SHA-1.
     """
+    one_to_one = list(one_to_one)
     ranges = clean_text.read_line_exclusions()
     pages = []
     for row in rows:
@@ -282,7 +283,9 @@ def text_pages(
     return pages
 
 
-def _segment(line: str, position: int, form: str, entry: Entry) -> str:
+def _segment(
+    line: str, position: int, form: str, entry: Entry, forms: list[str]
+) -> str:
     after = AFTER_CONSTRUCTION if "〜" in entry.word else AFTER
     start = max(0, position - BEFORE)
     end = min(len(line), position + len(form) + after)
@@ -292,9 +295,10 @@ def _segment(line: str, position: int, form: str, entry: Entry) -> str:
     # An earlier match that was skipped (part of a longer word, or a word
     # of the same form) must not come first in the example, so that the
     # first occurrence of the form is the one chosen.
-    earlier = segment.rfind(form, 0, offset)
-    if earlier != -1:
-        cut = max(cut, earlier + len(form) - 1)
+    for spelling in forms:
+        earlier = segment.rfind(spelling, 0, offset)
+        if earlier != -1:
+            cut = max(cut, earlier + len(spelling) - 1)
     if cut != -1:
         segment = segment[cut + 1 :]
     return segment.strip(" " + SPACE)
@@ -336,7 +340,7 @@ def find_in(
             for position in _matches(line, form, entry)
         )
         for position, form in found:
-            segment = _segment(line, position, form, entry)
+            segment = _segment(line, position, form, entry, forms)
             if len(segment) < len(form) + 4:
                 continue
             if _DIGITS.search(segment) or _CHAPTER_HEAD.match(segment):

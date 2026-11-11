@@ -195,6 +195,38 @@ class EvidencePagesTest(unittest.TestCase):
             result = build.evidence_pages(work, rows)
         self.assertEqual([r.oldid for r, _ in result], [1, 2])
 
+    def test_modernized_page_is_left_out_but_plain_compat_forms_are_not(
+        self,
+    ) -> None:
+        pairs = [
+            ("者", chr(0xFA5B), False),
+            ("県", "縣", False),
+            ("国", "國", False),
+            ("会", "會", False),
+            ("体", "體", False),
+            ("勅", "敕", False),
+        ]
+        overrides = {("勅", "敕"): override("勅", "敕", one_to_many="1")}
+        chosen = build.modernizing_pairs(pairs, overrides)
+        self.assertEqual(
+            chosen, [("県", "縣"), ("国", "國"), ("会", "會"), ("体", "體")]
+        )
+        pages = [
+            Page("者", 1, "{{Header|year=1890}}\n者者者者者者者者者ハ縣ニ在リ", []),
+            Page("新", 2, "{{Header|year=1890}}\n国会体国会体ヲ定ム", []),
+            Page("勅", 3, "{{Header|year=1890}}\n勅令勅令勅令勅令勅令ヲ縣ニ下ス", []),
+        ]
+        rows = [
+            Revision(p.title, p.oldid, p.sha1, 1890, "all", "listed", "r")
+            for p in pages
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            for item in pages:
+                fetch_corpus.save_page(work, item)
+            kept = build.evidence_pages(work, rows, iter(chosen))
+        self.assertEqual(sorted(r.oldid for r, _ in kept), [1, 3])
+
     def test_page_with_another_sha1_is_an_error(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)

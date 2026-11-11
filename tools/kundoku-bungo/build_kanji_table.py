@@ -167,6 +167,37 @@ def read_overrides(
     return overrides
 
 
+def modernizing_pairs(
+    pairs: Iterable[tuple[str, str, bool]],
+    overrides: dict[tuple[str, str], Override],
+) -> list[tuple[str, str]]:
+    """Returns the pairs whose modern form shows a replaced old form.
+
+    These are the pairs that tell a text written over in new forms. Left
+    out are pairs with several old forms, pairs with a compatibility
+    ideograph (MediaWiki keeps those only as character references, so the
+    plain modern form appears in period texts too), and pairs chosen by
+    word in kanji_overrides.tsv (勅 was also the usual form of the
+    period).
+
+    Args:
+        pairs: The pairs from unihan_pairs().
+        overrides: The rows of kanji_overrides.tsv.
+
+    Returns:
+        (modern, old) pairs for clean_text.looks_modernized().
+    """
+    result = []
+    for modern, old, several in pairs:
+        override = overrides.get((modern, old))
+        if several or 0xF900 <= ord(old) <= 0xFAFF:
+            continue
+        if override is not None and override.one_to_many == "1":
+            continue
+        result.append((modern, old))
+    return result
+
+
 def evidence_pages(
     work: Path,
     rows: Iterable[fetch_corpus.Revision],
@@ -191,6 +222,7 @@ def evidence_pages(
     Raises:
         TableError: A revision is not saved or has another SHA-1.
     """
+    one_to_one = list(one_to_one)
     pages = []
     for row in rows:
         if row.usage not in EVIDENCE_USAGES:
@@ -348,10 +380,13 @@ def main(argv: list[str] | None = None) -> int:
         work = fetch_corpus.check_work_dir(args.work)
         unihan = fetch_corpus.download_unihan(work, opener=_no_download)
         pairs = unihan_pairs(unihan)
-        one_to_one = [(m, o) for m, o, several in pairs if not several]
-        revisions = fetch_corpus.read_revisions()
-        pages = evidence_pages(work, revisions, one_to_one)
-        rows, missing, counts = build_rows(pairs, pages, read_overrides())
+        overrides = read_overrides()
+        pages = evidence_pages(
+            work,
+            fetch_corpus.read_revisions(),
+            modernizing_pairs(pairs, overrides),
+        )
+        rows, missing, counts = build_rows(pairs, pages, overrides)
         text = render(rows)
         if args.check:
             if KANJI_FILE.read_text(encoding="utf-8") != text:
