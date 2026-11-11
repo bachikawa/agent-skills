@@ -252,6 +252,24 @@ class LineExclusionsTest(unittest.TestCase):
         self.assertFalse(any("兵農始テ分レ遂ニ" in line for line in result))
         self.assertIn("我" + SPACE + "朝上古ノ制", result)
 
+    def test_charter_oath_in_seitai_is_removed_by_the_data_file(self) -> None:
+        title = "政体 (慶応四年太政官達第三百三十一号)"
+        ranges = clean_text.read_line_exclusions()[title]
+        page = "\n".join(
+            [
+                "故ニ今般　御誓文ヲ以テ目的トシ",
+                "一　大ニ斯国是ヲ定メ制度規律ヲ建ツルハ　御誓文ヲ以テ目的トス",
+                ":一　広ク会議ヲ興シ万機公論ニ決ス可シ",
+                ":一　官武一途庶民ニ至ルマテ各其志ヲ遂ケ人心ヲシテ倦マサラシメン事ヲ要ス",
+                ":右　御誓文ノ条件相行ハレ不悖ヲ以テ旨趣トセリ",
+                "一　在官人私ニ自家ニ於テ他人ト政事ヲ議スル勿レ",
+            ]
+        )
+        lines = clean_text.vocabulary_lines(page, ranges)
+        self.assertFalse(any("倦マサラシメン" in line for line in lines))
+        self.assertFalse(any("御誓文" in line for line in lines))
+        self.assertTrue(any("在官人" in line for line in lines))
+
     def test_file_with_unexpected_columns_is_an_error(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory, "line_exclusions.tsv")
@@ -277,6 +295,21 @@ class KanjiLinesTest(unittest.TestCase):
         self.assertEqual(
             clean_text.kanji_lines(page), ["朕惟フニ", "凡ソ人タル者ハ"]
         )
+
+
+class LooksModernizedTest(unittest.TestCase):
+    PAIRS = [("国", "國"), ("体", "體"), ("会", "會"), ("従", "從")]
+
+    def test_text_mostly_in_new_forms_is_modernized(self) -> None:
+        text = "広ク会議ヲ興シ国是ヲ定メ政体ヲ立テ従前ノ国法ヲ改ム"
+        self.assertTrue(clean_text.looks_modernized(text, self.PAIRS))
+
+    def test_text_in_old_forms_is_not_modernized(self) -> None:
+        text = "國是ヲ定メ政體ヲ立テ從前ノ國法ヲ改メ會議ヲ興ス国"
+        self.assertFalse(clean_text.looks_modernized(text, self.PAIRS))
+
+    def test_few_new_forms_are_not_enough(self) -> None:
+        self.assertFalse(clean_text.looks_modernized("国体ヲ定ム", self.PAIRS))
 
 
 class HasTextTest(unittest.TestCase):

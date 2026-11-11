@@ -35,6 +35,7 @@ REMOVED = chr(0xFFFC)
 # quoted in the vocabulary table or the examples.
 IMPERIAL_WORDS = re.compile(
     "朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|宸|思召|休命|大御心|詔|勅|敕"
+    "|御誓文|御沙汰|朝威|皇基|皇政|皇居"
 )
 # Notes of stenographers in speeches, such as （拍手） and （大喝采）. A
 # bracket is removed only when everything in it is such a note, so that
@@ -171,6 +172,34 @@ def _remove_sections(wikitext: str, heading: re.Pattern[str]) -> str:
     if skip_level is None:
         kept.append(wikitext[position:])
     return "".join(kept)
+
+
+# A text whose kanji are this share or more in new forms, with at least
+# NEW_FORM_MIN of them, was modernized by an editor even without a 新字体
+# heading (such as 政体). On the pages fetched in #9, transcriptions in
+# period forms stayed below 0.9, except 祝東京專門学校之開校 at 0.82,
+# whose base text is a draft in the author's hand.
+NEW_FORM_SHARE = 0.9
+NEW_FORM_MIN = 5
+
+
+def looks_modernized(text: str, pairs: Iterable[tuple[str, str]]) -> bool:
+    """Tells whether a text was written over in new kanji forms.
+
+    Args:
+        text: Plain text, such as joined lines of vocabulary_lines().
+        pairs: (modern, old) pairs where one modern form has one old
+            form, so that each modern form in the text stands for a
+            replaced old form.
+
+    Returns:
+        True when the modern forms are at least NEW_FORM_MIN and at
+        least NEW_FORM_SHARE of the forms of these pairs.
+    """
+    pairs = list(pairs)
+    modern = sum(text.count(m) for m, _ in pairs)
+    old = sum(text.count(o) for _, o in pairs)
+    return modern >= NEW_FORM_MIN and modern >= NEW_FORM_SHARE * (modern + old)
 
 
 def has_text(wikitext: str) -> bool:
