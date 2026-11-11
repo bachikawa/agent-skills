@@ -26,6 +26,7 @@ VOCABULARY_COLUMNS = [
     "source",
     "source_url",
 ]
+# In a two-part kind, the first part is the main use of the word.
 KINDS = {
     "接続",
     "副詞",
@@ -39,9 +40,12 @@ KINDS = {
 SOURCE_URL = re.compile(r"https://ja\.wikisource\.org/w/index\.php\?oldid=\d+")
 SOURCE_YEAR = re.compile(r"（(\d{4})）$")
 # Wording used only in the name of the emperor; the table must not teach it.
-IMPERIAL_WORDS = re.compile(r"朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|詔|勅")
+IMPERIAL_WORDS = re.compile(r"朕|臣民|皇祖|皇宗|御名|御璽|聖旨|聖慮|叡|詔|勅|敕")
 # Section and paragraph numbers in Arabic digits are added by transcribers.
 DIGITS = re.compile(r"[0-9０-９]")
+# Chapter numbers of the original text are left out of examples.
+CHAPTER_HEAD = re.compile(r"^第?[一二三四五六七八九十百]+章")
+HAN = re.compile(r"[\u3400-\u9fff\uf900-\ufaff々〻]")
 
 
 def read_vocabulary() -> tuple[list[str] | None, list[dict[str, str]]]:
@@ -65,7 +69,9 @@ def search_key(word: str) -> str:
 
     Returns:
         The fixed part before the first 〜 (after a leading 〜), without a
-        leading スル before コト.
+        leading スル before コト. The part after the 〜 is not checked,
+        because examples are short excerpts and some show a variant form
+        (such as 「将ニ〜ント欲ス」).
     """
     key = word.removeprefix("〜").split("〜")[0]
     return key.removeprefix("スル") if key.startswith("スルコト") else key
@@ -124,10 +130,25 @@ class VocabularyTest(unittest.TestCase):
             with self.subTest(word=row["word"]):
                 self.assertIn(row["example_form"], row["example"])
 
+    def test_form_is_not_part_of_a_longer_kanji_word(self) -> None:
+        for row in self.rows:
+            with self.subTest(word=row["word"]):
+                example, form = row["example"], row["example_form"]
+                position = example.index(form)
+                before = example[position - 1 : position]
+                self.assertFalse(
+                    HAN.match(form[0]) and before and HAN.match(before)
+                )
+
     def test_examples_have_no_transcriber_numbers(self) -> None:
         for row in self.rows:
             with self.subTest(word=row["word"]):
                 self.assertIsNone(DIGITS.search(row["example"]))
+
+    def test_examples_do_not_start_with_a_chapter_number(self) -> None:
+        for row in self.rows:
+            with self.subTest(word=row["word"]):
+                self.assertIsNone(CHAPTER_HEAD.match(row["example"]))
 
     def test_source_is_a_pre_1946_wikisource_revision(self) -> None:
         for row in self.rows:
