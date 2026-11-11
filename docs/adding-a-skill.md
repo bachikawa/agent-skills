@@ -44,7 +44,9 @@
    - 「インストール」の、スキルの名前を書いた 1 行（`/plugin install <スキル名> --marketplace bachikawa/agent-skills`）と呼び出し方、「ほかのエージェント（npx skills）」のコマンドに、そのスキルの分を足す。足した後、「検証」の `claude plugin validate .` で、「This README has no line that installs」の助言が出ないことを確かめる。
    - スキルのデータを作るツール（`tools/<スキル名>/`）がある時は「開発者向け」の「資料」の表に、第三者のデータを含む時は「ライセンス」に、そのスキルの項を足す。
    - README の目次（見出しの絵の下のリンクの行）は、スキルごとには足さない。
-   - 文語のお遊び版（`README.bungo.md`）にも、同じ節を足す。文は `kundoku-bungo` で文語にし、コマンド・コード・リンク・ライセンスの文は現代語のまま残す。目次のリンクは、文語にした見出しに合わせる。
+   - 見出しの絵（`docs/assets/banner.html` と PNG 2 枚）は、右端に `kundoku-bungo` の名前を入れている。スキルを足す時は、絵を直すかを決め、直す時は HTML のコメントのコマンドで書き出し直す。
+   - 上の項で `README.md` に足した所は、すべて文語のお遊び版（`README.bungo.md`）にも足す。文は `kundoku-bungo` で文語にし、コマンド・コード・リンクの先（URL・パス）・ライセンスの文は現代語のまま残す。目次のリンクは、文語にした見出しに合わせる。
+   - スキルを足す時のほかにも、`README.md` を直した時（確かめた版の数字を変える時など）は、`README.bungo.md` の同じ所も直す。2 つのコマンド・コード・リンクの先がそろっていることは、`tools/kundoku-bungo/tests/test_readme_bungo.py` で確かめる。
 6. 下の「検証」を行う。
 
 ## 雛形
