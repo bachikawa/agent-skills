@@ -98,22 +98,25 @@ def fixed_kana_words(
     """Counts the words whose kanji keep the same kana after them.
 
     Only stems that start a word (not preceded by a kanji) are counted.
+    Every version of a document is read, so that a word found only in an
+    amended version counts too; a line repeated in several versions of a
+    document adds to the share of kana only once.
 
     Args:
         texts: (key, lines) for each page; pages with the same key are
-            counted once.
+            one document.
 
     Returns:
-        The number of distinct texts for each fixed word, such as 悉ク.
+        The number of documents for each fixed word, such as 悉ク.
     """
     kana: dict[str, collections.Counter[str]] = {}
     keys: dict[str, set[str]] = {}
-    seen_texts: set[str] = set()
+    seen_lines: set[tuple[str, str]] = set()
     for key, lines in texts:
-        if key in seen_texts:
-            continue
-        seen_texts.add(key)
         for line in lines:
+            if (key, line) in seen_lines:
+                continue
+            seen_lines.add((key, line))
             for match in STEM_WITH_KANA.finditer(line):
                 start = match.start()
                 if start > 0 and re.match(f"[{KANJI}]", line[start - 1]):
@@ -132,20 +135,43 @@ def fixed_kana_words(
     return words
 
 
-def law_key(title: str) -> str:
+def law_key(title: str, modern: dict[str, str] | None = None) -> str:
     """Returns a key that is the same for the versions of one document.
 
     Amended versions of a law have titles such as 「國債整理基金特別會計法
-    (大正八年…)」 and 「地所質入書入規則/公布時」, so the part before 「 (」
-    or 「/」 names the document.
+    (大正八年…)」 and 「地所質入書入規則/公布時」, so the part before 「(」
+    or 「/」 names the document. In 「道路取締令中改正/道路取締令」 the
+    part after 「/」 names it instead. Old and new kanji forms of a title
+    (民事訴訟法施行條例 and 民事訴訟法施行条例) give the same key.
 
     Args:
         title: A page title.
+        modern: The modern form of each old form (modern_forms()).
 
     Returns:
         The title without the part that tells the version.
     """
-    return re.split(r" \(|/", title, maxsplit=1)[0]
+    key = title
+    if "/" in key:
+        before, after = key.split("/", 1)
+        key = after if "改正" in before else before
+    key = re.split(r" ?[(（]", key, maxsplit=1)[0].strip()
+    if modern:
+        key = "".join(modern.get(ch, ch) for ch in key)
+    return key
+
+
+def modern_forms(kanji: dict[str, list[str]]) -> dict[str, str]:
+    """Returns the modern form of each old form.
+
+    Args:
+        kanji: The old forms by modern form
+            (build_vocabulary.kanji_variants()).
+
+    Returns:
+        The modern form by old form.
+    """
+    return {old: new for new, olds in kanji.items() for old in olds}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -165,32 +191,33 @@ def main(argv: list[str] | None = None) -> int:
         work = fetch_corpus.check_work_dir(args.work)
         rows = fetch_corpus.read_revisions()
         pages = build_vocabulary.text_pages(work, rows)
-        counts = count_texts((law_key(p.row.title), p.lines) for p in pages)
-        fixed = fixed_kana_words(
-            (law_key(p.row.title), p.lines) for p in pages
-        )
-        entries = build_vocabulary.read_entries()
         kanji = build_vocabulary.kanji_variants()
-        known = {}
-        for entry in entries:
+        modern = modern_forms(kanji)
+        keyed = [(law_key(p.row.title, modern), p.lines) for p in pages]
+        counts = count_texts(keyed)
+        fixed = fixed_kana_words(keyed)
+        known: dict[str, set[str]] = {}
+        for entry in build_vocabulary.read_entries():
             forms = build_vocabulary.forms_of(entry.word, kanji)
-            keys = {
-                law_key(p.row.title)
-                for p in pages
-                if build_vocabulary.find_in(p.lines, forms, entry) is not None
+            known[entry.word] = {
+                key
+                for key, lines in keyed
+                if build_vocabulary.find_in(lines, forms, entry) is not None
             }
-            known[entry.word] = len(keys)
         path = work / CANDIDATES_FILE
         with open(path, "w", encoding="utf-8", newline="\n") as target:
-            target.write("kind\tword\ttexts\n")
-            for word, count in sorted(known.items(), key=lambda i: -i[1]):
-                target.write(f"entry\t{word}\t{count}\n")
+            target.write("kind\tword\ttexts\tdocuments\n")
+            for word, keys in sorted(known.items(), key=lambda i: -len(i[1])):
+                # The documents are listed for the rare words, so that a
+                # person can see they are not one law under two titles.
+                names = "、".join(sorted(keys)) if len(keys) <= 3 else ""
+                target.write(f"entry\t{word}\t{len(keys)}\t{names}\n")
             ranked = sorted(counts.items(), key=lambda i: (-i[1], i[0]))
             for word, count in ranked[: args.top]:
-                target.write(f"clause\t{word}\t{count}\n")
+                target.write(f"clause\t{word}\t{count}\t\n")
             ranked = sorted(fixed.items(), key=lambda i: (-i[1], i[0]))
             for word, count in ranked[: args.top]:
-                target.write(f"fixed\t{word}\t{count}\n")
+                target.write(f"fixed\t{word}\t{count}\t\n")
     except (
         build_vocabulary.VocabularyError,
         fetch_corpus.CorpusError,

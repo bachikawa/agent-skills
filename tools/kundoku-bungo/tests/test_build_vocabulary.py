@@ -91,6 +91,11 @@ class FindInTest(unittest.TestCase):
         self.assertEqual(len(plain[1]), len("之ヲ以テ") + 20)
         self.assertEqual(len(construction[1]), len("之ヲ以テ") + 40)
 
+    def test_skipped_match_in_another_spelling_is_cut_off(self) -> None:
+        line = "其事總テ之ヲ定メ総テ人々之ヲ守ル"
+        found = build.find_in([line], ["総テ", "總テ"], entry("総テ"))
+        self.assertEqual(found[1], "之ヲ定メ総テ人々之ヲ守ル")
+
     def test_example_starts_after_a_space(self) -> None:
         line = "前ノ文ナリ" + chr(0x3000) + "苟モ國アレハ則チ兵備アリ"
         found = build.find_in([line], ["苟モ"], entry("苟モ"))
@@ -233,10 +238,33 @@ class FindVocabularyTest(unittest.TestCase):
         self.assertNotIn("事故ニ", counts)
 
     def test_fixed_share_is_nine_tenths(self) -> None:
-        at_limit = [("a", ["悉ク"] * 9 + ["悉ニ"])]
-        below = [("a", ["悉ク"] * 8 + ["悉ニ", "悉ニ"])]
+        nine = [f"悉ク之ヲ{n}" for n in "一二三四五六七八九"]
+        at_limit = [("a", nine + ["悉ニ之ヲ十"])]
+        below = [("a", nine[:8] + ["悉ニ之ヲ十", "悉ニ之ヲ百"])]
         self.assertIn("悉ク", find_vocabulary.fixed_kana_words(at_limit))
         self.assertNotIn("悉ク", find_vocabulary.fixed_kana_words(below))
+
+    def test_word_only_in_a_later_version_is_counted(self) -> None:
+        texts = [
+            ("法", ["本令ハ甲ナリ"]),
+            ("法", ["悉ク之ヲ廢ス"]),
+            ("乙", ["悉ク改ム"]),
+        ]
+        self.assertEqual(find_vocabulary.fixed_kana_words(texts)["悉ク"], 2)
+
+    def test_amendment_and_old_forms_share_the_key_of_the_law(self) -> None:
+        modern = {"條": "条"}
+        pairs = [
+            ("道路取締令中改正/道路取締令", "道路取締令"),
+            ("民事訴訟法施行条例/公布時", "民事訴訟法施行條例"),
+            ("北海道國有未開地處分法(明治41年法律第57号)", "北海道國有未開地處分法"),
+        ]
+        for first, second in pairs:
+            with self.subTest(title=first):
+                self.assertEqual(
+                    find_vocabulary.law_key(first, modern),
+                    find_vocabulary.law_key(second, modern),
+                )
 
     def test_versions_of_one_law_share_a_key(self) -> None:
         titles = (
