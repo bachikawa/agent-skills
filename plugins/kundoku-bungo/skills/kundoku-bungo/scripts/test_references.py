@@ -166,8 +166,11 @@ class VocabularyTest(unittest.TestCase):
 
 
 EXAMPLES = REFERENCES / "examples.md"
+# Brackets hold stenographers' notes such as （拍手）; <ref and Arabic
+# digits come from transcribers and editors.
+EDITOR_NOTE = re.compile(r"[()（）\[\]［］]|<ref|[0-9０-９]")
 EXAMPLE_SECTION = re.compile(
-    r"^### (?P<id>[公演新])-\d+ .*?\n\n文語:\n\n```text\n(?P<bungo>.+?)\n```"
+    r"^### (?P<id>[公演新]-\d+) .*?\n\n文語:\n\n```text\n(?P<bungo>.+?)\n```"
     r"\n\n現代語訳:\n\n```text\n(?P<modern>.+?)\n```\n\n"
     r"(?P<notes>.*?)(?=^### |\Z)",
     re.S | re.M,
@@ -191,10 +194,19 @@ class ExamplesTest(unittest.TestCase):
                 self.assertEqual(len(urls), 1)
 
     def test_each_genre_has_at_least_three_sections(self) -> None:
-        genres = [section["id"] for section in self.sections]
+        genres = [section["id"][0] for section in self.sections]
         for genre in ("公", "演", "新"):
             with self.subTest(genre=genre):
                 self.assertGreaterEqual(genres.count(genre), 3)
+
+    def test_section_ids_are_unique(self) -> None:
+        ids = [section["id"] for section in self.sections]
+        self.assertEqual(len(ids), len(set(ids)))
+
+    def test_bungo_has_no_notes_from_stenographers_or_editors(self) -> None:
+        for section in self.sections:
+            with self.subTest(section=section["id"]):
+                self.assertIsNone(EDITOR_NOTE.search(section["bungo"]))
 
     def test_no_section_uses_imperial_wording(self) -> None:
         for section in self.sections:
