@@ -21,9 +21,9 @@ import convert_chars
 
 SCRIPT = Path(__file__).with_name("convert_chars.py")
 
-COMBINING_VOICED = "゙"
-SPACING_VOICED = "゛"
-OLD_FORM_OF_SHA = "社"  # CJK compatibility ideograph of 社
+COMBINING_VOICED = "\u3099"
+SPACING_VOICED = "\u309b"
+OLD_FORM_OF_SHA = "\ufa4c"  # CJK compatibility ideograph of 社
 
 
 class ToKatakanaTest(unittest.TestCase):
@@ -98,7 +98,7 @@ class RemovePunctuationTest(unittest.TestCase):
     def test_comma_is_removed_and_inner_period_becomes_space(self) -> None:
         self.assertEqual(
             convert_chars.remove_punctuation("之ヲ定ム。但シ、此ノ限ニ在ラス。"),
-            "之ヲ定ム　但シ此ノ限ニ在ラス",
+            "之ヲ定ム\u3000但シ此ノ限ニ在ラス",
         )
 
     def test_each_line_is_handled_separately(self) -> None:
@@ -117,6 +117,34 @@ class RemovePunctuationTest(unittest.TestCase):
                 self.assertEqual(
                     convert_chars.remove_punctuation(given), expected
                 )
+
+    def test_other_closing_brackets_are_handled(self) -> None:
+        cases = {
+            "〈之ヲ定ム。〉": "〈之ヲ定ム〉",
+            "《之ヲ定ム。》": "《之ヲ定ム》",
+        }
+        for given, expected in cases.items():
+            with self.subTest(given=given):
+                self.assertEqual(
+                    convert_chars.remove_punctuation(given), expected
+                )
+
+    def test_consecutive_periods_count_as_one(self) -> None:
+        cases = {
+            "之ヲ定ム。。": "之ヲ定ム",
+            "之ヲ定ム。。但シ": "之ヲ定ム\u3000但シ",
+        }
+        for given, expected in cases.items():
+            with self.subTest(given=given):
+                self.assertEqual(
+                    convert_chars.remove_punctuation(given), expected
+                )
+
+    def test_period_before_space_does_not_add_another_space(self) -> None:
+        self.assertEqual(
+            convert_chars.remove_punctuation("之ヲ定ム。\u3000但シ"),
+            "之ヲ定ム\u3000但シ",
+        )
 
     def test_period_before_trailing_space_or_cr_is_removed(self) -> None:
         cases = {
@@ -209,6 +237,34 @@ class CommandLineTest(unittest.TestCase):
         self.assertEqual(
             completed.stdout.decode("utf-8"), "$(echo injected)カクセイ"
         )
+
+    def test_input_file_with_bom_does_not_leak_the_bom(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory, "input.txt")
+            source.write_text("がくせい", encoding="utf-8-sig")
+            completed = self._run("to-bungo", "--input", str(source))
+        self.assertEqual(completed.stdout.decode("utf-8"), "カクセイ")
+
+    def test_missing_input_file_fails_with_message(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            missing = str(Path(directory, "missing.txt"))
+            completed = self._run("to-bungo", "--input", missing)
+        self.assertEqual(completed.returncode, 1)
+        self.assertEqual(completed.stdout, b"")
+        self.assertIn(b"cannot read", completed.stderr)
+
+    def test_empty_input_path_fails_instead_of_reading_stdin(self) -> None:
+        completed = self._run("to-bungo", "--input", "", given="がくせい")
+        self.assertEqual(completed.returncode, 1)
+        self.assertEqual(completed.stdout, b"")
+
+    def test_input_file_not_in_utf8_fails_with_message(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory, "input.txt")
+            source.write_text("がくせい", encoding="shift_jis")
+            completed = self._run("to-bungo", "--input", str(source))
+        self.assertEqual(completed.returncode, 1)
+        self.assertIn(b"cannot read", completed.stderr)
 
     def test_multiple_lines_are_kept(self) -> None:
         completed = self._run("to-bungo", given="さだむ。\nあり。\n")

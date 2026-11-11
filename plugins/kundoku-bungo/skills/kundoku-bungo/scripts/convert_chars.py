@@ -5,7 +5,9 @@ script (hiragana and katakana), voicing marks, small kana and
 punctuation. Rewriting grammar, choosing words and historical kana
 spelling are left to the agent, because they depend on context.
 
-Half-width katakana are out of scope and left as they are.
+Half-width katakana and punctuation other than the ideographic comma
+and period (such as the full-width comma and full stop) are out of
+scope and left as they are.
 
 Usage:
     python convert_chars.py to-bungo [options] --input FILE
@@ -28,8 +30,10 @@ _KATAKANA_BLOCK_START = 0x30A0
 _KATAKANA_BLOCK_END = 0x30FF
 _KANA_OFFSET = 0x60
 
-# ヵ and ヶ are used as counters and in place names (三ヶ月, 霞ヶ関),
-# not read as kana, so they stay katakana.
+# Small ヵ and ヶ are used as counters and in place names (三ヶ月,
+# 霞ヶ関), not read as kana, so they stay katakana. The full-size ケ
+# of pre-war text (三ケ月) cannot be told apart from the kana ケ by a
+# table, so the agent reads it.
 _KATAKANA_KEPT = {"ヵ", "ヶ"}
 
 # Iteration marks are converted together with the kana they repeat.
@@ -41,10 +45,10 @@ _SMALL_TO_LARGE = str.maketrans(
     "あいうえおつやゆよわかけアイウエオツヤユヨワカケ",
 )
 
-_COMBINING_VOICED = "゙"
-_COMBINING_SEMI_VOICED = "゚"
-_SPACING_VOICED = "゛"
-_SPACING_SEMI_VOICED = "゜"
+_COMBINING_VOICED = "\u3099"
+_COMBINING_SEMI_VOICED = "\u309a"
+_SPACING_VOICED = "\u309b"
+_SPACING_SEMI_VOICED = "\u309c"
 _VOICING_MARKS = {
     _COMBINING_VOICED,
     _COMBINING_SEMI_VOICED,
@@ -54,10 +58,14 @@ _VOICING_MARKS = {
 
 _COMMA = "、"
 _PERIOD = "。"
-_IDEOGRAPHIC_SPACE = "　"
-# A period needs no separator when a closing bracket or the end of the
-# line follows it.
-_CLOSING_OR_END = re.compile(_PERIOD + r"(?=[」』）〕】\])]|\s*$)")
+_IDEOGRAPHIC_SPACE = "\u3000"
+_CLOSING_BRACKETS = "」』）〕】》〉］｝)]}"
+# Periods need no separator when a closing bracket, a space or the end
+# of the line follows them.
+_PERIODS_BEFORE_BREAK = re.compile(
+    _PERIOD + "+(?=[" + re.escape(_CLOSING_BRACKETS) + r"]|\s|$)"
+)
+_PERIODS = re.compile(_PERIOD + "+")
 
 
 def _is_kana(char: str) -> bool:
@@ -120,8 +128,8 @@ def strip_voicing_marks(text: str) -> str:
     """Removes voiced and semi-voiced marks from kana.
 
     Precomposed kana such as ガ or パ become カ and ハ. Combining marks
-    and the spacing marks ゛ and ゜ are removed. Characters other than
-    kana are left as they are.
+    and the spacing voiced and semi-voiced marks are removed.
+    Characters other than kana are left as they are.
 
     Args:
         text: The text to convert.
@@ -160,9 +168,10 @@ def enlarge_small_kana(text: str) -> str:
 def remove_punctuation(text: str) -> str:
     """Removes the Japanese comma and period.
 
-    The comma is removed. A period followed by a closing bracket or by
-    the end of the line (spaces aside) is removed. Any other period
-    becomes an ideographic space so that sentences stay apart.
+    The comma is removed. Consecutive periods count as one. A period
+    followed by a closing bracket, a space or the end of the line is
+    removed. Any other period becomes an ideographic space so that
+    sentences stay apart.
 
     Args:
         text: The text to convert.
@@ -173,8 +182,8 @@ def remove_punctuation(text: str) -> str:
     lines = []
     for line in text.split("\n"):
         line = line.replace(_COMMA, "")
-        line = _CLOSING_OR_END.sub("", line)
-        lines.append(line.replace(_PERIOD, _IDEOGRAPHIC_SPACE))
+        line = _PERIODS_BEFORE_BREAK.sub("", line)
+        lines.append(_PERIODS.sub(_IDEOGRAPHIC_SPACE, line))
     return "\n".join(lines)
 
 
@@ -274,17 +283,22 @@ def main(argv: list[str] | None = None) -> int:
     Returns:
         The exit code.
     """
-    # The Windows console may not use UTF-8, and both the input and the
-    # help text contain Japanese. Writing "\n" as is keeps the line
-    # endings the same on every platform.
-    sys.stdin.reconfigure(encoding="utf-8")
+    # The Windows console may not use UTF-8, and the text and the
+    # arguments echoed in error messages are Japanese. Writing "\n" as
+    # is keeps the line endings the same on every platform.
     sys.stdout.reconfigure(encoding="utf-8", newline="\n")
     sys.stderr.reconfigure(encoding="utf-8")
     args = _build_parser().parse_args(argv)
-    if args.input:
-        with open(args.input, encoding="utf-8") as source:
-            text = source.read()
+    if args.input is not None:
+        try:
+            # utf-8-sig drops the BOM that some Windows editors add.
+            with open(args.input, encoding="utf-8-sig") as source:
+                text = source.read()
+        except (OSError, UnicodeDecodeError) as error:
+            print(f"cannot read {args.input}: {error}", file=sys.stderr)
+            return 1
     else:
+        sys.stdin.reconfigure(encoding="utf-8-sig")
         text = sys.stdin.read()
     if args.direction == "to-bungo":
         result = to_bungo(
