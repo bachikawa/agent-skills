@@ -187,6 +187,5 @@ agent-skills/
 
 [MIT](LICENSE)
 
-- `kundoku-bungo` は、Unicode の Unihan データベースから作った字の表（`plugins/kundoku-bungo/skills/kundoku-bungo/references/kanji.tsv`）を含む。この表にだけ、Unicode License v3 も当てはまる（[LICENSE-UNICODE](LICENSE-UNICODE)、出典は [NOTICE.md](plugins/kundoku-bungo/skills/kundoku-bungo/NOTICE.md)）。
-- リポジトリの一番上の `LICENSE-UNICODE` は、スキルの中の `LICENSE-UNICODE` の写しである。GitHub のトップページで、ライセンスを見やすくするために置いた。2 つは同じ中身に保つ。
+- `kundoku-bungo` は、Unicode の Unihan データベースから作った字の表（`plugins/kundoku-bungo/skills/kundoku-bungo/references/kanji.tsv`）を含む。この表にだけ、Unicode License v3 も当てはまる（[LICENSE-UNICODE](plugins/kundoku-bungo/skills/kundoku-bungo/LICENSE-UNICODE)、出典は [NOTICE.md](plugins/kundoku-bungo/skills/kundoku-bungo/NOTICE.md)）。
 - 見出しの絵の文字は、Noto Sans JP と Noto Serif JP（SIL Open Font License 1.1）で書いた。
