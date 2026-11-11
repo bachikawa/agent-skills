@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import csv
 import os
+import re
 import sys
 import tempfile
 import zipfile
@@ -62,6 +63,9 @@ OVERRIDE_COLUMNS = [
 ]
 EVIDENCE_USAGES = frozenset({"all", "kanji_only"})
 REVISION_URL = "https://ja.wikisource.org/w/index.php?oldid={}"
+# Design rows cite images in the National Diet Library Digital Collections.
+DESIGN_URL = re.compile(r"https://dl\.ndl\.go\.jp/pid/[0-9]+(?:/[0-9]+)*")
+OVERRIDE_KINDS = ("", "design", "exclude")
 
 
 class TableError(Exception):
@@ -75,10 +79,14 @@ class Override:
     Attributes:
         modern: The modern form.
         old: The old form.
-        kind: Empty to keep the kind from the code point, or design for a
-            design variant that is not in Unihan.
-        one_to_many: "1" when the old form must be chosen by word.
-        note: How to choose, for a one_to_many row.
+        kind: Empty to keep the kind from the code point, design for a
+            design variant that is not in Unihan, or exclude for a pair
+            whose only evidence is a slip of the transcription.
+        one_to_many: "1" when the old form must be chosen by word, "0"
+            to convert a pair that has several old forms in Unihan, or
+            empty to keep what Unihan gives.
+        note: How to choose, for a one_to_many row; why, for an exclude
+            row.
         evidence: The source of a design row.
         evidence_url: The URL of that source.
     """
@@ -118,12 +126,12 @@ def unihan_pairs(unihan_zip: Path) -> list[tuple[str, str, bool]]:
 
 
 def read_overrides(
-    path: Path = OVERRIDES_FILE,
+    path: Path | None = None,
 ) -> dict[tuple[str, str], Override]:
     """Reads kanji_overrides.tsv.
 
     Args:
-        path: The file to read.
+        path: The file to read (OVERRIDES_FILE when None).
 
     Returns:
         The overrides by (modern, old).
@@ -131,6 +139,7 @@ def read_overrides(
     Raises:
         TableError: The columns or a value are not as expected.
     """
+    path = OVERRIDES_FILE if path is None else path
     with open(path, encoding="utf-8", newline="") as source:
         reader = csv.DictReader(source, delimiter="\t", quoting=csv.QUOTE_NONE)
         if reader.fieldnames != OVERRIDE_COLUMNS:
@@ -141,12 +150,15 @@ def read_overrides(
             key = (override.modern, override.old)
             if key in overrides:
                 raise TableError(f"two overrides for {key}")
-            if override.kind not in ("", "design"):
+            if override.kind not in OVERRIDE_KINDS:
                 raise TableError(f"unknown kind: {override.kind}")
+            if override.kind == "exclude" and not override.note:
+                raise TableError(f"exclude row without a reason: {key}")
             if override.one_to_many not in ("", "0", "1"):
                 raise TableError(f"unexpected one_to_many: {key}")
             if override.kind == "design" and not (
-                override.evidence and override.evidence_url
+                override.evidence
+                and DESIGN_URL.fullmatch(override.evidence_url)
             ):
                 raise TableError(f"design row without evidence: {key}")
             overrides[key] = override
@@ -188,7 +200,7 @@ def build_rows(
     pairs: Iterable[tuple[str, str, bool]],
     pages: list[tuple[fetch_corpus.Revision, str]],
     overrides: dict[tuple[str, str], Override],
-) -> tuple[list[list[str]], list[tuple[str, str]]]:
+) -> tuple[list[list[str]], list[tuple[str, str]], dict[tuple[str, str], int]]:
     """Builds the rows of kanji.tsv.
 
     Args:
@@ -198,7 +210,9 @@ def build_rows(
 
     Returns:
         The rows sorted by the code points of the modern and the old form,
-        and the pairs that were not found in the corpus.
+        the pairs that were not found in the corpus, and the number of
+        pages each found pair appears in (a pair found in one page only
+        is worth checking against the original).
 
     Raises:
         TableError: A one_to_many row has no note, or an override does not
@@ -206,15 +220,20 @@ def build_rows(
     """
     rows = []
     missing = []
+    counts = {}
     used = set()
     for modern, old, several in pairs:
-        page = next((p for p, text in pages if old in text), None)
-        if page is None:
+        found = [p for p, text in pages if old in text]
+        if not found:
             missing.append((modern, old))
             continue
+        page = found[0]
+        counts[(modern, old)] = len(found)
         override = overrides.get((modern, old))
         if override is not None:
             used.add((modern, old))
+            if override.kind == "exclude":
+                continue
         kind = "compat" if 0xF900 <= ord(old) <= 0xFAFF else "joyo"
         one_to_many = "1" if several else "0"
         note = ""
@@ -256,11 +275,18 @@ def build_rows(
     if without_note:
         raise TableError(f"one_to_many rows without a note: {without_note}")
     rows.sort(key=lambda r: (ord(r[0]), ord(r[1])))
-    return rows, sorted(missing, key=lambda p: (ord(p[0]), ord(p[1])))
+    missing.sort(key=lambda p: (ord(p[0]), ord(p[1])))
+    return rows, missing, counts
 
 
 def render(rows: Iterable[list[str]]) -> str:
     """Returns the text of kanji.tsv with LF line ends.
+
+    Args:
+        rows: The rows from build_rows().
+
+    Returns:
+        The text of the file.
 
     Raises:
         TableError: A value has a tab or a line break.
@@ -274,7 +300,12 @@ def render(rows: Iterable[list[str]]) -> str:
 
 
 def write_atomically(text: str, path: Path) -> None:
-    """Replaces a file at once, so that a failure keeps the old file."""
+    """Replaces a file at once, so that a failure keeps the old file.
+
+    Args:
+        text: The new content.
+        path: The file to replace.
+    """
     handle, temporary = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
     try:
         with os.fdopen(handle, "w", encoding="utf-8", newline="\n") as target:
@@ -302,14 +333,19 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         work = fetch_corpus.check_work_dir(args.work)
-        unihan = fetch_corpus.download_unihan(
-            work, opener=_no_download
-        )
+        unihan = fetch_corpus.download_unihan(work, opener=_no_download)
         pages = evidence_pages(work, fetch_corpus.read_revisions())
-        rows, missing = build_rows(
+        rows, missing, counts = build_rows(
             unihan_pairs(unihan), pages, read_overrides()
         )
         text = render(rows)
+        if args.check:
+            if KANJI_FILE.read_text(encoding="utf-8") != text:
+                print("kanji.tsv differs from the build", file=sys.stderr)
+                return 1
+        else:
+            write_report(work, missing, counts)
+            write_atomically(text, KANJI_FILE)
     except (
         TableError,
         fetch_corpus.CorpusError,
@@ -318,23 +354,37 @@ def main(argv: list[str] | None = None) -> int:
     ) as error:
         print(error, file=sys.stderr)
         return 1
-    if args.check:
-        current = KANJI_FILE.read_text(encoding="utf-8")
-        if current != text:
-            print("kanji.tsv differs from the build", file=sys.stderr)
-            return 1
-    else:
-        write_atomically(text, KANJI_FILE)
-        with open(
-            work / "kanji_missing.tsv", "w", encoding="utf-8", newline="\n"
-        ) as target:
-            for modern, old in missing:
-                target.write(f"{modern}\t{old}\tU+{ord(old):04X}\n")
     print(f"{len(rows)} rows, {len(missing)} pairs not found", file=sys.stderr)
     return 0
 
 
+def write_report(
+    work: Path,
+    missing: Iterable[tuple[str, str]],
+    counts: dict[tuple[str, str], int],
+) -> None:
+    """Writes WORK/kanji_missing.tsv and WORK/kanji_counts.tsv.
+
+    Args:
+        work: The work directory.
+        missing: The pairs not found in the corpus.
+        counts: The number of pages each found pair appears in.
+    """
+    with open(work / "kanji_missing.tsv", "w", encoding="utf-8") as target:
+        for modern, old in missing:
+            target.write(f"{modern}\t{old}\tU+{ord(old):04X}\n")
+    with open(work / "kanji_counts.tsv", "w", encoding="utf-8") as target:
+        for (modern, old), count in sorted(counts.items(), key=_by_count):
+            target.write(f"{modern}\t{old}\t{count}\n")
+
+
+def _by_count(item: tuple[tuple[str, str], int]) -> tuple[int, int, int]:
+    (modern, old), count = item
+    return count, ord(modern), ord(old)
+
+
 def _no_download(request: object) -> bytes:
+    """Stops when Unihan.zip has to be downloaded; this script never does."""
     raise fetch_corpus.CorpusError(
         "Unihan.zip is not fetched; run fetch_corpus.py unihan"
     )

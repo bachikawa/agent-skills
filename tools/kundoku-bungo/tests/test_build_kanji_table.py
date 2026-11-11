@@ -6,13 +6,16 @@ Run from the repository root with:
 
 from __future__ import annotations
 
+import contextlib
 import csv
+import io
 import re
 import sys
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -31,6 +34,7 @@ def revision(
 
 
 def override(modern: str, old: str, **values: str) -> build.Override:
+    """Returns a row of kanji_overrides.tsv for a test."""
     fields = dict(
         modern=modern,
         old=old,
@@ -70,7 +74,7 @@ class BuildRowsTest(unittest.TestCase):
     ]
 
     def test_earliest_page_is_the_evidence(self) -> None:
-        rows, missing = build.build_rows(
+        rows, missing, counts = build.build_rows(
             [("国", "國", False), ("学", "學", False), ("体", "體", False)],
             self.PAGES,
             {},
@@ -101,17 +105,18 @@ class BuildRowsTest(unittest.TestCase):
             ],
         )
         self.assertEqual(missing, [("体", "體")])
+        self.assertEqual(counts, {("国", "國"): 2, ("学", "學"): 1})
 
     def test_compatibility_ideograph_is_marked_compat(self) -> None:
         pages = [(revision("法", 1, 1880), "陸" + COMPAT_SEA + "軍")]
-        rows, _ = build.build_rows([("海", COMPAT_SEA, False)], pages, {})
+        rows, _, _ = build.build_rows([("海", COMPAT_SEA, False)], pages, {})
         self.assertEqual(rows[0][3], "compat")
 
     def test_override_sets_one_to_many_and_the_note(self) -> None:
         overrides = {
             ("国", "國"): override("国", "國", one_to_many="1", note="選ぶ")
         }
-        rows, _ = build.build_rows(
+        rows, _, _ = build.build_rows(
             [("国", "國", False)], self.PAGES, overrides
         )
         self.assertEqual(rows[0][4:6], ["1", "選ぶ"])
@@ -126,7 +131,7 @@ class BuildRowsTest(unittest.TestCase):
             evidence="官報",
             evidence_url="https://dl.ndl.go.jp/pid/1",
         )
-        rows, _ = build.build_rows([], self.PAGES, {("衆", "眾"): design})
+        rows, _, _ = build.build_rows([], self.PAGES, {("衆", "眾"): design})
         self.assertEqual(
             rows,
             [
@@ -142,6 +147,23 @@ class BuildRowsTest(unittest.TestCase):
                 ]
             ],
         )
+
+    def test_excluded_pair_is_left_out_of_the_table(self) -> None:
+        overrides = {
+            ("国", "國"): override("国", "國", kind="exclude", note="誤り")
+        }
+        rows, missing, _ = build.build_rows(
+            [("国", "國", False), ("学", "學", False)], self.PAGES, overrides
+        )
+        self.assertEqual([r[1] for r in rows], ["學"])
+        self.assertEqual(missing, [])
+
+    def test_override_can_turn_several_old_forms_into_one(self) -> None:
+        overrides = {("国", "國"): override("国", "國", one_to_many="0")}
+        rows, _, _ = build.build_rows(
+            [("国", "國", True)], self.PAGES, overrides
+        )
+        self.assertEqual(rows[0][4], "0")
 
     def test_several_old_forms_without_a_note_is_an_error(self) -> None:
         with self.assertRaises(build.TableError):
@@ -195,6 +217,35 @@ class OverridesFileTest(unittest.TestCase):
             with self.assertRaises(build.TableError):
                 build.read_overrides(path)
 
+    def test_unexpected_rows_are_errors(self) -> None:
+        header = "\t".join(build.OVERRIDE_COLUMNS)
+        url = "https://dl.ndl.go.jp/pid/2960976/1/18"
+        cases = {
+            "duplicate": ["国\t國\t\t1\t説明\t\t", "国\t國\t\t1\t説明\t\t"],
+            "kind": ["国\t國\tother\t\t\t\t"],
+            "one_to_many": ["国\t國\t\t2\t説明\t\t"],
+            "design without evidence": ["衆\t眾\tdesign\t1\t説明\t\t"],
+            "design elsewhere": [
+                "衆\t眾\tdesign\t1\t説明\t官報\thttps://example.com/x"
+            ],
+            "exclude without a reason": ["国\t國\texclude\t\t\t\t"],
+        }
+        for name, lines in cases.items():
+            with self.subTest(case=name):
+                with tempfile.TemporaryDirectory() as directory:
+                    path = Path(directory, "kanji_overrides.tsv")
+                    path.write_text(
+                        header + "\n" + "\n".join(lines) + "\n", "utf-8"
+                    )
+                    with self.assertRaises(build.TableError):
+                        build.read_overrides(path)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "kanji_overrides.tsv")
+            path.write_text(
+                f"{header}\n衆\t眾\tdesign\t1\t説明\t官報\t{url}\n", "utf-8"
+            )
+            self.assertIn(("衆", "眾"), build.read_overrides(path))
+
     def test_every_override_is_in_the_table(self) -> None:
         with open(build.KANJI_FILE, encoding="utf-8", newline="") as source:
             table = {
@@ -205,9 +256,68 @@ class OverridesFileTest(unittest.TestCase):
             }
         for key, value in build.read_overrides().items():
             with self.subTest(pair=key):
+                if value.kind == "exclude":
+                    self.assertNotIn(key, table)
+                    continue
                 self.assertIn(key, table)
                 if value.note:
                     self.assertEqual(table[key]["note"], value.note)
+
+
+class MainTest(unittest.TestCase):
+    """Runs main() with a small Unihan, corpus and table in a temporary
+    directory."""
+
+    def run_main(self, table_text: str, *args: str) -> tuple[int, str]:
+        page = Page("法", 1, "{{Header|year=1890}}\n國", [])
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory, "work")
+            fetch_corpus.save_page(work, page)
+            unihan = Path(work, "Unihan.zip")
+            with zipfile.ZipFile(unihan, "w") as archive:
+                archive.writestr(
+                    "Unihan_Variants.txt",
+                    "U+56FD\tkJapaneseOldVariant\tU+570B\n",
+                )
+            sha256 = fetch_corpus._sha256(unihan.read_bytes())
+            table = Path(directory, "kanji.tsv")
+            table.write_text(table_text, encoding="utf-8")
+            overrides = Path(directory, "kanji_overrides.tsv")
+            overrides.write_text(
+                "\t".join(build.OVERRIDE_COLUMNS) + "\n", "utf-8"
+            )
+            rows = [Revision("法", 1, page.sha1, 1890, "all", "listed", "r")]
+            stderr = io.StringIO()
+            with mock.patch.object(
+                fetch_corpus, "UNIHAN_SHA256", sha256
+            ), mock.patch.object(
+                fetch_corpus, "read_revisions", return_value=rows
+            ), mock.patch.object(
+                build, "KANJI_FILE", table
+            ), mock.patch.object(
+                build, "OVERRIDES_FILE", overrides
+            ), contextlib.redirect_stderr(stderr):
+                code = build.main(["--work", str(work), *args])
+            return code, table.read_text(encoding="utf-8")
+
+    EXPECTED = (
+        "\t".join(build.KANJI_COLUMNS)
+        + "\n国\t國\tU+570B\tjoyo\t0\t\t法（1890）\t"
+        + "https://ja.wikisource.org/w/index.php?oldid=1\n"
+    )
+
+    def test_check_passes_when_the_table_is_the_same(self) -> None:
+        code, text = self.run_main(self.EXPECTED, "--check")
+        self.assertEqual((code, text), (0, self.EXPECTED))
+
+    def test_check_fails_and_keeps_the_table_when_it_differs(self) -> None:
+        different = self.EXPECTED.replace("法（1890）", "別（1890）")
+        code, text = self.run_main(different, "--check")
+        self.assertEqual((code, text), (1, different))
+
+    def test_build_writes_the_table(self) -> None:
+        code, text = self.run_main("old\n")
+        self.assertEqual((code, text), (0, self.EXPECTED))
 
 
 class KanjiTableEvidenceTest(unittest.TestCase):
