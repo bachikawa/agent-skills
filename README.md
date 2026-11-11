@@ -20,6 +20,7 @@
   <a href="#インストール">インストール</a> ・
   <a href="#ほかのエージェントnpx-skills">npx skills</a> ・
   <a href="#更新と外し方">更新と外し方</a> ・
+  <a href="#開発する人へ">開発する人へ</a> ・
   <a href="#ライセンス">ライセンス</a>
 </p>
 
@@ -33,15 +34,15 @@
 
 <table>
   <tr><th align="left">現代語（入力）</th><td>この規則に違反した者は、罰金に処する。ただし、事情によっては、その刑を軽くすることができる。</td></tr>
-  <tr><th align="left">文語（出力）</th><td>此ノ規則ニ違反シタル者ハ罰金ニ處ス　但シ事情ニ依リテハ其ノ刑ヲ減輕スルコトヲ得</td></tr>
+  <tr><th align="left">文語（出力）</th><td>此ノ規則ニ違反シタル者ハ罰金ニ處ス　但シ事情ニ依リテハ其ノ刑ヲ減輕スルコトヲ得</td></tr>
 </table>
 
 - 既定の表記は、漢字カタカナ交じり・旧字体・濁点なし・句読点なし。ひらがな・新字体・濁点あり・句読点ありにもできる。
-- 字の表（新字体と旧字体 318 組）と語の表（漢文訓読から来た語 98 語）に、当時の公文書の翻刻の典拠を付けてある。
+- 字の表（新字体と旧字体の対応）と語の表（漢文訓読から来た語）に、当時の文書（法令・告諭・演説などの翻刻と、官報の画像）の典拠を付けてある。
 - 文語から現代語への訳もできる。
 
 > [!NOTE]
-> 出力は現代の作文で、史料ではない。上の文語も、スキルで変換した例である。
+> 出力は現代の作文で、史料ではない。上の文語も、スキルで変換した例である。「者」は、既定のとおり互換漢字の旧字体（U+FA5B）で、ソフトによっては新字体と同じ形に見える。
 
 プラグイン ID: `kundoku-bungo@bachikawa-skills` ・ [変更の記録（Releases）](https://github.com/bachikawa/agent-skills/releases) ・ [出典と権利の表示](plugins/kundoku-bungo/skills/kundoku-bungo/NOTICE.md)
 
@@ -49,7 +50,7 @@
 
 ## インストール
 
-Claude Code で、次の 1 行を実行する（Claude Code 2.1.275 以降。2.1.322 で確かめた）。
+Claude Code で、次の 1 行を実行する（`claude plugin validate` の案内では Claude Code 2.1.275 以降。2.1.322 で確かめた）。
 
 ```text
 /plugin install kundoku-bungo --marketplace bachikawa/agent-skills
