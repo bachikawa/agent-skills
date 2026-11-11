@@ -55,12 +55,15 @@ HALF_WIDTH_BRACKET = re.compile(r"[()\[\]]")
 # Characters that mark editors' markup left after strip_markup(), or that
 # the original documents never have.
 _LEFTOVER_MARKUP = re.compile(f"[<>{{}}|={REMOVED}]")
-_KANJI_NUMBER = "一二三四五六七八九十百千〇廿卅"
+_KANJI_NUMBER = (
+    "一二三四五六七八九十百千〇廿卅壹貳參肆伍陸柒捌玖拾"
+    "0123456789０１２３４５６７８９"
+)
 # Chapter and article numbers at the start of a line, with the space after.
 # A number followed directly by text, as in 「第三條ノ規定ニ依リ」, is part
 # of the sentence and is kept.
 HEADING_NUMBER = re.compile(
-    f"^(?:第[{_KANJI_NUMBER}]+[編章節款條条項](?:ノ[{_KANJI_NUMBER}]+)?"
+    f"^(?:第[{_KANJI_NUMBER}]+[編章節款條条項](?:ノ[{_KANJI_NUMBER}]+)*"
     f"|[{_KANJI_NUMBER}]+章)(?:[ {IDEOGRAPHIC_SPACE}]+|$)"
 )
 # Variation selectors, C0 and C1 controls other than the line break, and
@@ -72,6 +75,21 @@ _INVISIBLE = re.compile(
     f"{chr(0x2066)}-{chr(0x2069)}{chr(0xFEFF)}]"
 )
 _HEADER_START = re.compile(r"\{\{\s*[Hh]eader\s*[|}]")
+_SECTION_HEADING = re.compile(r"^(=+)\s*(.*?)\s*\1\s*$", re.M)
+# Sections written by editors: links, notes, information about the law,
+# and versions rewritten in hiragana or modern Japanese.
+EDITOR_SECTION = re.compile(
+    "外部リンク|関連項目|関連資料|現代語訳|読み下し|平仮名|ひらがな|脚注"
+    "|注釈|註釈|注記|出典|参考|改廃経過|改正経過|沿革|解説|備考|凡例|法令情報"
+)
+# Versions in which editors only replaced the kanji forms. Some pages, such
+# as 学制, have no other transcription, so these sections are removed only
+# when the page has the text in another section too.
+NEW_FORM_SECTION = re.compile("新字体|常用漢字|JIS")
+# The fewest kana and kanji a page must keep for its other sections to
+# count as a transcription.
+_MIN_TEXT = 20
+_TEXT_CHAR = re.compile("[ぁ-ゖァ-ヺ一-鿿㐀-䶿豈-龎々〆]")
 # Templates whose first argument is the text of the original document.
 _TEXT_TEMPLATE = re.compile(
     r"\{\{\s*(?:[Ll]ang\s*\|[^|{}]*|異体字|[Rr]|[Rr]uby)\s*\|([^{}|]*)[^{}]*\}\}"
@@ -127,42 +145,121 @@ def split_header(wikitext: str) -> tuple[str, str]:
     return header, wikitext[: match.start()] + wikitext[end:]
 
 
+def _remove_sections(wikitext: str, heading: re.Pattern[str]) -> str:
+    """Removes the sections whose headings match, with their subsections.
+
+    A section runs until the next heading of the same or a higher level.
+    """
+    kept = []
+    position = 0
+    skip_level = None
+    for match in _SECTION_HEADING.finditer(wikitext):
+        level = len(match.group(1))
+        if skip_level is None:
+            kept.append(wikitext[position : match.start()])
+        elif level <= skip_level:
+            skip_level = None
+        if skip_level is None and heading.search(match.group(2)):
+            skip_level = level
+        position = match.start()
+        if skip_level is not None:
+            position = match.end()
+    if skip_level is None:
+        kept.append(wikitext[position:])
+    return "".join(kept)
+
+
+def remove_editor_sections(wikitext: str) -> str:
+    """Removes the sections that editors wrote.
+
+    Sections matching EDITOR_SECTION (such as 関連項目 or 現代語訳) are
+    always removed. Sections matching NEW_FORM_SECTION (such as 新字体)
+    are removed when the rest of the page still has a transcription;
+    otherwise they are the only transcription and are kept.
+
+    Args:
+        wikitext: Wikitext without the header.
+
+    Returns:
+        The wikitext without those sections.
+    """
+    text = _remove_sections(wikitext, EDITOR_SECTION)
+    without_new_forms = _remove_sections(text, NEW_FORM_SECTION)
+    plain = strip_markup(without_new_forms)
+    if len(_TEXT_CHAR.findall(plain)) >= _MIN_TEXT:
+        return without_new_forms
+    return text
+
+
 def body(wikitext: str) -> str:
-    """Removes the page header template (Header) from a page.
+    """Returns the part of a page that holds the original document.
+
+    Removes the page header template (Header) and the sections written by
+    editors (see remove_editor_sections()).
 
     Args:
         wikitext: The wikitext of a whole page.
 
     Returns:
-        The wikitext without the header (see split_header()).
+        The wikitext of the original document, with markup.
     """
-    return split_header(wikitext)[1]
+    return remove_editor_sections(split_header(wikitext)[1])
 
 
 def strip_markup(wikitext: str, *, mark_removed: bool = False) -> str:
     """Removes the editors' markup and keeps the text of the document.
 
-    Removes notes in <ref> tags, text in bold (numbers added by
-    transcribers), templates other than those holding the text, links to
-    files, categories and other languages, HTML tags, invisible
-    characters and controls. Keeps the text of links and of the
+    Removes notes in <ref> tags with their text, <sup>, <sub> and <small>
+    with their text, text in bold (numbers added by transcribers),
+    templates other than those holding the text, links to files,
+    categories and other languages, other HTML tags (their text is kept),
+    invisible characters and controls. Keeps the text of links and of the
     異体字・Lang・r・Ruby templates, also when they are nested. <br> becomes
-    a line break. Character references are turned into characters without
-    normalizing them, so compatibility ideographs survive.
+    a line break and a no-break space becomes a space. Character
+    references are turned into characters without normalizing them, so
+    compatibility ideographs survive.
 
     Args:
         wikitext: Wikitext, usually the result of body().
-        mark_removed: Put REMOVED in place of each template that is
-            removed, so that a caller can tell where text may be missing.
+        mark_removed: Put REMOVED where text was removed from inside a
+            line (a template, bold text inside a line, <sup> and the
+            like, or an unclosed <ref>), so that a caller can tell where
+            text may be missing.
 
     Returns:
         The plain text, with the line breaks of the wikitext.
     """
-    text = re.sub(r"<ref\b[^>]*/>", "", wikitext)
-    text = re.sub(r"<ref\b[^>]*>.*?</ref>", "", text, flags=re.S)
-    text = re.sub(r"<br\s*/?>", "\n", text, flags=re.I)
-    text = re.sub(r"'''[^']*'''", "", text)
     replacement = REMOVED if mark_removed else ""
+    text = re.sub(r"<ref\b[^>]*/>", "", wikitext, flags=re.I)
+    text = re.sub(r"<ref\b[^>]*>.*?</ref>", "", text, flags=re.S | re.I)
+    # An unclosed <ref> would leave its note behind; drop the rest of the
+    # line with it.
+    text = re.sub(r"<ref\b[^>]*>[^\n]*", replacement, text, flags=re.I)
+    text = re.sub(
+        r"<(sup|sub|small)\b[^>]*>.*?</\1>",
+        replacement,
+        text,
+        flags=re.S | re.I,
+    )
+    text = re.sub(r"<br\b[^>]*>", "\n", text, flags=re.I)
+    # Tags that only wrap text, such as <span id="a2"> around an article
+    # number, are removed first so that the number is seen at the start
+    # of its line.
+    text = re.sub(
+        r"</?(?:span|div|p|center|font|big|b|i|u)\b[^>]*>",
+        "",
+        text,
+        flags=re.I,
+    )
+    # Bold at the start of a line is a number added by a transcriber; bold
+    # inside a line may be a word of the text, so it is marked.
+    text = re.sub(
+        f"^([ {IDEOGRAPHIC_SPACE}*:#;]*)'''[^'\\n]*'''",
+        r"\1",
+        text,
+        flags=re.M,
+    )
+    text = re.sub(r"'''[^'\n]*'''", replacement, text)
     previous = None
     while previous != text:
         previous = text
@@ -175,7 +272,7 @@ def strip_markup(wikitext: str, *, mark_removed: bool = False) -> str:
     text = re.sub(r"\[\[(?:[^|\]]*\|)?([^\]]*)\]\]", r"\1", text)
     text = re.sub(r"<[^>]+>", "", text)
     text = text.replace("''", "")
-    text = html.unescape(text).replace("\t", " ")
+    text = html.unescape(text).replace("\t", " ").replace(chr(0xA0), " ")
     return _INVISIBLE.sub("", text)
 
 
@@ -213,16 +310,18 @@ def apply_line_exclusions(
         The lines outside every range.
 
     Raises:
-        ValueError: An anchor is not found, which means that the page is
-            not the revision the range was written for.
+        ValueError: A start anchor is not found or is found on more than
+            one line, or an end anchor is not found. Either means that
+            the page is not the revision the range was written for.
     """
     kept = list(lines)
     for start_anchor, end_anchor in ranges:
-        start = next(
-            (i for i, line in enumerate(kept) if start_anchor in line), None
-        )
-        if start is None:
+        found = [i for i, line in enumerate(kept) if start_anchor in line]
+        if not found:
             raise ValueError(f"start anchor not found: {start_anchor}")
+        if len(found) > 1:
+            raise ValueError(f"start anchor found twice: {start_anchor}")
+        start = found[0]
         end = next(
             (i for i in range(start, len(kept)) if end_anchor in kept[i]),
             None,
@@ -286,7 +385,7 @@ def vocabulary_lines(
     lines = apply_line_exclusions(text.split("\n"), ranges)
     result = []
     for line in lines:
-        if line.lstrip().startswith(("=", "{|", "|")):
+        if line.lstrip().startswith(("=", "{|", "|", "!", "----", "__")):
             continue
         line = HEADING_NUMBER.sub("", line.strip(_LINE_MARKS))
         if not line or IMPERIAL_WORDS.search(line):

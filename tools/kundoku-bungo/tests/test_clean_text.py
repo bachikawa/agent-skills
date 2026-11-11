@@ -50,6 +50,30 @@ class BodyTest(unittest.TestCase):
         self.assertIn("year=1907", header)
         self.assertEqual(rest, "{{Otheruses}}\n\n本文")
 
+    ORIGINAL = "凡ソ人タル者ハ其身ヲ修メ智ヲ開キ才藝ヲ長スルニ在リ"
+
+    def test_sections_written_by_editors_are_removed(self) -> None:
+        page = (
+            f"== 原文 ==\n{self.ORIGINAL}\n=== 第一章 ===\n乙\n"
+            "== 新字体 ==\n新\n=== 第一章 ===\n新二\n"
+            "== 現代語訳 ==\n訳\n"
+            "== 関連項目 ==\n* [[刑法]]\n"
+            "== 附則 ==\n丙"
+        )
+        text = clean_text.body(page)
+        for kept in (self.ORIGINAL, "乙", "丙", "第一章"):
+            with self.subTest(kept=kept):
+                self.assertIn(kept, text)
+        for removed in ("新", "訳", "刑法", "関連項目"):
+            with self.subTest(removed=removed):
+                self.assertNotIn(removed, text)
+
+    def test_new_form_section_is_kept_when_it_is_the_only_text(self) -> None:
+        page = f"== 新字体 ==\n{self.ORIGINAL}\n== 関連項目 ==\n* [[刑法]]"
+        text = clean_text.body(page)
+        self.assertIn(self.ORIGINAL, text)
+        self.assertNotIn("刑法", text)
+
     def test_unclosed_header_takes_the_rest_of_the_page(self) -> None:
         self.assertEqual(clean_text.body("前\n{{Header|notes=注\n本文"), "前\n")
 
@@ -110,6 +134,36 @@ class StripMarkupTest(unittest.TestCase):
         text = "甲&#9;乙&#x202E;丙&#x200B;丁&#7;"
         self.assertEqual(clean_text.strip_markup(text), "甲 乙丙丁")
 
+    def test_text_removed_inside_a_line_can_be_marked(self) -> None:
+        removed = clean_text.REMOVED
+        cases = {
+            "本法ハ'''公布'''ノ日ヨリ": f"本法ハ{removed}ノ日ヨリ",
+            "本文<sup>編者注</sup>終": f"本文{removed}終",
+            "本文<ref>閉じない注": f"本文{removed}",
+        }
+        for text, expected in cases.items():
+            with self.subTest(text=text):
+                self.assertEqual(
+                    clean_text.strip_markup(text, mark_removed=True), expected
+                )
+
+    def test_bold_number_inside_a_span_at_the_line_start_is_removed(
+        self,
+    ) -> None:
+        text = f"<span id=\"a2\">'''第２条'''</span>{SPACE}法律ニ正條ナキ者ハ"
+        self.assertEqual(
+            clean_text.strip_markup(text, mark_removed=True),
+            f"{SPACE}法律ニ正條ナキ者ハ",
+        )
+
+    def test_unclosed_bold_does_not_join_lines(self) -> None:
+        text = "甲'''乙\n丙\n丁'''戊"
+        self.assertEqual(clean_text.strip_markup(text), "甲'乙\n丙\n丁'戊")
+
+    def test_ref_in_capitals_and_br_with_attributes(self) -> None:
+        text = '甲<REF>注</REF>乙<br clear="all">丙'
+        self.assertEqual(clean_text.strip_markup(text), "甲乙\n丙")
+
     def test_removed_templates_can_be_marked(self) -> None:
         text = "本法ハ{{傍点|公布}}ノ日ヨリ"
         self.assertEqual(
@@ -161,6 +215,11 @@ class LineExclusionsTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             clean_text.apply_line_exclusions(["本文"], [("詔書寫", "明治")])
 
+    def test_start_anchor_on_two_lines_is_an_error(self) -> None:
+        lines = ["別紙詔書寫ノ通", "明治五年", "詔書寫", "明治五年"]
+        with self.assertRaises(ValueError):
+            clean_text.apply_line_exclusions(lines, [("詔書寫", "明治五年")])
+
     def test_conscription_rescript_is_removed_by_the_data_file(self) -> None:
         ranges = clean_text.read_line_exclusions()[CONSCRIPTION]
         lines = [
@@ -209,6 +268,16 @@ class VocabularyLinesTest(unittest.TestCase):
     def test_branch_number_with_a_space_is_removed(self) -> None:
         page = f"第一條ノ二{SPACE}本文\n第廿條 本文"
         self.assertEqual(clean_text.vocabulary_lines(page), ["本文", "本文"])
+
+    def test_other_ways_of_writing_numbers_are_removed(self) -> None:
+        page = "第壹條 甲\n第1条 乙\n第一條ノ二ノ三 丙\n第二條&nbsp;丁"
+        self.assertEqual(
+            clean_text.vocabulary_lines(page), ["甲", "乙", "丙", "丁"]
+        )
+
+    def test_page_layout_lines_are_left_out(self) -> None:
+        page = "! 見出シ\n----\n__NOTOC__\n乙ハ丙ナリ"
+        self.assertEqual(clean_text.vocabulary_lines(page), ["乙ハ丙ナリ"])
 
     def test_lines_that_may_hold_editors_material_are_left_out(self) -> None:
         page = "\n".join(
