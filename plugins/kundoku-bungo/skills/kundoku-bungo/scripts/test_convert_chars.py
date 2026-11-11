@@ -26,6 +26,67 @@ SPACING_VOICED = "\u309b"
 OLD_FORM_OF_SHA = "\ufa4c"  # CJK compatibility ideograph of 社
 
 
+class KanjiTableTest(unittest.TestCase):
+    def test_every_row_is_well_formed(self) -> None:
+        for row in convert_chars.load_kanji_table():
+            with self.subTest(modern=row["modern"], old=row["old"]):
+                self.assertEqual(len(row["modern"]), 1)
+                self.assertEqual(len(row["old"]), 1)
+                self.assertEqual(
+                    row["old_codepoint"], f"U+{ord(row['old']):04X}"
+                )
+                self.assertIn(row["kind"], {"joyo", "compat", "design"})
+                self.assertIn(row["one_to_many"], {"0", "1"})
+                self.assertTrue(row["evidence"])
+                self.assertTrue(row["evidence_url"].startswith("https://"))
+
+    def test_one_to_one_rows_have_unique_modern_forms(self) -> None:
+        modern = [
+            row["modern"]
+            for row in convert_chars.load_kanji_table()
+            if row["one_to_many"] == "0"
+        ]
+        self.assertEqual(len(modern), len(set(modern)))
+
+    def test_old_forms_are_unique(self) -> None:
+        old = [row["old"] for row in convert_chars.load_kanji_table()]
+        self.assertEqual(len(old), len(set(old)))
+
+
+class ToKyujitaiTest(unittest.TestCase):
+    def test_one_to_one_kanji_become_old_forms(self) -> None:
+        self.assertEqual(convert_chars.to_kyujitai("学生"), "學生")
+
+    def test_kanji_whose_old_form_depends_on_the_word_are_kept(self) -> None:
+        cases = {"弁護": "弁護", "台": "台", "民衆": "民衆"}
+        for given, expected in cases.items():
+            with self.subTest(given=given):
+                self.assertEqual(convert_chars.to_kyujitai(given), expected)
+
+    def test_compatibility_ideographs_are_used_by_default(self) -> None:
+        self.assertEqual(
+            convert_chars.to_kyujitai("社会"), OLD_FORM_OF_SHA + "會"
+        )
+
+    def test_compatibility_ideographs_can_be_skipped(self) -> None:
+        self.assertEqual(
+            convert_chars.to_kyujitai("社会", compat=False), "社會"
+        )
+
+
+class ToShinjitaiTest(unittest.TestCase):
+    def test_old_forms_become_modern(self) -> None:
+        cases = {
+            "辯護": "弁護",
+            "辨別": "弁別",
+            OLD_FORM_OF_SHA + "會": "社会",
+            "有眾": "有衆",
+        }
+        for given, expected in cases.items():
+            with self.subTest(given=given):
+                self.assertEqual(convert_chars.to_shinjitai(given), expected)
+
+
 class ToKatakanaTest(unittest.TestCase):
     def test_hiragana_becomes_katakana(self) -> None:
         self.assertEqual(convert_chars.to_katakana("がくせい"), "ガクセイ")
@@ -193,12 +254,28 @@ class ToBungoTest(unittest.TestCase):
     def test_empty_text(self) -> None:
         self.assertEqual(convert_chars.to_bungo(""), "")
 
+    def test_kanji_become_old_forms_by_default(self) -> None:
+        self.assertEqual(convert_chars.to_bungo("学生は"), "學生ハ")
+
+    def test_shinjitai(self) -> None:
+        self.assertEqual(
+            convert_chars.to_bungo("学生は", kyujitai=False), "学生ハ"
+        )
+
 
 class ToModernTest(unittest.TestCase):
-    def test_only_kana_script_changes(self) -> None:
+    def test_kana_script_changes(self) -> None:
         self.assertEqual(
             convert_chars.to_modern("之ヲ使用セシメタル者"),
             "之を使用せしめたる者",
+        )
+
+    def test_old_kanji_forms_become_modern(self) -> None:
+        self.assertEqual(convert_chars.to_modern("學生ハ"), "学生は")
+
+    def test_keep_kyujitai(self) -> None:
+        self.assertEqual(
+            convert_chars.to_modern("學生ハ", shinjitai=False), "學生は"
         )
 
 
@@ -271,8 +348,20 @@ class CommandLineTest(unittest.TestCase):
         self.assertEqual(completed.stdout.decode("utf-8"), "サタム\nアリ\n")
 
     def test_to_modern(self) -> None:
-        completed = self._run("to-modern", given="スヘシ")
-        self.assertEqual(completed.stdout.decode("utf-8"), "すへし")
+        completed = self._run("to-modern", given="學生ハ")
+        self.assertEqual(completed.stdout.decode("utf-8"), "学生は")
+
+    def test_to_modern_keep_kyujitai(self) -> None:
+        completed = self._run("to-modern", "--keep-kyujitai", given="學生ハ")
+        self.assertEqual(completed.stdout.decode("utf-8"), "學生は")
+
+    def test_to_bungo_shinjitai(self) -> None:
+        completed = self._run("to-bungo", "--shinjitai", given="学生")
+        self.assertEqual(completed.stdout.decode("utf-8"), "学生")
+
+    def test_to_bungo_no_compat(self) -> None:
+        completed = self._run("to-bungo", "--no-compat", given="社会")
+        self.assertEqual(completed.stdout.decode("utf-8"), "社會")
 
     def test_missing_direction_exits_with_usage_error(self) -> None:
         self.assertEqual(self._run().returncode, 2)
