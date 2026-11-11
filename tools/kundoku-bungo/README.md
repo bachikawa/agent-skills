@@ -42,7 +42,7 @@
 | `all` | 字の表・語の表・用例集のすべてに使う |
 | `kanji_only` | 字の表の典拠だけに使う（詔書・勅語・勅諭・憲法・皇室典範・皇室令・華族令、皇室についてのお知らせ）。語の表と用例集には使わない |
 | `text_only` | 語の表と用例集だけに使う。政府の文書でない演説・新聞（`NON_GOVERNMENT_PAGES`）。字の表の典拠にはしない |
-| `examples_only` | 用例集の出典の版を固定するためだけに置く。表を作るスクリプトは読まない |
+| `examples_only` | 用例集の出典の版を固定するためだけに置く。表を作るスクリプトは読まない。用例集が引かなくなっても、人が行を消すまで残る（「株熱の余症恐るべし」など） |
 
 ### 使い道の決め方
 
@@ -83,7 +83,7 @@ python -I tools/kundoku-bungo/fetch_corpus.py unihan --work "$WORK"
 
 - 本文は `WORK/pages/<oldid>.wiki` に保存する。取った版は、SHA-1 が `corpus_revisions.tsv` と同じことを確かめる。違えば止まる。ページが改名されて題名だけが違う時は、警告を出して続ける（版はページと一緒に動くため）。
 - すでに保存した版は、SHA-1 が合えば取り直さない。合わない（書き換わった・途中で切れた）版は取り直す。
-- 空の作業用のディレクトリで実行すると、標準エラーに「1501 fetched, 1501 in total」と出る。もう一度実行すると「0 fetched, 1501 in total」になる。
+- 空の作業用のディレクトリで実行すると、標準エラーに「1504 fetched, 1504 in total」と出る（数は `corpus_revisions.tsv` のデータの行の数）。もう一度実行すると「0 fetched, 1504 in total」になる。
 - 50 版ずつ保存するので、途中で止まっても、取れた分は残る。
 - Unihan は、UCD 18.0.0 の `Unihan.zip`（https://www.unicode.org/Public/18.0.0/ucd/Unihan.zip ）を取り、SHA-256 を確かめる。
 
@@ -162,9 +162,12 @@ python -I tools/kundoku-bungo/find_vocabulary.py --work "$WORK"
 python -I tools/kundoku-bungo/check_examples.py --work "$WORK"
 ```
 
-- 「文語」が、出典の版の 1 つの行（`clean_text.vocabulary_lines()`。語の表と同じく、編集者の注・速記の注・半角のかっこ・天皇の名義でだけ使う言い方を含む行を除いたもの）の中に、そのままあるかを見る。
+- 「文語」が、出典の版の 1 つの行の中に、そのままあるかを見る。
+- 行は `clean_text.vocabulary_lines()` のもので、語の表と同じ決まりで作る。速記の注は取り除き、編集者の注・半角のかっこ・天皇の名義でだけ使う言い方を含む行と、`line_exclusions.tsv` の範囲の行は除く。
 - 出典の版は、`corpus_revisions.tsv` で使い道が `all`・`text_only`・`examples_only` のものでなければならない。
-- 新しい版を引く節を足した時は、`fetch_corpus.py revisions` からやり直す（`reclassify` は、取っていない版を引いていると止まる）。用例集だけが引く版は `examples_only` になり、字の表・語の表は変わらない。
+- 新しい版を引く節を足した時は、`fetch_corpus.py list`・`revisions` からやり直す（`revisions` は `list` が書く `WORK/titles.json` を使う。`reclassify` は、取っていない版を引いていると止まる）。用例集だけが引く版は `examples_only` になる。
+- `revisions` は、カテゴリのページを最新の版で取り直す。その間にウィキソースで編集されたページがあると、用例集と関係のない行も変わる。`corpus_revisions.tsv` の差分を確かめ、`build_kanji_table.py --check` と `build_vocabulary.py --check` も実行する。
+- 演説・新聞のページは、`fetch_corpus.py` の `NON_GOVERNMENT_PAGES` にも名前を書く（使い道を手で変えても、字の表の典拠にならないようにするため）。
 
 ### 典拠を広げる時
 
