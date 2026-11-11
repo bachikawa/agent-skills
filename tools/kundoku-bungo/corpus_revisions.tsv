@@ -5,7 +5,7 @@ title	oldid	sha1	year	usage	source	rule
 一圓銀貨量目ヲ增シ貿易銀ト唱ヘ表裏模様等改正	111312	0d269dbd2a5188e3275079a11a391d98a1c1c9b4	1875	all	listed	default
 一定ノ地域ニ戒嚴令中必要ノ規定ヲ適用スルノ件	153659	c4d46e86c3d4a0c325a0bb510f8d8dba9aac2018	1923	all	listed	default
 一般ノ教育ヲ宗教外ニ特立セシムル件	207862	d76ffadbcfa19985ad3bba1238da5623895aaddd	1899	all	listed	default
-七戶八戶斗南黑石館ノ五縣ヲ弘前縣ニ併ス	143633	fb6efa4ba578cbe85c121cb2756eec220aaee94d	1871	all	listed	default
+七戶八戶斗南黑石館ノ五縣ヲ弘前縣ニ併ス	143633	fb6efa4ba578cbe85c121cb2756eec220aaee94d	1871	all	pinned	pinned
 三村合併ニ依リ鹿兒島市人口異動	102907	ab3918b683fe4cc33a27e3713ba8f245a70537b6	1934	all	listed	default
 三重縣下龜山電信分局閉局	100401	dc9b118288399b0a06df4361fbd0c3c10786ed02	1885	all	listed	default
 上野國諸縣ヲ廢シ群馬縣ヲ置キ管地ヲ定ム	143627	8e9ca115d70438355ee2e81097c01f85bff37b27	1871	all	listed	default
@@ -40,9 +40,9 @@ title	oldid	sha1	year	usage	source	rule
 二本松縣福島縣ト改稱	143535	55f301c933e604e8680c6ef31ef580e8e7303dbf	1871	all	listed	default
 五節ヲ廃シ祝日ヲ定ム	98186	8b36f1a20dfc8eea576725ab1e935b7202c85ca4	1873	all	listed	default
 京城帝國大學ニ關スル件	102297	d7c304027163912d8e74de364b87d1dc6aa74b83	1924	all	listed	default
-京都東京大坂ヲ除クノ外諸府ヲ廢シテ縣ト爲ス	143533	5f2cfe1e21c872b1e157e283628875235ab520ee	1869	all	listed	default
+京都東京大坂ヲ除クノ外諸府ヲ廢シテ縣ト爲ス	143533	5f2cfe1e21c872b1e157e283628875235ab520ee	1869	all	pinned	pinned
 人吉市設置	103086	9cdc4b6f000262b18a9d0132f32da78730729915	1942	all	listed	default
-人身賣買ヲ禁シ諸奉公人年限ヲ定メ藝娼妓ヲ解放シ之ニ付テノ貸借訴訟ハ取上ケス	207879	c42fa40266ef746ed645d0bb7c36d2dfbc82a7c3	1872	all	listed	default
+人身賣買ヲ禁シ諸奉公人年限ヲ定メ藝娼妓ヲ解放シ之ニ付テノ貸借訴訟ハ取上ケス	207879	c42fa40266ef746ed645d0bb7c36d2dfbc82a7c3	1872	all	pinned	pinned
 仙臺縣ヲ宮城縣盛岡縣ヲ岩手縣ト改稱	98082	4dd94ccdb86a85968d494a9028d5644c574433b8	1872	all	listed	default
 代人規則	111252	e700af76df1bacd2c0f1f26bed1ceeb52f7fd9ee	1873	all	listed	default
 代人規則 (公布時)	111253	27985ab2abe79ac6bb3621336e4d1966858c808a	1873	all	pinned	pinned
@@ -59,7 +59,7 @@ title	oldid	sha1	year	usage	source	rule
 佐野市設置	103098	88ee7e963844d7101cb01ef8a5db2e256c585d93	1943	all	listed	default
 作業會計法中改正法律	111614	13876f77010ccabe84171976822b2234686bb190	1897	all	listed	default
 來ル四月ヨリ日曜日ヲ以テ休暇ト定ム	111320	854a567d624f72648751556ce61c3f4b8da05263	1876	all	listed	default
-來二十七日御卽位ヲ令ス	143528	5ee0474968f0583600d3e36121d5d0b51956fb56	1868	kanji_only	listed	imperial-title
+來二十七日御卽位ヲ令ス	143528	5ee0474968f0583600d3e36121d5d0b51956fb56	1868	kanji_only	pinned	imperial-title
 供託令	170019	d14d37ebb4b3d12d54d077896a434fa30e2b1a7f	1921	all	listed	default
 俘虜取扱規則	101316	00bb2b86db90469b65ae09b8bc093e5f6f1e9136	1904	all	listed	default
 保安規則	107064	fb7992fdd32db0ea023645c4950c7996256565ec	1906	all	listed	default
@@ -70,16 +70,16 @@ title	oldid	sha1	year	usage	source	rule
 修復船肇敏丸ヲ肇敏艦ト改稱	111398	b1c81563bc6e78e1b7718e8deb3b0927a91b8909	1879	all	listed	default
 修身教育ニ就キ訓示ノ件	207857	676da14beb66116ea4e517cd03cdeb0f1db84efa	1893	all	listed	default
 假廳開廳	143526	9fd9201897a8e9f1d3c568333e13ea05b76e6744	1890	all	listed	default
-僧侶苗字ヲ設ケシム	98083	f996da5a03e8d0c8989434e1673170ad7be4fe1c	1872	all	listed	default
+僧侶苗字ヲ設ケシム	98083	f996da5a03e8d0c8989434e1673170ad7be4fe1c	1872	all	pinned	pinned
 元帥府條例等廢止ノ件	103165	8ef4cf7fd82204fc84aa4dda3b17070efca710ff	1945	all	listed	default
-元帥府設置	100942	aa1ef05664dc71eaeb5184afe4d47ba321e6e70e	1898	kanji_only	listed	imperial-category
+元帥府設置	100942	aa1ef05664dc71eaeb5184afe4d47ba321e6e70e	1898	kanji_only	pinned	imperial-category
 元帥海軍大將東鄕平八郞薨去ニ付國葬ヲ賜フ旨仰出	208103	95fcc4942ec86c7d79f5729619d2ccb51aece79e	1934	all	listed	default
 元老院官制	111465	13df7269c60dc2f11c52e9c577b4002b69e265a6	1886	all	listed	default
 元號ヲ昭和ト稱呼	206551	a7826e7285a59cccd91d49182bcb2e49ecf1c285	1926	all	listed	default
 光市設置	103102	70f024e18e841ff7bd001ac5fe2ee617d29e78c4	1943	all	listed	default
 児童虐待防止法	204142	ec919aff4c2e01fe6fed46e961ec4599aa411e80	1933	all	listed	default
-內大臣ニ年金ヲ賜フノ詔	100453	d9ada4f9407b094319a39d0d41712bf015e57861	1886	kanji_only	listed	imperial-title
-全国ノ城廓陣屋等存廃ヲ定メ存置ノ地所建物木石等陸軍省ニ管轄セシム	207881	1f19e48ef3ba0af34b0e3a223e6727dd9ec0bcb8	1873	all	listed	default
+內大臣ニ年金ヲ賜フノ詔	100453	d9ada4f9407b094319a39d0d41712bf015e57861	1886	kanji_only	pinned	imperial-title
+全国ノ城廓陣屋等存廃ヲ定メ存置ノ地所建物木石等陸軍省ニ管轄セシム	207881	1f19e48ef3ba0af34b0e3a223e6727dd9ec0bcb8	1873	all	pinned	pinned
 八代市設置	103054	b4df902841d82b47f2be3b593aae8980299577bc	1940	all	listed	default
 八戶縣ヲ三戶縣ト改ム	223607	e0ced80d1af6bccfe67a14320cc8452a2484f44a	1869	all	listed	default
 公共團體ノ管理スル公共用土地物件ノ使用ニ關スル法律 (公布時)	111919	e9b3c69c0a7e99987dde6d4d9eda228ccfda3351	1914	all	listed	default
@@ -105,10 +105,10 @@ title	oldid	sha1	year	usage	source	rule
 公證人、辯護士、司法書士、辨理士及計理士ノ懲戒免除ニ關スル件 (昭和二十年勅令第五百八十五号)	103167	371f422905b2f2840d50739f358a0ad743159504	1945	all	listed	default
 公證人、辯護士、司法書士、辨理士及計理士ノ懲戒免除ニ關スル件 (昭和十三年勅令第八十一号)	103028	3e48da7636b1d97211334a73a4d3ba07bc45d68d	1938	all	listed	default
 公證人、辯護士、司法書士、辨理士及計理士ノ懲戒免除ニ關スル件 (昭和十五年勅令第五十号)	103056	5073306c60c1b1e5e724446fdcd0602a97f23875	1940	all	listed	default
-公議所ヲ置キ明春ヨリ開議セシム	143521	ea53b709e741ec9588c962d2def212980674f400	1869	all	listed	default
+公議所ヲ置キ明春ヨリ開議セシム	143521	ea53b709e741ec9588c962d2def212980674f400	1869	all	pinned	pinned
 公議所ヲ集議院ト改稱	143520	ea8469b2cde1778c90d3344a5edbaf1abb032583	1869	all	listed	default
 公議所開議ノ期ヲ延フ	143519	776b617ef8ddd68ee119a8e69f1872b10760c7fc	1869	all	listed	default
-公議所開議ヲ令ス	143518	78c81885b07edf18682727d1ba3e83748795e375	1869	all	listed	default
+公議所開議ヲ令ス	143518	78c81885b07edf18682727d1ba3e83748795e375	1869	all	pinned	pinned
 共通法	242914	a6c2c0277c50c13b30c38617138f742de9c3b631	1918	all	listed	default
 共通法ノ一部ヲ施行ノ件	101934	1a86e57f32ba4888477bbac12dfe86ac97341d47	1918	all	listed	default
 共通法中改正 (大正12年法律第25号)	109938	2e23410ad34c762ee60032781272c8222b391573	1923	all	listed	default
@@ -117,14 +117,14 @@ title	oldid	sha1	year	usage	source	rule
 兵役法廢止等ニ關スル件	103185	42f0eca25b1b9bc855c7865d5720cd5e9654fe36	1945	all	listed	default
 内務省令號外 (大正12年9月2日)	192450	8dfd1ca6b3a36936ccc806599aa7108dd10559f4	1923	all	listed	default
 内国勧業博覧会五箇年目毎ニ開設	102323	4bd77b548fb14333c5e44352f90978a949fd4f39	1877	all	listed	default
-内閣官制	154374	679f31196e614d2787e7ca312b875c5ffea46839	1889	all	listed	default
+内閣官制	154374	679f31196e614d2787e7ca312b875c5ffea46839	1889	all	pinned	pinned
 出水郡阿久根村鶴渡來地ヲ天然紀念物ニ假指定	207878	22eea57b977e98cd8fce9c692e518b77a31ba66b	1920	all	listed	default
 出版物一種發賣頒布禁止 (明治42年内務省告示第93号)	160120	1ab9aef0fe205b41b1edea527066be7a4662555b	1909	all	listed	default
-出訴期限規則	111255	5f93046d93241b17a85752c73550f5cc82343530	1873	all	listed	default
+出訴期限規則	111255	5f93046d93241b17a85752c73550f5cc82343530	1873	all	pinned	pinned
 函館札幌根室三県管轄区画並県庁位置	207882	f13f502e364cb1b3391ba0a29135f550f0d611c0	1882	all	listed	default
 函館札幌根室三縣並北海道事業管理局ヲ廢シ北海道廳ヲ置ク	100454	2b6865d430aa8f8fa58532ce335f0cdba53283bf	1886	all	listed	default
 函館縣駐在所及函館區駐在所改稱	192381	73015b87eb7f2c9957eea557e7101c25f90a0756	1886	all	listed	default
-切支丹宗門及ヒ邪宗門禁止ノ制札ヲ改ム	143515	c1bf1e6939785d4064b4902b6e4e8bf4f0a15ef3	1868	all	listed	default
+切支丹宗門及ヒ邪宗門禁止ノ制札ヲ改ム	143515	c1bf1e6939785d4064b4902b6e4e8bf4f0a15ef3	1868	all	pinned	pinned
 刑事交渉法 (大正10年法律第90号)	244743	e3f81d2429ea19c2ca00b620ef091b184c609f83	1907	all	listed	default
 刑法 (明治13年太政官布告第36号)	216438	bb15980626aee1de97d3686b79290b7b4d522a73	1880	all	pinned	pinned
 刑法施行法	241185	a1a12fe3f20f7051a35b8481456b0b77a2283ee2	1908	all	pinned	pinned
@@ -134,8 +134,8 @@ title	oldid	sha1	year	usage	source	rule
 別府市ヲ置ク	102294	05ffdc47c78a16da90d1e29a317a128b46e9877e	1924	all	listed	default
 利息制限法	201553	ef3a09078601b7cf692f57dc1155a45f93be3415	1877	all	listed	default
 動產不動產書入金穀貸借規則	111256	959a0288bbb7375d3ed7db8be9c4eff904662b45	1873	all	listed	default
-勲章制定ノ件	111231	325be3a41f4a996e6750c84d9c7dbba61d8d6ef5	1872	all	listed	default
-勳章從軍記章制定ノ件	111313	b2e00e5394b0571509ca0555f0774752568a7ab1	1875	all	listed	default
+勲章制定ノ件	111231	325be3a41f4a996e6750c84d9c7dbba61d8d6ef5	1872	all	pinned	pinned
+勳章從軍記章制定ノ件	111313	b2e00e5394b0571509ca0555f0774752568a7ab1	1875	all	pinned	pinned
 北海道ノ内從來酒造税則ヲ施行セサル地方ニ之ヲ施行スルノ件	236452	62e322c3d861a2292dbced506b1e61b5daed2ca6	1889	all	listed	default
 北海道國有未開地處分法	239987	5f8e543d5953f4b1774c3da1f3703499e04d9b3e	1897	all	listed	default
 北海道國有未開地處分法(明治41年法律第57号)	242335	1c632107b974d69b8455bce8774806a5d178d468	1908	all	listed	default
@@ -164,7 +164,7 @@ title	oldid	sha1	year	usage	source	rule
 占領地公安維持ニ関スル罸則	170097	839864c8427ca377b778202990e560cced5db61f	1920	all	listed	default
 厚生省指定工場規則	192455	3cdbc5a691e25afe6f18482954fbdde7fd03a088	1945	all	listed	default
 取引所稅法 (明治26年法律第6号)	227846	da74deba036f9926a220ad6d72b2ee4ec0ef1dc6	1893	all	listed	default
-古器舊物ヲ保全セシム	170094	0a9ec8ff5c5662bebb74517b19070c5a7be8bf8c	1871	all	listed	default
+古器舊物ヲ保全セシム	170094	0a9ec8ff5c5662bebb74517b19070c5a7be8bf8c	1871	all	pinned	pinned
 古江東線大隅大崎東串良間ニ停車場設置	103015	08deea48434cfa3e6257b27f8864ef5db6cf59fc	1937	all	listed	default
 古江東線志布志東串良間鐵道運輸營業開始	102920	7faec1df6e91d25861f96e25f74ffb4933c45521	1935	all	listed	default
 古江東線方面ト古江西線方面間ニ發著スル宅扱及小口扱貨物取扱開始	103006	df6f42d2e667d1cbf533fa6dc4f44157a9e376ee	1935	all	listed	default
@@ -177,7 +177,7 @@ title	oldid	sha1	year	usage	source	rule
 古社寺保存法施行ニ關スル件	179365	5784729eac6421004451fdf8c2367fddb873e507	1897	all	listed	default
 古社寺保存法施行ニ關スル件 (公布時)	111620	51e3df5032165aebc3a747bbc15f216861c3ffc8	1897	all	listed	default
 史蹟名勝天然紀念物保存法	206731	77f382466e2d9d49c5510f544d82290025741f32	1919	all	listed	default
-右院規則	143507	91d4094906037e23989ee738903b4fc13b7c238d	1871	all	listed	default
+右院規則	143507	91d4094906037e23989ee738903b4fc13b7c238d	1871	all	pinned	pinned
 司法官試補及辯護士ノ資格ニ關スル法律	192138	c1307f3efc25a3a318adbbc1c695cea557e6594e	1923	all	listed	default
 司法官試補及辯護士ノ資格ニ關スル法律 (昭和11年法律第7号による改正後)	192116	03b3b79970d6aeee9fa068592dd10e09b34fb3b1	1923	all	listed	default
 司法官試補及辯護士ノ資格ニ關スル法律 (昭和12年法律第83号による改正後)	192127	ed035e8a7f9d58b6b060d69310b7866e88b09355	1923	all	listed	default
@@ -191,7 +191,7 @@ title	oldid	sha1	year	usage	source	rule
 司法警察官吏及司法警察官吏ノ職務ヲ行フヘキ者ノ指定等ニ關スル件中改正ノ件 (昭和3年勅令第238号)	102615	21948b27c7e13337b896a8b0b56744f0e7d27e81	1928	all	listed	default
 司法警察官吏及司法警察官吏ノ職務ヲ行フヘキ者ノ指定等ニ關スル件中改正ノ件 (昭和9年勅令第100号)	102909	9d48959c59f28eb3aee1b6aaf9d40239e04be003	1934	all	listed	default
 各地ニ唱フル字ハ漫ニ改称変更スル勿ラシム	219862	401761fe9bb9b48cb84ce3d15c9316221d198e2c	1881	all	listed	default
-各地ノ風習舊慣ヲ私法ト爲ス等申禁解禁ノ條件	98091	99ae42201405d1403ca1a0e80450f69b0f28a0f9	1872	all	listed	default
+各地ノ風習舊慣ヲ私法ト爲ス等申禁解禁ノ條件	98091	99ae42201405d1403ca1a0e80450f69b0f28a0f9	1872	all	pinned	pinned
 各官衙圖書購買備付ハ申請伺ヲ要セス	111559	c9ef733cbf3fdbf0694503f1a5be49da4d1cdc40	1893	all	listed	default
 各廳職員優遇令ニ依ル優遇者ノ番號	112154	06cee1ba1834559faa2a9e6573f22be91555280d	1945	all	listed	default
 命令ノ條項違犯ニ關スル罰則ノ件	100572	f30b5bc1b3e8320f72d5e48bcf2567092e3ef123	1890	all	listed	default
@@ -236,7 +236,7 @@ title	oldid	sha1	year	usage	source	rule
 國家總動員法 (昭和十六年法律第十九号)	112135	9395a17a7df3d7c65314ee87621b13c66a6b0c16	1938	all	listed	default
 國家總動員法ヲ朝鮮、臺灣及樺太ニ施行スル件	103030	aba769099efcdf5d1e4eab0b82f569fa2bfbd819	1938	all	listed	default
 國家總動員法施行期日ノ件	112137	571decf8440b8c32d13658701dd498de6f58bbc7	1938	all	listed	default
-國會開設ノ勅諭	187111	ff974e56d4e66a5ab9e4d1f01b2994f7074fcb98	1881	kanji_only	listed	imperial-title
+國會開設ノ勅諭	187111	ff974e56d4e66a5ab9e4d1f01b2994f7074fcb98	1881	kanji_only	pinned	imperial-title
 國有鐵道線路名稱	206669	7875d20d6a714e4fd5b3b9208f9449e1b20abb75	1909	all	listed	default
 國有鐵道線路名稱中改正 (大正11年鉄道省告示第130号)	208128	aa0b339fb57959b7aed2f9266ef14a6916dbe79c	1922	all	listed	default
 國有鐵道線路名稱中改正 (大正11年鉄道省告示第68号)	208126	070257766372baec9faf6af796f8c94bbff95bf9	1922	all	listed	default
@@ -265,13 +265,13 @@ title	oldid	sha1	year	usage	source	rule
 國民義勇戰鬪隊統率令	112155	df43c3034866c5fe889fa44cd7e3c2ec24591e51	1945	all	listed	default
 國籍法 (明治三十二年法律第六十六号)	190029	4111573d01321f401ee0303d9fc37d50381a3411	1899	all	listed	default
 國籍證明書規則 (明治22年外務省令第3号)	236807	01ecd792366ece52939a1da92a86f5cb457b0c41	1889	all	listed	default
-國道表	192906	14133af9685cb03d9ce4e595c11e9f9a99130edf	1885	all	listed	default
+國道表	192906	14133af9685cb03d9ce4e595c11e9f9a99130edf	1885	all	pinned	pinned
 國道表 (明治三十三年)	111730	d6dab4ba41d70351935511b70fc5fc7a92109fbf	1900	all	listed	default
 國道表 (明治二十二年)	111522	4c2f96382344918ac347db8612605e0093e4f97b	1889	all	listed	default
 國道表 (明治十九年)	136613	0bbe8c98c5137f9801b1300bffafa5e0610cef58	1886	all	listed	default
 國道表 (明治十八年二月二十四日)	111452	8e91eb810017e35083c855c9cd9e9e3daff95b3e	1885	all	listed	default
 國道表第三十八號中福山ヲ敷根ト改ム	147042	81036e3e245c08864448e3c4e60f846ff74fd9bc	1889	all	listed	default
-國道路線認定ノ件 (大正九年四月一日)	101961	6269617884fb7206534e0e9c9fd59e0318f57f60	1920	all	listed	default
+國道路線認定ノ件 (大正九年四月一日)	101961	6269617884fb7206534e0e9c9fd59e0318f57f60	1920	all	pinned	pinned
 國都西線國分霧島神宮間鐵道運輸營業開始	102636	b8d072143c7a66adb638a2ccd76bbf2521fc6fbe	1930	all	listed	default
 國防保安法	103079	ab44b24a62f749458f3716dfcdb4c2619b048f5f	1941	all	listed	default
 國防保安法廢止等ニ關スル件	103169	6ec675642711580f968029489bf8fde3e39f784c	1945	all	listed	default
@@ -292,7 +292,7 @@ title	oldid	sha1	year	usage	source	rule
 地所質入書入規則 (公布時)	98176	e2d4bef4bdfa241545bcb8f9bfb1da52c901f699	1873	all	pinned	pinned
 地所質入書入規則 (明治6年太政官布告第167号による改正)	98175	6eadcfc47ecea80a535daf9a83d3d087f134f1f0	1873	all	listed	default
 地所質入書入規則 (明治7年太政官布告第52号による改正)	98173	8f8ffe7b6ca673611237c6669d8750e720800a29	1873	all	listed	default
-地所質入書入規則 (明治7年太政官布告第6号による改正)	98174	b63e66d45b0f606e5f361622a097861df8957082	1873	all	listed	default
+地所質入書入規則 (明治7年太政官布告第6号による改正)	98174	b63e66d45b0f606e5f361622a097861df8957082	1873	all	pinned	pinned
 地所質入書入規則 (明治7年太政官布告第76号による改正)	98172	1173d7728db211956c42eb2a421bbe87b80c64c4	1873	all	listed	default
 地所質入書入規則第九條改正	111302	a8f50906b1ef6f9b6fb11b0061d8fff42ff8f342	1874	all	listed	default
 地所質入書入規則第五條改正	111400	300b4b9f560d3ed14923728ed4e31cd5f8a6b6e5	1879	all	listed	default
@@ -300,7 +300,7 @@ title	oldid	sha1	year	usage	source	rule
 地所質入書入規則第十六條增補	111303	3d18312ba707d44a6115d3e4db4fe8560db74caa	1874	all	listed	default
 地所質入書入規則第十條第十二條改正	111304	8928bee74eb489d0f8d652cace18f3f46ccb76a0	1874	all	listed	default
 地方学事通則 (明治23年法律第89号)	207850	0480236de9f2773399aabd38482682a6a9aff457	1890	all	listed	default
-地方官假官制	225474	5773e222cae0ed133697f39b27fefb3780c72940	1895	all	listed	default
+地方官假官制	225474	5773e222cae0ed133697f39b27fefb3780c72940	1895	all	pinned	pinned
 地方官庁命令公式令中改正ノ件	112067	338839e21690b22c53d856f1eaa78142a835b3e5	1928	all	listed	default
 地方官廳ノ發スル命令ノ公布式	179303	712d59adbac772365722caf5d545f90f7f24a05f	1893	all	listed	default
 地方官廳命令公式令 (大正十五年勅令第二百三十五号)	111561	bcf528c49f312bd59c09e0508b723b0389ce47e8	1893	all	listed	default
@@ -311,7 +311,7 @@ title	oldid	sha1	year	usage	source	rule
 埼玉縣下郡界變更ニ關スル件	102249	3fb7ac9f957099adf1cb1d5e8a1eb29c6b8c2ef9	1921	all	listed	default
 墓地ノ名稱所在及地域	234901	b56654ed2e44c59afb030402743ce21ae9877f54	1927	all	listed	default
 墓地及埋葬火葬取締規則	170093	cff083f2b83ff4911c9637a73d9a178d84929da0	1920	all	listed	default
-士卒祿制二十一等ヲ十八等ニ止ム	143497	0a27612412e5b2a41e19b79e28845d189e793e3d	1870	all	listed	default
+士卒祿制二十一等ヲ十八等ニ止ム	143497	0a27612412e5b2a41e19b79e28845d189e793e3d	1870	all	pinned	pinned
 夕張市設置	103103	c75eb504681165915f451777caba58101f3b0cc8	1943	all	listed	default
 外国人ノ入国、滞在及退去ニ関スル件	206925	5952e9adc273eead0ec94a340f982e89b7372249	1939	all	listed	default
 外国人入国ニ関スル件	206928	a609110fed7e6c0aed7dcb72a72cad56c0a90ddf	1918	all	listed	default
@@ -325,10 +325,10 @@ title	oldid	sha1	year	usage	source	rule
 外國人土地法ヲ樺太ニ施行スルノ件	177148	f7349c93a9a1aed3416a6a060f03a52122351c62	1926	all	listed	default
 外國人土地法施行期日ノ件	102589	89b49d0e9c31fbc680ee3e1afcc979232b34f826	1936	all	listed	default
 外國馬匹輸入屆出方	111814	dff325843640493be8181b8612fbbb2a284475b3	1907	all	listed	default
-大中小藩ノ區別ヲ定ム	143496	cd3eab810c44c2825302b337d1721aceb36f4589	1868	all	listed	default
+大中小藩ノ區別ヲ定ム	143496	cd3eab810c44c2825302b337d1721aceb36f4589	1868	all	pinned	pinned
 大分縣下毛郡中津町ヲ廢シ中津市ヲ置ク	102622	8fde8bb80ee8202fcdeae2db211a43a5ca364afd	1929	all	listed	default
 大分縣大分郡大分町ヲ市制施行地ニ指定	101540	adc2e5f1ebe6c6cb82afd783ceb0c0fda75674fc	1910	all	listed	default
-大友帝廢帝九條廢帝ニ御諡號奉上ニ付御典執行	159343	407b5b87b9db68155bb65951d5340a6b6b13ec0c	1870	kanji_only	listed	imperial-title
+大友帝廢帝九條廢帝ニ御諡號奉上ニ付御典執行	159343	407b5b87b9db68155bb65951d5340a6b6b13ec0c	1870	kanji_only	pinned	imperial-title
 大友帝廢帝九條廢帝御諡號	143494	b8b57f98aba23e4596e8dc7ff10873dabbafa9d9	1870	kanji_only	listed	imperial-title
 大喪使官制 (大正元年勅令第1号)	111907	dcd828f1b5c174a14bc944c1c80b21083f1d2128	1912	kanji_only	listed	imperial-title
 大喪使官制廢止ノ件	111908	8a9c912c806db98700803c039d5e5d328d4c6e05	1912	kanji_only	listed	imperial-title
@@ -351,31 +351,31 @@ title	oldid	sha1	year	usage	source	rule
 大正十二年法律第五十二號中改正法律 (昭和7年法律第21号)	192113	f1a34dc6928e0a529cfc36b0c6332a8d8c754def	1932	all	listed	default
 大正十年勅令第百九十號町村制ヲ施行セサル島嶼指定ノ件中改正ノ件	107219	d877a6604c655404ad355e22083c8b0dccf9b036	1940	all	listed	default
 大正十年勅令第百九十號町村制ヲ施行セザル島嶼指定ノ件改正ノ件	107286	c40a94a3f86068812ed015229bc37dff1103bc15	1943	all	listed	default
-大正十年法律第六十三號第一條施行期日ノ件	242387	e1d3213b71f295d9c21281e12e44ccb60625301f	1923	all	listed	default
-大禮服竝ニ軍人警察官吏等制服著用ノ外帶刀禁止	100209	07ad8fc6c0197e917950133db8526d255b016faa	1876	all	listed	default
+大正十年法律第六十三號第一條施行期日ノ件	242387	e1d3213b71f295d9c21281e12e44ccb60625301f	1923	all	pinned	pinned
+大禮服竝ニ軍人警察官吏等制服著用ノ外帶刀禁止	100209	07ad8fc6c0197e917950133db8526d255b016faa	1876	all	pinned	pinned
 大赦、復權及資格囘復ニ關スル假證明規程	112156	200a58dbb85ca4ec32858150f8f77e3f535e7eaa	1945	all	listed	default
 大赦令 (明治22年勅令第12号)	221603	f83f0e30ad102ad40ee8506efa8905d1d44913c4	1889	all	listed	default
-大阪裁判所ヲ改テ大阪府ト爲ス	143491	3b68d416751a55fc787ae1b4c72e77d2ec4c18b6	1868	all	listed	default
-大阪裁判所ヲ置ク	143490	cd6d6830b2cfbf086a5d92a08d63d53b92fc9c16	1868	all	listed	default
+大阪裁判所ヲ改テ大阪府ト爲ス	143491	3b68d416751a55fc787ae1b4c72e77d2ec4c18b6	1868	all	pinned	pinned
+大阪裁判所ヲ置ク	143490	cd6d6830b2cfbf086a5d92a08d63d53b92fc9c16	1868	all	pinned	pinned
 大阪造幣寮鑄造ノ貿易銀改正	111305	331ca024a92e5306f955599d5bbbbb491cad3343	1874	all	listed	default
-大阪鎭臺ヲ置ク	143489	32c4b2b5b669e47bba7af021b735a03309129d69	1868	all	listed	default
+大阪鎭臺ヲ置ク	143489	32c4b2b5b669e47bba7af021b735a03309129d69	1868	all	pinned	pinned
 大隅鐵道株式會社所屬古江串良間鐵道買收等	102911	e8708b7751bd15e87e57eb5102e24c74a9b1bcbc	1935	all	listed	default
 天皇 皇后兩陛下ノ御影竝ニ敎育ニ關スル勅語ノ謄本ハ尊重ニ奉置セシム	111549	37c4babb8d7822d439b7a9c676fd278e2ed7b323	1891	kanji_only	listed	imperial-title
 天皇陛下崩御 (大正15年12月25日告示)	112028	086cc7a1a10e07d80a8a9cf2463e7c93d53ce2b5	1926	kanji_only	listed	imperial-title
 天皇陛下崩御 (明治45年7月30日告示)	101813	06679f1dd62e1d1759eac43c4637c611a9963ff2	1912	kanji_only	listed	imperial-title
 天童縣ヲ山形縣ニ併ス	143488	d7bc1824c5de1afc9aa0270e4361f53ac04b2991	1871	all	listed	default
-天草富岡縣ヲ置ク	143487	d38371cb65a7adfc13f1662a68a7fa54e8f20b17	1868	all	listed	default
+天草富岡縣ヲ置ク	143487	d38371cb65a7adfc13f1662a68a7fa54e8f20b17	1868	all	pinned	pinned
 太政大臣左右大臣等ヲ廢シ内閣總理大臣等ヲ置ク	207930	48c4484a45b305792d028d501691674f02f65e32	1885	all	listed	default
-太政官日誌ヲ發刊シ天下ニ布吿セシム	143631	830a9ca29e57c19be7cbf3bd646284f0b9336d8c	1868	all	listed	default
-太政官規則	143485	43a95f23c8a3fb9d5fa3a8faafd531f8ef34204b	1869	all	listed	default
-太陰暦ヲ廃シ太陽暦ヲ頒行ス	246692	6e801145bdb73cbcd152d5ee16cd7bd7aa660490	1872	all	listed	default
+太政官日誌ヲ發刊シ天下ニ布吿セシム	143631	830a9ca29e57c19be7cbf3bd646284f0b9336d8c	1868	all	pinned	pinned
+太政官規則	143485	43a95f23c8a3fb9d5fa3a8faafd531f8ef34204b	1869	all	pinned	pinned
+太陰暦ヲ廃シ太陽暦ヲ頒行ス	246692	6e801145bdb73cbcd152d5ee16cd7bd7aa660490	1872	all	pinned	pinned
 奈良線東寺仮停車場廃止 (大正3年鉄道院告示第59号)	206854	489a6f9b5fabe6a8441bd5c5861aeec98ae70f29	1914	all	listed	default
 奈良縣設置ノ件	208171	903ea2bc210ad684319c68b5568133a0ef590166	1887	all	listed	default
-契約證書解釋方法	111337	ea9019ab54f830bb5811ebf27483f1eff6666aa7	1877	all	listed	default
+契約證書解釋方法	111337	ea9019ab54f830bb5811ebf27483f1eff6666aa7	1877	all	pinned	pinned
 女子ノ小学校就学勧誘及裁縫教員採用方	207849	44a5849d07b855c1727b65015b75bf77c151a931	1893	all	listed	default
-女子挺身勤勞令	120531	84d86c4c8034917b0c22ff7dc0c2b8887eafc472	1944	all	listed	default
+女子挺身勤勞令	120531	84d86c4c8034917b0c22ff7dc0c2b8887eafc472	1944	all	pinned	pinned
 姬路縣飾磨縣ト改稱	143483	82ee1f01f76389b7fe34771d234acc735b8ff62d	1871	all	listed	default
-姬路豐岡二縣ヲ置キ管地ヲ定ム	143482	af3a099cf976457a8a8ec04d5bc35d6cdf220f14	1871	all	listed	default
+姬路豐岡二縣ヲ置キ管地ヲ定ム	143482	af3a099cf976457a8a8ec04d5bc35d6cdf220f14	1871	all	pinned	pinned
 娼妓取締規則	230988	04e8aae79688575d085ba40da0193acb998e3b44	1900	all	listed	default
 娼妓藝妓ニ係ル貸借其他人身賣買ニ類スル所業ノ處分	111233	9ca6f9cf71bb4b964b27269a37eb41f9ab460f0b	1872	all	listed	default
 婚姻事件養子縁組事件及ヒ禁治産事件ニ關スル訴訟規則	151552	8a6c0539e93688adc33f138d0af8571199a1450e	1890	all	listed	default
@@ -418,7 +418,7 @@ title	oldid	sha1	year	usage	source	rule
 學徒勤勞令	245349	116f39697358a535e35140974f739d330d3522cd	1944	all	listed	default
 學徒勤勞令中改正ノ件	103162	1b8fdb60659314b330384bbeb49dc720f8bb1553	1945	all	listed	default
 官吏ノ勤續ニ關スル件	111564	e3ec73ceae8dadd48ae4e9f0d53bcf48ea043e5d	1893	all	listed	default
-官吏服務紀律	111480	cf35a3eab769b836a388bc4616a090288ad80cc6	1887	all	listed	default
+官吏服務紀律	111480	cf35a3eab769b836a388bc4616a090288ad80cc6	1887	all	pinned	pinned
 官吏服務紀律 (公布時)	111481	7e01f7430c7f14e5e943e6b56a2cc056c0274270	1887	all	listed	default
 官有土地貸下規則	101966	a0d9313ac70c82d9416bdac47ee6a3c114588f09	1920	all	listed	default
 官有林野産物処分規則	169960	af76f3cfc7430b5affe5dd619d9129f75b477078	1920	all	listed	default
@@ -434,7 +434,7 @@ title	oldid	sha1	year	usage	source	rule
 実業補習学校規程ニ関スル件	207840	d66320af68cdbc06b7d6449d57d5674a0db0f0e7	1902	all	listed	default
 実業補習学校規程発布ニ附キ訓示	207839	040bc91d5d894686e02fa57a683b7a3c90afa7ef	1893	all	pinned	pinned
 宮並ニ華族家人ノ職員ヲ定ム	206784	e055a3e630f3b3ee7b58749e062c9be064f2227b	1870	kanji_only	listed	imperial-number
-宮中ニ內大臣幷顧問官等ヲ置ク	111455	e9d294ab57ac440140b32d0eaffa52c5b72a780f	1885	all	listed	default
+宮中ニ內大臣幷顧問官等ヲ置ク	111455	e9d294ab57ac440140b32d0eaffa52c5b72a780f	1885	all	pinned	pinned
 宮中ニ内大臣宮中顧問官内大臣秘書官ヲ置ク	111456	3fb12dd96edea93eb3a8e4df6415bcd59aed44fb	1885	kanji_only	listed	imperial-number
 宮之城線宮之城薩摩鶴田間鐵道運輸營業開始	102897	15e242d845c07fe7f2a9ac8779766145d39392ee	1934	all	listed	default
 宮之城線川内町楠元間ニ薩摩白濱停車場設置	208101	aa4891ea645372bfd6c65095be65c5a3775973ae	1936	all	listed	default
@@ -444,9 +444,9 @@ title	oldid	sha1	year	usage	source	rule
 宮之城線薩摩山崎宮之城間ニ船木停車場設置	103001	2c236f825100ebddee740a7f93bfd63fdcc5dcb9	1936	all	listed	default
 宮之城線薩摩永野薩摩大口間鐵道運輸營業開始	103012	684206dbd9efa226b392eea17dde136a5aaccf41	1937	all	listed	default
 宮之城線薩摩鶴田薩摩永野間鐵道運輸營業開始	102918	8689a8b1490227135e612964f917fa507614cea1	1935	all	listed	default
-宮內傳染病豫防令	192295	de6b05e8d967223c2464fe0d32d1890320de44d3	1908	kanji_only	listed	imperial-category
+宮內傳染病豫防令	192295	de6b05e8d967223c2464fe0d32d1890320de44d3	1908	kanji_only	pinned	imperial-category
 宮城縣下陸前國氣仙郡靑森縣下陸奧國二戶郡ヲ巖手縣ヘ管轄	223606	2787212355f94a62592a80232d6594f14442795f	1876	all	listed	default
-宮堂上菊御紋付ノ品ヲ其祈願所ヘ寄附禁止ノ件	143432	826af962bdbb609def77a9a60ee87c8317f83093	1869	kanji_only	listed	imperial-title
+宮堂上菊御紋付ノ品ヲ其祈願所ヘ寄附禁止ノ件	143432	826af962bdbb609def77a9a60ee87c8317f83093	1869	kanji_only	pinned	imperial-title
 宮崎市ヲ置ク	208115	46666398713059c0d42c8f48b58e6049bbed10cf	1924	all	listed	default
 宮崎県再置	147093	ff42f1c3be25bef2021236a8b3f027bc08a1f46b	1883	all	listed	default
 宮崎縣下郡廢置法律	100889	8d0766c6a67f42a0fdf905ff8360e7d5592805e5	1896	all	listed	default
@@ -461,7 +461,7 @@ title	oldid	sha1	year	usage	source	rule
 専門学校令	236716	c307403a477cdb0a96ee9f4ae62da583b54d74fc	1903	all	listed	default
 尋常中學校高等女學校技藝學校設置ノ爲メ町村學校組合ヲ設クルノ件	208166	3516c3f404467cbf447c9ff5b4a4c96997e52ae8	1893	all	listed	default
 小作調停法ノ施行期日及施行外地區指定ノ件 (大正十三年勅令第二百二十八号)	102299	5842a92afa2ad816f23fa81bb40fcce5ff7d04d5	1924	all	listed	default
-小倉縣以下十一縣ヲ置キ管地ヲ定ム	207904	5118a956d90e3cb556a155fb17077195047614fe	1871	all	listed	default
+小倉縣以下十一縣ヲ置キ管地ヲ定ム	207904	5118a956d90e3cb556a155fb17077195047614fe	1871	all	pinned	pinned
 小学校ニ於テ祝日大祭日ノ儀式ヲ行フノ際唱歌用ニ供スル歌詞並楽譜中改正	207972	9a743e8c90bf2a65960c11c8354534b25d5d54f3	1913	all	listed	default
 小学校ニ於テ祝日大祭日ノ儀式ヲ行フノ際唱歌用ニ供スル歌詞並楽譜別冊目次中追加	207969	7d268b182c05b02b55c7052e3276f5c5651a8d75	1928	all	listed	default
 小学校ニ於テ祝日大祭日ノ儀式執行ノ際唱歌用ニ供スル歌詞及楽譜ハ文部大臣ノ認可ヲ経シム	207837	945652efc9016d7709f27bb9befb1821898eb991	1891	all	listed	default
@@ -473,7 +473,7 @@ title	oldid	sha1	year	usage	source	rule
 小学校令及小学校令施行規則改正ニ関シ其要旨並ニ施行上特ニ注意ヲ要スル事項	207835	29fbd13731d3bb89a77a5241d1a2519e3cb7a31a	1907	all	listed	default
 小学校令改正並小学校令施行規則発布ニ関スル件	207834	7e945ebae17c043fed28d15fc92bfa04436aaf60	1900	all	listed	default
 小学校令施行ニ要スル諸規則悉皆発布ニ附キ普通教育ノ施設ニ関スル文部大臣ノ意見表示	207833	a5201441f8f8023fe260db42fedb0a565523d6b5	1891	all	pinned	pinned
-小学校令施行規則	206787	e54d8cc6a9a481245566cc49a3f0e8f4fa6a0172	1900	all	listed	default
+小学校令施行規則	206787	e54d8cc6a9a481245566cc49a3f0e8f4fa6a0172	1900	all	pinned	pinned
 小学校修身教科書審査採定期日並唱歌ノ歌詞楽譜採用手続省略ノ件ヲ定メ明治二十五年訓令第五号ヲ廃ス	207832	614a3d68df911ea1a6ee520acc0b4bb237e6989a	1893	all	listed	default
 小学校修身教科用図書審査採定着手期	207831	bd8d78e16ce8a7b0198f5b26394b64f2a4d32775	1892	all	listed	default
 小学校唱歌用歌詞及楽譜採用方	207829	eaaeb84794d7ae5fd3011461b4d3d40008a68111	1894	all	listed	default
@@ -487,7 +487,7 @@ title	oldid	sha1	year	usage	source	rule
 少尉候補生以下旅費支給方	192377	eac19a9ae3dde0fcf7b8f439f26a58fefd82afb4	1886	all	listed	default
 尾道町ヲ市制施行地ニ指定	100945	3e4b9619f6369fa3aba7adc54d25253dfe4cfab7	1898	all	listed	default
 居留地ノ行政事務ニ關スル件	101551	7cb96aa08780b47cb69b9be730d9ad9e201663e5	1910	all	listed	default
-屠獣取締規則	170006	6ebb7a479e50d8c6eb42d8bd22596c97d47f8c4f	1920	all	listed	default
+屠獣取締規則	170006	6ebb7a479e50d8c6eb42d8bd22596c97d47f8c4f	1920	all	pinned	pinned
 山口縣下郡廢置法律	100891	ea7b6bc4a9ba5ac646328acd491adaed471dd512	1896	all	listed	default
 山口縣吉敷郡山口町及吉敷村廢止山口市ヲ置ク	102629	95adf397fd446c5126a2f9310e57d467b09516f3	1929	all	listed	default
 山形県更ニ第六大学区ニ編入	207909	18891475f812cb01e2cb05b2fdc08cfaf90975f5	1876	all	listed	default
@@ -514,7 +514,7 @@ title	oldid	sha1	year	usage	source	rule
 市制中東京市京都市大阪市ニ特例ヲ設クルノ件	107074	09e009d66c5987b408c41c6d535821c9ea4a5c4c	1889	all	listed	default
 市制中追加法律	111694	0f793274350c09d2f36a29c1559f8d55ba5feff1	1898	all	listed	default
 市制及町村制	163673	82071efda07c9c76f8ecfc8431e3c5a7c0e1d7bb	1888	all	listed	default
-市制及町村制 (公布時)	169975	0d21ca3e4c79a9a58464c1478f2f17c41f1670a0	1888	all	listed	default
+市制及町村制 (公布時)	169975	0d21ca3e4c79a9a58464c1478f2f17c41f1670a0	1888	all	pinned	pinned
 市制及町村制 (明治28年法律第7号による改正)	111513	231a8acdb93d10ed5db12571b62649dcae5d0f92	1888	all	listed	default
 市制及町村制 (明治31年法律第20号による改正)	111514	e458ca287286150630e01717614d910ab430afcf	1888	all	listed	default
 市制及町村制ニ係ル件	111515	9f6a21081b902e1a7e93d8c2de344edfe3acfbd2	1888	all	listed	default
@@ -562,14 +562,14 @@ title	oldid	sha1	year	usage	source	rule
 幟仁親王殿下薨去ニ付會葬者大禮服着用	100466	0f65e5729a8f9d60db01b93eba646d6dd3a5e580	1886	kanji_only	listed	imperial-title
 幟仁親王殿下薨去ニ付服喪被仰出	100457	c3962f6d0bc9997d223c8dda7128984ce582ca4e	1886	kanji_only	listed	imperial-title
 平民自今必苗字ヲ唱ヘシム	107004	e29afc7ea5fda809f8b3991bb7b846b442763cc7	1875	all	listed	default
-平縣以下十一縣ヲ置キ管地ヲ定ム	143395	db6e4176765fdc69b48af2b8e7f40c95448e17db	1871	all	listed	default
+平縣以下十一縣ヲ置キ管地ヲ定ム	143395	db6e4176765fdc69b48af2b8e7f40c95448e17db	1871	all	pinned	pinned
 年中祭日祝日ノ休暇日ヲ定ム	149707	be65b31ba5fa3d0057df10f36369fb43ceac34c5	1873	all	listed	default
 年中祭日祝日ノ休暇日ヲ定ム (明治六年)	111289	8b478fbd8ae7fb87fec926f405bce2ccd9184e87	1873	all	listed	default
 年中祭日祝日ノ休暇日ヲ定ム (明治十一年)	111290	2bd4ccfc1aa2f1e849f438bcc72bad961e97580b	1873	all	listed	default
 年賀郵便物ノ引受ヲ爲サス	112026	b2a44d967df12418e4f6c8117ede1da6d4fbef34	1926	all	listed	default
 年齡計算ニ關スル法律	242135	c3c27d87ebcf61705efd64f7f77fe7f73021b934	1902	all	listed	default
-年齡計算方ヲ定ム	242137	ce28a01a6d3c26294d332840cad724e395359b58	1873	all	listed	default
-年齡計算方濱田外五縣ヘ達	179626	284b574387b0be73491c21e9c58d5daa37427da0	1873	all	listed	default
+年齡計算方ヲ定ム	242137	ce28a01a6d3c26294d332840cad724e395359b58	1873	all	pinned	pinned
+年齡計算方濱田外五縣ヘ達	179626	284b574387b0be73491c21e9c58d5daa37427da0	1873	all	pinned	pinned
 広告税法	206535	44983243a65e13a8c81ec41ff80aeba1a9114f86	1942	all	listed	default
 府県従来ノ学校ヲ廃シ学制ニ随ヒ更ニ設立セシム	207914	035efead8f7ab27598adfaf2c7539f085b416801	1872	all	listed	default
 府県立師範学校通則	207506	6668eab11d467662fc2220a945ea459fb3fb0d45	1883	all	listed	default
@@ -581,14 +581,14 @@ title	oldid	sha1	year	usage	source	rule
 府縣會規則中改正ニ付區町村會規則中改正	111401	4082f3170b588672af8cae0c805654977cdb9571	1879	all	listed	default
 府縣會議員、市町村會議員等ノ任期延長ニ關スル法律	103082	14ee6569b0297304d39c2e9068e82e3d9208577e	1941	all	listed	default
 府縣立醫學校費用ノ件	111482	58576f93e2d6de572f912bbb8dc628e9e0bcfb9f	1887	all	listed	default
-府縣道及地方費道ヲ指定ス	237166	2dec03b2f5043178a7be06f87dd78108ac1b2f2c	1936	all	listed	default
-府藩縣交涉訴訟准判規程	143392	13de368c42e65ba22b1d8b22856e4562ff1ae5e1	1871	all	listed	default
+府縣道及地方費道ヲ指定ス	237166	2dec03b2f5043178a7be06f87dd78108ac1b2f2c	1936	all	pinned	pinned
+府藩縣交涉訴訟准判規程	143392	13de368c42e65ba22b1d8b22856e4562ff1ae5e1	1871	all	pinned	pinned
 府藩縣所轄外ニ跨ル訴訟ハ添翰シテ民部官ニ出訴セシム	143391	602ae648cda0ed302f7dd8a889022c67f3d616a6	1869	all	listed	default
 府藩縣支配中ヨリ民部官ニ出訴ノ者ハ訴狀ニ府藩縣ノ印ヲ押捺セシム	143390	cf6e55ce926dafe5e11b1d1a8245b6fce62556b1	1869	all	listed	default
 府藩縣貫屬ノ者管轄替ノ節家祿渡方ヲ定ム	143388	cc21f092085da12345cf28c7d55d278d249bebe3	1871	all	listed	default
 度量衡法	111554	67acabb89edefc470deb202bf1a3724729a1b089	1891	all	listed	default
 度量衡法 (明治四十二年)	162063	e30a0577b7292ddba7738782eefe79e634a07384	1909	all	listed	default
-廢藩置縣ノ詔書	215290	85ffd01c168c80c61adb2a29abe6206a1e2baa77	1871	kanji_only	listed	imperial-title
+廢藩置縣ノ詔書	215290	85ffd01c168c80c61adb2a29abe6206a1e2baa77	1871	kanji_only	pinned	imperial-title
 延岡市設置	102884	5983359a85378fca64c2331ac6a3bedb7bb10a2c	1933	all	listed	default
 建物保護ニ関スル法律	222851	4c3305672f4354090861dba42b7066d1a419cddf	1909	all	listed	default
 建言ノ輩今後集議院ニ參セシム	143386	8800b27ffd10285bf25008119bb4369f6d4bba0b	1869	all	listed	default
@@ -597,16 +597,16 @@ title	oldid	sha1	year	usage	source	rule
 從前ノ軍令中陸軍大臣等ニ關スル規定ニ關スル件	112157	f3339be60dea936e8873c01c45d6ad4112a446a7	1945	all	listed	default
 御名睦字及恵統二字闕画ニ及ハス	98071	0f19bbf2291eb1338031b3cf4331d01e1adaad5c	1872	kanji_only	listed	imperial-title
 御歴代御諱並ニ御名ノ文字人民名乗リ憚ルニ及ハス	98185	c54d86011c563babc7745fafdf2d2fd2f4ddb4ef	1873	kanji_only	listed	imperial-title
-御諱御名ノ文字ヲ闕画セシム	143384	97fca403b9ac9afbcdf58b3181a175be8f7b0138	1868	kanji_only	listed	imperial-title
-復讐ヲ嚴禁ス	199922	cdc4409a3157ca53502f4e30d6108f7288d262f3	1873	all	listed	default
+御諱御名ノ文字ヲ闕画セシム	143384	97fca403b9ac9afbcdf58b3181a175be8f7b0138	1868	kanji_only	pinned	imperial-title
+復讐ヲ嚴禁ス	199922	cdc4409a3157ca53502f4e30d6108f7288d262f3	1873	all	pinned	pinned
 徵兵令詔書及ヒ徵兵吿諭	107014	e1cad5290f6d1798f6f0944af4e7dead1c45460b	1872	all	pinned	mixed
-德川慶喜征討ノ大號令ヲ發シ諸侯ヲシテ去就ヲ決セシム	168786	64d78a4ee55452feae27d08550b8d64cc7f8cc88	1868	all	listed	default
+德川慶喜征討ノ大號令ヲ發シ諸侯ヲシテ去就ヲ決セシム	168786	64d78a4ee55452feae27d08550b8d64cc7f8cc88	1868	all	pinned	pinned
 思想犯保護観察法 (昭和11年法律第29号)	244742	103dc16ddfe32b2f6eae300595db9ba7f1520874	1936	all	listed	default
 恤救規則	207014	6d8441c045c18ff9b23b0daf75faf6df28ba18ef	1874	all	listed	default
 愛知岐阜兩縣内管轄替ノ件	208174	08d25a7eeeec59e8d1f87284a963ea5d37dc7a1a	1887	all	listed	default
 慈恵院規則	101988	f1e02a8d269c5191e58a96ed0068db48ef4f98b4	1920	all	listed	default
 戊申詔書	207984	dc09eb6ccd60d5db453c97b342cf10ce9802b1b3	1908	kanji_only	listed	imperial-title
-戒嚴令	224848	e05eb849cc9f9da5faf49fdcc08bd5e5586a54c6	1882	all	listed	default
+戒嚴令	224848	e05eb849cc9f9da5faf49fdcc08bd5e5586a54c6	1882	all	pinned	pinned
 戦災復興院官制	109263	aadd3b4cd5f964c206d07c704db8c0732c8a6b0c	1945	all	listed	default
 戰時大本營條例	111568	15225c5fb46217a766619b4742acf11c7925d956	1893	all	listed	default
 戰時大本營條例 (明治二十六年勅令第五十二号)	111569	c9bfc4f68450a4bbee1282fed1185d53c9cb3a46	1893	all	listed	default
@@ -618,7 +618,7 @@ title	oldid	sha1	year	usage	source	rule
 戰時民事特別法廢止法律 (公布時)	112160	59c98da0152723a385861f643a1299999feac911	1945	all	listed	default
 戸畑市ヲ置ク	102293	75e6386c2514b7428f738c6c0883f32d962f12a6	1924	all	listed	default
 戸籍法中改正法律 (明治40年法律第14号)	242173	f688b035fc845443629d9eb5c4b9f694fd205272	1907	all	listed	default
-所轄運送船春風丸ヲ肇敏丸ト改稱	98193	b71ab94c95b6608673d3aefa921531e3d29c2c6b	1873	all	listed	default
+所轄運送船春風丸ヲ肇敏丸ト改稱	98193	b71ab94c95b6608673d3aefa921531e3d29c2c6b	1873	all	pinned	pinned
 拾錢紙幣通用禁止ノ件	100473	f35b1a064775ee0257633fa4a21e2d0fcf6e7288	1886	all	listed	default
 指宿線五位野喜入間鐵道運輸營業開始	102896	f5b1eccc03eb56bf1b969c870e32c04e029fb765	1934	all	listed	default
 指宿線喜入指宿間鐵道運輸營業開始	102898	782f0310ac4bd34df53ca747561a3c4761e49679	1934	all	listed	default
@@ -627,7 +627,7 @@ title	oldid	sha1	year	usage	source	rule
 指宿線西鹿兒島谷山間ニ停車場設置	208095	e9e2e9581e0286cd56c7e28cc280807ef5d07093	1944	all	listed	default
 攝政令	192290	ba2c5892d83f1f363e1b40e41ccfabc15655b830	1909	kanji_only	listed	imperial-category
 支那事変に関する一時賜金として公布する為公債発行に関する法律	206533	c15243f6b22c9f52a0be9ca0570889c0a0261c16	1940	all	listed	default
-支那人我カ童男女ヲ買取ル者アルニ付之ヲ提警セシム	143378	0739bf6de967702516b324931bdfcea3f9a6c46b	1870	all	listed	default
+支那人我カ童男女ヲ買取ル者アルニ付之ヲ提警セシム	143378	0739bf6de967702516b324931bdfcea3f9a6c46b	1870	all	pinned	pinned
 政体 (慶応四年太政官達第三百三十一号)	97814	320bfa01d16aa075a08a075ed6933e462d60f036	1868	all	listed	default
 政府ノ承繼シタル舊北海道鐵道株式會社社債ニ關スル規程	192429	82c67f542307c4699dbee5ac86027946bed87f7f	1907	all	listed	default
 政府發行ノ紙幣ハ明治十九年一月ヨリ漸次銀貨ニ交換消却ス	111458	3e1fd89c3c813e113c194d276a6b9c9118f624dd	1885	all	listed	default
@@ -651,35 +651,35 @@ title	oldid	sha1	year	usage	source	rule
 教育令第十条第四十九条中追加	207917	cf9867815fa6b66f9ae0b0ae139322b46f61cf70	1881	all	listed	default
 教育基金令 (明治32年勅令第435号)	207813	f29ca05903378d7d1b16ad8796a32eafe3713c52	1899	all	listed	default
 教育基金特別会計法	208342	6070fedbb1fa24a7409ac814ba0211f8615d6efe	1899	all	listed	default
-散髪制服略服脱刀随意ニ任セ禮服ノ節ハ帶刀セシム	97989	4b611ca93f98f8b9a7a736969766828b624b921d	1871	all	listed	default
+散髪制服略服脱刀随意ニ任セ禮服ノ節ハ帶刀セシム	97989	4b611ca93f98f8b9a7a736969766828b624b921d	1871	all	pinned	pinned
 数町村聯合シテ中学校等ヲ設置スルトキハ特ニ学務委員ヲ置クコトヲ得	207918	c9d05be14c50f524f98163f0a8ed67c19564ebef	1882	all	listed	default
 整理公債条例/1888年6月18日発行官報各府県庁到達日数等の後7日施行	208177	8d01417b7674c627949b8d5dfd980012ef0cfc13	1886	all	listed	default
 整理公債条例/1904年2月21日施行	208176	c2c5faf8e0b739e853d60896e5dfbc9ec1cec3f0	1886	all	listed	default
 整理公債条例/公布時	207491	3f97d63ed7dbecfb400bc667853cd71f2bba17ed	1886	all	listed	default
 整理公債条例中改正ノ件 (明治37年勅令第43号)	208154	7700025ef8d6ba2338de80bc4f6c9bf77d78b426	1886	all	listed	default
 整理公債条例中改正ノ件 (明治39年勅令第136号)	208144	b4b3ddb07c1aa5f7dc300298d34a4fc3b77fc4e7	1886	all	listed	default
-整理公債条例中追加ノ件	208170	91be1bee36a451388508c3200d6a132081cc0e2a	1886	all	listed	default
+整理公債条例中追加ノ件	208170	91be1bee36a451388508c3200d6a132081cc0e2a	1886	all	pinned	pinned
 文化勲章令	103017	0291980dde24efec41263baa09e8d88bdd1b303a	1937	all	listed	default
 文官採用ノ資格ヲ有スヘキ准士官下士滿期退營前見習通勤ノ件	111742	032d132e85b9c43c14916b82d536867f136a82b5	1900	all	listed	default
 文武官其ノ他官廳ノ命ニ依ル者ノ外日本臣民管轄地方廳ノ許可ナクシテ朝鮮國ニ渡航スルコトヲ禁スルノ件	107049	d8e5e21f7089a37c8140e23612a0f850b6e84239	1896	all	listed	default
-文部省官員ヲ差遣シ社寺古器物取調	111242	2aaf76f2da2c6173f9855b9b277d5aea2b6da102	1872	all	listed	default
+文部省官員ヲ差遣シ社寺古器物取調	111242	2aaf76f2da2c6173f9855b9b277d5aea2b6da102	1872	all	pinned	pinned
 文部省直轄諸学校官制 (明治23年勅令第233号)	207521	10660a49e20f94d71b62130a4ed092865da576cc	1890	all	listed	default
 文部省直轄諸學校官制中改正ノ件 (明治34年勅令第24号)	208153	b05b840f2c152845905b767ddf74e6475f361617	1901	all	listed	default
 新聞紙印行條例	233623	67b628bea63c4dac73473ac9bfaf27ad8f25dace	1869	all	listed	default
 新聞紙條例中改正法律	100926	0022c92bece2ed131caa8cfabe4be1f2bca49234	1897	all	listed	default
 新聞紙雜誌及其他ノ出版物ニ關スル件	100745	3d588a421d2e08e73459a3d1c7d67f13582b5f54	1894	all	listed	default
 新貨幣量目寸法改正	111243	b164f6732cacc9dba30f805221713d1a22f1524c	1872	all	listed	default
-新貨條例	111357	5f54c8bae2d76095b3c7509e7a7d6c31f28de13c	1871	all	listed	default
+新貨條例	111357	5f54c8bae2d76095b3c7509e7a7d6c31f28de13c	1871	all	pinned	pinned
 新貨條例中金貨一圓表面模様替	111244	b04939b85e2b9bdc5b32371005d305be39eb037a	1872	all	listed	default
 新貨條例中銀貨五錢表面模様替	111245	0d7ba0b09e7a986b340fd1e92c6861d4bfc6ba9a	1872	all	listed	default
 新貨條例中銅貨幣二錢ノ一種ヲ加ヘ且各種ノ圖面改正鑄造	111295	a2656e1d3ed063818662f9be3b1d0f208e41eb4f	1873	all	listed	default
 新購ノ帆前船ヲ春風丸ト名ク	143365	6f42508031ba4dee3bfa5b85a5f4298dcd81df7c	1871	all	listed	default
 日本渡航規則	102239	3d963d29500c3a080470b6e0f052f7efca2bd203	1921	all	listed	default
 日本赤十字社条例	236877	1529d5ad7a94cbdfdf690d7c2205b5bd8a8d6922	1901	all	listed	default
-日本銀行條例	242164	5dda337dab54bfedc7ace1f489f2b98887503c8e	1882	all	listed	default
+日本銀行條例	242164	5dda337dab54bfedc7ace1f489f2b98887503c8e	1882	all	pinned	pinned
 日本銀行法 (昭和17年法律第67号)	239592	eeb6a4e0908dd00b310706f1c717e52c361f91e6	1942	all	listed	default
 日田市設置	103052	0d84980725b842e09da7ba9188328589f84db41c	1940	all	listed	default
-日田縣ヲ置ク	143356	2d4e16c98cc40243752f4a83f40f7941be4797d0	1868	all	listed	default
+日田縣ヲ置ク	143356	2d4e16c98cc40243752f4a83f40f7941be4797d0	1868	all	pinned	pinned
 明治22年青森県令第15号	223125	e0b2dce82298e60e29d31966d3ccb4e871fd562b	1889	all	listed	default
 明治22年青森県令第16号	223126	27fde287835ae77a1c02a32f8b213081599cf6ff	1889	all	listed	default
 明治22年鹿児島県令第26号	174480	9e0dd7199cf2dd0021da48bf49e75f900a842500	1889	all	listed	default
@@ -746,7 +746,7 @@ title	oldid	sha1	year	usage	source	rule
 昭和十七年二月香港占領地総督告諭	103083	29d410190a1f505ed69267ceb48e9bfc709dee04	1942	all	pinned	pinned
 昭和十七年法律第四十一號（明治四十五年法律第二十一號中改正法律）施行期日ノ件	193334	f83f1eb9775c17646e9c69505cff234bdc7a6064	1942	all	listed	default
 昭和十八年法律第九十號中改正法律	103190	50f207a271b19e5424b5c9544705691ffd0c55a4	1945	all	listed	default
-暗殺ヲ爲スヲ嚴禁ス	143350	274f80577fc9d2c39a3894d648ea776586e4a10c	1868	all	listed	default
+暗殺ヲ爲スヲ嚴禁ス	143350	274f80577fc9d2c39a3894d648ea776586e4a10c	1868	all	pinned	pinned
 暴力行爲等處罰ニ關スル法律	161531	1ed80d26042def7c833f42fb20444c78cc882d08	1926	all	listed	default
 暴力行爲等處罰ニ關スル法律 (公布時)	112034	277fc0edb3d7752b4c079fc6d3bf3dea0cf48476	1926	all	listed	default
 書類ノ公示送達ヲ爲スヘキ場合ニハ門前ノ揭示板ニ其書類貼附	111920	7eb0f639319d9b61df3b8ed390f58627a63e6d43	1914	all	listed	default
@@ -766,7 +766,7 @@ title	oldid	sha1	year	usage	source	rule
 本年七月第拾弐号達中改正	207507	0a6f06baa2fa2f87a33b6e7a4fbb5e501aa9a7e2	1883	all	listed	default
 本省日本橋區本材木町ヘ設置	100411	29518bd85db66a65962469861728e44d53e16f55	1885	all	listed	default
 東京、大阪、小倉以外ノ衞戍監獄ニ於ケル在監者移送方	109202	77a755023bd4cc065bee7a1c4fd9347a1a58e75d	1913	all	listed	default
-東京中非人乞食ヲ舊里ニ交割シ再出ヲ禁ス	143348	19c0919885a70ca829828bb4d27d9f8ad90aabd2	1869	all	listed	default
+東京中非人乞食ヲ舊里ニ交割シ再出ヲ禁ス	143348	19c0919885a70ca829828bb4d27d9f8ad90aabd2	1869	all	pinned	pinned
 東京大阪砲兵工廠据置運轉資本增加ニ關スル法律	111627	0a34e51c3919ccc703b5d2a7c18f350843178d66	1897	all	listed	default
 東京府内一定ノ地域ニ戒嚴令中必要ノ規定ヲ適用スルノ件	207864	ccaa1c679654a9bcda607908338e68e91addc41c	1905	all	listed	default
 東京府及神奈川県境域変更ニ関スル法律	100733	af1f4afbffacb8ac74010bd02fbe712d72f265c1	1893	all	listed	default
@@ -802,8 +802,8 @@ title	oldid	sha1	year	usage	source	rule
 民法法例戶籍法及競賣法施行期日ノ件	160122	a9ec5c960ade8550802621fb98e2c83ce88f0cd3	1898	all	listed	default
 民法第四編第五編 (明治35年法律第37号による改正後)	189981	4667ab2e0408c7c360aa7b801ffb9d13e1d1bf77	1898	all	listed	default
 水先法戰時特例	107366	7fe326037681541a9b75ce70ffe91df367e73867	1943	all	listed	default
-水害地方地租特別處分法	111743	3cf41b38093fa2bfbb56f9a07d46530b3c7f2a6a	1900	all	listed	default
-江戸城ヲ東京城ト稱セシム	143341	ac8671214bca5b66564f071b79ac24b0f86cb4eb	1868	all	listed	default
+水害地方地租特別處分法	111743	3cf41b38093fa2bfbb56f9a07d46530b3c7f2a6a	1900	all	pinned	pinned
+江戸城ヲ東京城ト稱セシム	143341	ac8671214bca5b66564f071b79ac24b0f86cb4eb	1868	all	pinned	pinned
 沖繩縣ノ郡編制ニ關スル件	100863	c1d6b320802945ba99413d54058b760af34e8ed3	1896	all	listed	default
 沖繩縣及島嶼町村制	198580	8a999b68d29f25aa2502207453aaf6eaf73c5fc7	1907	all	listed	default
 沖繩縣及島嶼町村制ヲ沖繩縣ニ施行	192385	8080ced79206addf1b539ce2be7b484100aaaa9b	1907	all	listed	default
@@ -824,7 +824,7 @@ title	oldid	sha1	year	usage	source	rule
 治安警察法廢止等ノ件	103184	e06a9284d2aabb0703378dd6ffabc12c773149f8	1945	all	listed	default
 法例	100966	905287e2f1a93c2aa4f6ac8ab1ea94fbf281f638	1898	all	listed	default
 法例 (公布時)	212403	e2fe4dabd4d3dab789f22185f473524cd2ba6b31	1898	all	pinned	pinned
-法例 (明治23年法律第97号)	206719	de105987d44965529f58104953a7e8481e1fdc74	1890	all	listed	default
+法例 (明治23年法律第97号)	206719	de105987d44965529f58104953a7e8481e1fdc74	1890	all	pinned	pinned
 法例 (昭和17年法律第7号による改正)	111698	c844a1d89f46b0c5c420cb7f0630c8c3225fdbf1	1898	all	listed	default
 法律命令ノ臺灣ニ於ケル施行期限ニ關スル件	111598	71dc25069635f1ce2f746326446e6b1f418bbdd4	1896	all	listed	default
 法律命令ノ臺灣ニ於ケル施行期限ニ關スル件 (公布時)	111599	a985e4636554477698a4bc2b6bb6ef2e7ef8c4ea	1896	all	listed	default
@@ -835,9 +835,9 @@ title	oldid	sha1	year	usage	source	rule
 海軍工廠條例中改正ノ件	101569	bf22dbe5fe5e3f8f24c336ffe912b3de2c7ea308	1908	all	listed	default
 海軍軍事教習令施行規則廢止	147095	356c23250365dbd9d4e3ad9ecd0faa5f7af86203	1945	all	listed	default
 海軍軍法會議ノ後繼裁判所指定	112170	dd00a28e176822345e5d8d44f13e44fdf1419501	1945	all	listed	default
-清国ニ対スル宣戦ノ詔勅	206538	5d3a8cb68f620fb083044dc3915dedbd0214b40a	1894	kanji_only	listed	imperial-title
+清国ニ対スル宣戦ノ詔勅	206538	5d3a8cb68f620fb083044dc3915dedbd0214b40a	1894	kanji_only	pinned	imperial-title
 渡航者取締規則	102238	0ec12e9f654157575597429c971d9b8016e79881	1921	all	listed	default
-港湾取締規則	122650	f5ee3fb001f08e070b285b62b9b9c442ecb4abc3	1921	all	listed	default
+港湾取締規則	122650	f5ee3fb001f08e070b285b62b9b9c442ecb4abc3	1921	all	pinned	pinned
 漁区及製魚区貸下令	102241	fdc88f5a2c06250a479ae669a483b3fa87dff8e8	1921	all	listed	default
 漁区及製魚区貸下令/公布時	169995	f0d962f394ca75ba49252d6e4f115993642f0b11	1921	all	listed	default
 漁業取締令	170007	7e7f343a0a11376d9c304e28ae4bc1b2d93b4ff0	1920	all	listed	default
@@ -855,24 +855,24 @@ title	oldid	sha1	year	usage	source	rule
 犯罪卽決例	216479	626adc24c0a971140d95bd489f010ea56e776347	1910	all	listed	default
 狩猟規則	170046	ec22cd36e0a4bab4cc6ac8414dab54c243806d9f	1920	all	listed	default
 狩獵免許稅徵收ニ關スル法律	111628	8f10e14e410bf7b2d9b30217e90a06d6e95b9f98	1897	all	listed	default
-独逸国ニ対スル宣戦ノ詔書	207021	c730c30f451d1edb1a9fc26084593c3913f7aab8	1914	kanji_only	listed	imperial-title
+独逸国ニ対スル宣戦ノ詔書	207021	c730c30f451d1edb1a9fc26084593c3913f7aab8	1914	kanji_only	pinned	imperial-title
 王公家軌範/公布時	244294	0411ce522a7d38672552402020819d12b176c0a4	1926	kanji_only	pinned	imperial-category
 理事廳令公文式	107079	e59fbe4b3dae5a59b316cdf4ebcf7f035ef938c5	1906	all	listed	default
 琉球國王尚泰ヲ藩王トナシ華族ニ陞列スルノ詔	98069	ff068ec54451d1e67dd5aa061b4ed27cd0ee145b	1872	kanji_only	listed	imperial-title
 琉球國那覇港ニ於テ淸國貿易ニ關スル船舶出入及貨物積卸許可法律	100748	470c16a597d645b22f852993ede34c44d0937cf7	1894	all	listed	default
-琉球藩ヲ廢シ沖繩縣ヲ置ク	207921	4aa26cd91ff3c9e5bd6bccb3be64398538de348a	1879	all	listed	default
+琉球藩ヲ廢シ沖繩縣ヲ置ク	207921	4aa26cd91ff3c9e5bd6bccb3be64398538de348a	1879	all	pinned	pinned
 生絲檢査所法	100755	64bec1b3ca622e0b4800218c4921731932084d2b	1895	all	listed	default
 田川市設置	103100	881bdd7e9737c4136c9994a78774b08dd1c245ac	1943	all	listed	default
-田畑夫食取入ノ余ハ諸物品勝手作ヲ許ス	143332	60e0c5b4be56d2b777fe2ae08e1612a12a491b83	1871	all	listed	default
+田畑夫食取入ノ余ハ諸物品勝手作ヲ許ス	143332	60e0c5b4be56d2b777fe2ae08e1612a12a491b83	1871	all	pinned	pinned
 町村制ヲ施行セサル島嶼指定ノ件 (明治22年勅令第1号)	182910	cc23c19885a08ea648eddd64605fa3fda5f073f0	1889	all	listed	default
 町村制中改正法律 (明治28年法律第7号)	111587	081b9e9396c70b094832677c5d80fc916977234e	1895	all	listed	default
 町村制第三条並ニ市制第四条ニ依ル石川郡富樫村外五ヶ村廃止金沢市編入	102917	bd752999b83ad855ad8693b60a37d97b97b49239	1935	all	listed	default
 町村區域及名稱更正 (明治22年宮城県令第8号)	245758	02ab17909b435aa31b1de2cbb32b0345f6ea0206	1889	all	listed	default
-町村行政ニ關シ主務大臣許可ノ職權ヲ縣知事ニ委任スルノ件	198582	afb24982d1784364add4e993200415c7be5cf787	1914	all	listed	default
+町村行政ニ關シ主務大臣許可ノ職權ヲ縣知事ニ委任スルノ件	198582	afb24982d1784364add4e993200415c7be5cf787	1914	all	pinned	pinned
 町立滑川實科高等女學校(富山縣)設置開校認可	101801	14523d4ddfbb43df0b851d4c7fd5e0cd88f51cda	1913	all	listed	default
 癩予防ニ関スル法律	190017	1d7f28a6caaed2a35bccc1c56f5e8d0219a558b3	1907	all	listed	default
 癩予防法	206732	5b48a3ca7e859f8705c56c28e7b3ca53ea5cfbfd	1907	all	listed	default
-登極令	236295	be398257272ea5f52c78f31b98faa47803f85539	1909	kanji_only	listed	imperial-category
+登極令	236295	be398257272ea5f52c78f31b98faa47803f85539	1909	kanji_only	pinned	imperial-category
 登記法中改正ノ件	178214	22630d2149d970b74b9650b3fe8a88655c7b49f4	1887	all	listed	default
 皇后陛下御分娩皇男子御誕生	101779	a7cbec874c710886ed376225f1cdfdcb2303fb55	1915	kanji_only	listed	imperial-title
 皇太后陛下 崩御ニ附キ歌舞音曲停止	100897	7975f87110d7bd981b0041d2f6155e67b26b306a	1897	kanji_only	listed	imperial-title
@@ -883,7 +883,7 @@ title	oldid	sha1	year	usage	source	rule
 皇室典範 (明治二十二年二月十一日)	187620	81229793ad904a9e0a3cc27ec4097227cd212fd1	1889	kanji_only	listed	imperial-title
 皇室典範增補 (大正七年十一月二十八日)	101933	d65e5e4042bf59619fb8fa9aa9cec5b8f97a0830	1918	kanji_only	listed	imperial-title
 皇室典範增補 (明治四十年二月十一日)	242238	98fa1afe1f2b658c59eee0de68f1437031b27549	1907	kanji_only	listed	imperial-title
-皇室婚嫁令	207943	409c33b8b204c216a50600091bb85428aef4ca96	1900	kanji_only	listed	imperial-title
+皇室婚嫁令	207943	409c33b8b204c216a50600091bb85428aef4ca96	1900	kanji_only	pinned	imperial-title
 皇室服喪令	205187	e2b69cee0d8ca1abac809dbd1c91437d8e8a27a2	1909	kanji_only	listed	imperial-title
 皇室誕生令	207942	e5db664edef00928c4b7bc11891339fe778bfe14	1902	kanji_only	listed	imperial-title
 皇居御造營落成ニ付自今宮城ト稱セラル件	206646	5da61c5aeaec02590253bfdfd403c82ace771034	1888	kanji_only	listed	imperial-title
@@ -937,14 +937,14 @@ title	oldid	sha1	year	usage	source	rule
 第二號布吿中六月二十八日ヨリ三十日迄ノ休暇取消	111297	a775266033b050b4a3f6f90c01f02efa8ceeb343	1873	all	listed	default
 第四十号達所管ヨリ差出ス表及調書毎年一度ト定ム	207922	48f247526976c2847d246d37450aa3e9196bd2bb	1873	all	listed	default
 筑摩縣外十五縣廢合竝ニ管轄替	227664	7304e0f70720468c57b1ad01d283f80cdabb97d5	1876	all	listed	default
-箱根始メ諸道關門廢止ス	143319	ae13ee4a887be3f380bfae2c075036c7ca0c4805	1869	all	listed	default
+箱根始メ諸道關門廢止ス	143319	ae13ee4a887be3f380bfae2c075036c7ca0c4805	1869	all	pinned	pinned
 箱館府ヲ廢ス	143318	07a2b2bb7cf5964a6141faf4dd0035dae43e2004	1869	all	listed	default
 箱館裁判所ヲ改テ箱館府ト爲ス	143317	08265db3cda1d562ba221dbd494e530e1290d8a6	1868	all	listed	default
 箱館裁判所ヲ置ク	143316	db7383ffaa408134a5f2477f32f8a16123d7ed9e	1868	all	listed	default
 米國及英國ニ對スル宣戰ノ詔書	206948	3c2d7fce1abcb3cac59849f11bbe8a34bce2b98c	1941	kanji_only	pinned	imperial-title
 統監府令公文式	111788	cd1cc63c2b9dbdea1b1d7e83d12fb85de2740483	1906	all	listed	default
 統監府令公文式 (明治三十九年統監府令第三十一号)	111789	8f80d705f2607357ec9efca0c8b3bd5d3ee84010	1906	all	listed	default
-統監府令公文式 (明治三十九年統監府令第四号)	111790	a6f9542aabd366b746132c93db1199e1f4edc49d	1906	all	listed	default
+統監府令公文式 (明治三十九年統監府令第四号)	111790	a6f9542aabd366b746132c93db1199e1f4edc49d	1906	all	pinned	pinned
 統監府令公文式 (明治四十二年統監府令第四号)	111791	e2d615433e1fce70428c02b9efeb1dee89e46dbc	1906	all	listed	default
 統監府令公文式中改正 (明治四十三年統監府令第五十一号)	111889	9a7a5dcc5dc18ef8fb39d4e62afadac5f4438191	1910	all	listed	default
 統監府令公文式中改正 (明治四十二年統監府令第四号)	201193	771b230190b12752fd3a77191afc4cd38343ab27	1909	all	listed	default
@@ -978,7 +978,7 @@ title	oldid	sha1	year	usage	source	rule
 臨時震災救護事務局官制	153661	27457152cb8c5572511f48f234c4ae30459bdef2	1923	all	listed	default
 自今布吿本文ノ肩ニ番號ヲ朱書シ各省布吿モ之ニ準依セシム	111247	c50520f2a4b68ee0d206642b9a3920f632e38692	1872	all	listed	default
 自今滿二十年ヲ以テ丁年ト定ム	111327	6e96486b01b55feb8868370253ed2b0f7d592f1d	1876	all	listed	default
-自動車取締令	192440	06f54c315bba2f3d4ece2e0db1fc36c389243508	1919	all	listed	default
+自動車取締令	192440	06f54c315bba2f3d4ece2e0db1fc36c389243508	1919	all	pinned	pinned
 自動車取締令中改正 (大正12年内務省令第44号)	101954	163e72cb1917e3082d700ec7c91f5923abd36ba7	1923	all	listed	default
 自動車取締令中改正 (大正12年内務省令第44号)/自動車取締令	147059	a91aecf36758d8ec031b3c019f9b5b47de1c0901	1923	all	listed	default
 自動車取締令中改正 (昭和19年内務省令第20号)	208135	77749124ac3bd1e7547a5edc507c6605e3429a0d	1943	all	listed	default
@@ -1029,7 +1029,7 @@ title	oldid	sha1	year	usage	source	rule
 臺灣總督府地方官官制 (明治三十九年五月二十二日勅令第百十三号)	225579	8645aae48d3e5c04230e02de32c58efaee5b8fe0	1906	all	listed	default
 臺灣總督府地方官官制 (明治三十二年七月七日勅令第三百三十九号)	225537	d5bbdda119834dabbf04305dafb34688b1ed37b9	1899	all	listed	default
 臺灣總督府地方官官制 (明治三十八年三月二十八日勅令第九十号)	225581	b499dc07efafeba0614dd635205947c2450b6805	1905	all	listed	default
-臺灣總督府地方官官制 (明治三十四年十一月九日勅令第二百二号)	225567	f332126fdc70c9bb12e5dd5a9d95e64b12b89450	1901	all	listed	default
+臺灣總督府地方官官制 (明治三十四年十一月九日勅令第二百二号)	225567	f332126fdc70c9bb12e5dd5a9d95e64b12b89450	1901	all	pinned	pinned
 臺灣總督府地方官官制 (明治三十四年十月三日勅令第百八十七号)	225563	52e83dfe9860d519462757076cfa43688403fde1	1901	all	listed	default
 臺灣總督府地方官官制 (明治三十四年四月三十日勅令第八十七号)	225562	f89ac3da89cce8b9f3b7af440482964cf6478bb6	1901	all	listed	default
 臺灣總督府地方官官制 (明治三十年五月三日勅令第百五十二号)	225531	71e5b4beabc6b5fa504ba61f8855c8a87db49839	1897	all	listed	default
@@ -1042,13 +1042,13 @@ title	oldid	sha1	year	usage	source	rule
 臺灣總督府地方官官制 (明治四十四年五月二十五日勅令第百六十九号)	225589	814f970d4111691b0136c03ff4e854ce07fca6a3	1911	all	listed	default
 臺灣總督府地方官官制 (明治四十年四月三十日勅令第百六十八号)	225580	5a5dd92556a0be7bd9e927db3e4109a82cb3cdb3	1907	all	listed	default
 臺灣總督府官制	111632	242deb6c6e594cfbdb0ffd6a8138c5e293bec49d	1897	all	listed	default
-臺灣總督府撫墾署官制	107059	c48285fb4a0b88145f8ec0a232588bcbbf522e6f	1896	all	listed	default
-臺灣總督府條例	194801	64443d12f832e91b8c1acd28755a49bcc64f43f3	1896	all	listed	default
+臺灣總督府撫墾署官制	107059	c48285fb4a0b88145f8ec0a232588bcbbf522e6f	1896	all	pinned	pinned
+臺灣總督府條例	194801	64443d12f832e91b8c1acd28755a49bcc64f43f3	1896	all	pinned	pinned
 臺灣總督府條例 (明治二十九年勅令第八十八号)	111606	a458b4032810c3b9f93606822d26100139dcd494	1896	all	listed	default
 臺灣總督府條例中改正ノ件	111633	0e02c3e7bf55ce13d67c4800320b9d4ac45dff02	1897	all	listed	default
 臺灣總督府法院條例	191269	4ee8cc980a157757b9af8e4e0063e66b45908e56	1896	all	listed	default
 臺灣總督府特別會計法	111634	9ce4bd7dab70a86f3fabe821edbd7aa2db5b505c	1897	all	listed	default
-臺灣總督府稅關管轄區域ノ件	107066	45cf5172686d2c1af6b0cd5a2a18a83d4a74522d	1896	all	listed	default
+臺灣總督府稅關管轄區域ノ件	107066	45cf5172686d2c1af6b0cd5a2a18a83d4a74522d	1896	all	pinned	pinned
 臺灣總督府管內街、庄、社ニ長ヲ置クノ件	225636	724668034e6396a5f26d8d94c54c0ec6d48bd3d1	1897	all	listed	default
 臺灣總督府評議會章程	111607	483ac6ddfcf0aaa43be3acb322daf9ea30737056	1896	all	listed	default
 臺灣總督府評議會章程 (明治三十一年勅令第百七号)	111608	84650a480760032255024da030aa128f7a129db0	1896	all	listed	default
@@ -1076,9 +1076,9 @@ title	oldid	sha1	year	usage	source	rule
 船橋市設置(昭和12年内務省告示第119号)	129728	d534d33a9fc30cfca735cf34ee0c376117f7e1cc	1937	all	listed	default
 船舶法戰時特例	103127	5e68716bfb47bdf087fcdf7a1b460cb39dc0cecb	1944	all	listed	default
 芦屋市設置	208100	f7c4e0880533fc64695aec562dd19cf053e0120c	1940	all	listed	default
-芸妓酌婦芸妓置屋営業取締規則	225115	5f928ae3be5726a3395bbb8463c35354a9ab370d	1916	all	listed	default
+芸妓酌婦芸妓置屋営業取締規則	225115	5f928ae3be5726a3395bbb8463c35354a9ab370d	1916	all	pinned	pinned
 荒尾市設置	103084	049207d8322d0ad1cdb0673d9c10fee582c4249f	1942	all	listed	default
-菊御紋並禁裏御用等ノ文字濫用禁止ノ件	143314	9673e2eea75dc0959f6b90fddedeff0b9b4511ba	1868	kanji_only	listed	imperial-title
+菊御紋並禁裏御用等ノ文字濫用禁止ノ件	143314	9673e2eea75dc0959f6b90fddedeff0b9b4511ba	1868	kanji_only	pinned	imperial-title
 華士族平民互ニ養子取組ヲ許ス	194078	011d2a4ee96172165cc280b30f6b94286607890d	1873	all	listed	default
 華族ヨリ平民ニ至ルマテ互ニ婚姻スルヲ許ス	188863	d6fbac07dbad60228b67fcde68b811cf184d528f	1871	all	listed	default
 華族ヨリ平民迄苗字名並屋號共改稱ヲ禁シ同苗同名ニテ差支アル者ハ願出シム	111248	6f04d96402cfd7783cc01c039644b8e65d55d452	1872	all	listed	default
@@ -1087,7 +1087,7 @@ title	oldid	sha1	year	usage	source	rule
 華族令 (明治二十七年宮内省達甲第二号)	111580	8326ba162588e20aec21b3171cd7b66ab7bb199e	1894	kanji_only	listed	imperial-title
 華族令 (明治十七年宮内省達無号)	111449	dafdee9920227f6977d07e4eab12f81a0be8808d	1884	kanji_only	listed	imperial-title
 華族令中改正	111581	ab0f294d379ac72b2b5af2510cdbf4b6ac2fd48e	1894	kanji_only	listed	imperial-title
-著作権法 (明治32年法律第39号)	219616	6140f85e7b7705524bf004f1b5006235773bbd48	1899	all	listed	default
+著作権法 (明治32年法律第39号)	219616	6140f85e7b7705524bf004f1b5006235773bbd48	1899	all	pinned	pinned
 著作権法中改正法律 (明治43年法律第63号)	207974	6bbbc0ca89a0a13fad7ca388f5a775e12dd05f54	1910	all	listed	default
 著作權法ヲ朝鮮ニ施行スルコトニ關スル件	160121	fbd78e3912ec65e4623dcf0311e7df1bd62dd7e7	1910	all	listed	default
 著作權法ヲ樺太ニ施行スルノ件	102620	b5c43a4e782668b71f8d5eedc2fd453016a691fc	1928	all	listed	default
@@ -1103,7 +1103,7 @@ title	oldid	sha1	year	usage	source	rule
 薩哈嗹州派遣軍公証令中改正	102232	df9c75770fae20ae3c3dce1d9f71129474462aff	1921	all	listed	default
 薩哈嗹州派遣軍刑事令	169966	2a6b221c5c3bc7fdab35b4188ddbc5799543ba3b	1920	all	listed	default
 薩哈嗹州派遣軍刑事即決例	118401	15da8cf218fa0a7ee54cc2d2e0dfd5528084c244	1920	all	listed	default
-薩哈嗹州派遣軍司令官布告 (1922年8月1日)	102258	9ab2ee2048b4508e0c2125f42a00427eb5090418	1922	all	listed	default
+薩哈嗹州派遣軍司令官布告 (1922年8月1日)	102258	9ab2ee2048b4508e0c2125f42a00427eb5090418	1922	all	pinned	pinned
 薩哈嗹州派遣軍司令官布告 (1922年9月28日)	102259	72675f34badc6ac61d34e7539e20f835e6a12db7	1922	all	listed	default
 薩哈嗹州派遣軍司令官布告 (1925年2月27日その1)	102310	27cf2d33dc423b6cf0567574d3e49b7588cddaed	1925	all	listed	default
 薩哈嗹州派遣軍司令官布告 (1925年2月27日その2)	102311	8d32cfcfb27285b1a9d16d0d6d03a38eb4e19da4	1925	all	listed	default
@@ -1125,9 +1125,9 @@ title	oldid	sha1	year	usage	source	rule
 薬学校通則	207923	b95ffeafc9a51ccb9341b692630e92238192631d	1882	all	listed	default
 藤澤市設置	112145	dc8d491209991cc533c84365db6c84c7b0d7b182	1940	all	listed	default
 藩ヲ廢シ縣ヲ置ク	143310	c28adfa0834ea86200625db647924e4cc3f27848	1871	all	listed	default
-藩制	143309	39f4fd0e2750096441e0dc54d837d0f8104d8965	1870	all	listed	default
-蝦夷地ヲ北海道ト稱シ十一國ニ分割國名郡名ヲ定ム	154011	ca3b73a6e51482ae4081f0513ac4de2cb6d1c22e	1869	all	listed	default
-蠶種檢査法	111637	16dcee6c2c0deb862fcd5cfd800d1f61ee4a37ee	1897	all	listed	default
+藩制	143309	39f4fd0e2750096441e0dc54d837d0f8104d8965	1870	all	pinned	pinned
+蝦夷地ヲ北海道ト稱シ十一國ニ分割國名郡名ヲ定ム	154011	ca3b73a6e51482ae4081f0513ac4de2cb6d1c22e	1869	all	pinned	pinned
+蠶種檢査法	111637	16dcee6c2c0deb862fcd5cfd800d1f61ee4a37ee	1897	all	pinned	pinned
 衆議院解散 (大正13年1月31日詔書)	102287	ca02b55376bd4b0481f80b1c75171c1304893ae0	1924	kanji_only	listed	imperial-title
 衆議院解散 (大正3年12月25日詔書)	160113	ea6ab41892052d6bb09cef49e9ea101df4f27e65	1914	kanji_only	listed	imperial-title
 衆議院解散 (大正6年1月25日詔書)	160123	f3e4fc9a2f5b074de8cdd324bb1bfe71c86942bc	1917	kanji_only	listed	imperial-title
@@ -1143,7 +1143,7 @@ title	oldid	sha1	year	usage	source	rule
 衆議院議員選擧法第十條ノ特例ニ關スル法律	103189	528b9636b396c6a7dbef9c01aebe1e6a0bbaf084	1945	all	listed	default
 行政執行法	101025	8b61c7caaf72740591278df94cc37775bbb3be34	1900	all	listed	default
 行政執行法中改正法律	160119	89963294d403a138fbdacefcfe92bd0436896074	1910	all	listed	default
-行政官吏服務紀律	111427	b42800c63d48b0aabc3fc79bac7b96712fae72f3	1882	all	listed	default
+行政官吏服務紀律	111427	b42800c63d48b0aabc3fc79bac7b96712fae72f3	1882	all	pinned	pinned
 行政廳ノ違法處分ニ關スル行政裁判ノ件	111536	1d1930dd589240d0c87b734c86df67313ab0d14b	1890	all	listed	default
 行政裁判所ノ證據決定ニ基キ第三者ニ對シ書類其他ノ證憑ノ提出ヲ求ムル場合ニ於ケル送付ノ費用取扱方	101926	326927ffc6fc3f354cb1100c616544ead859e3a9	1917	all	listed	default
 行政裁判所事務分配方法	111993	fc52c9b965be593ca0121a62808cad66f0f69b9c	1918	all	listed	default
@@ -1155,7 +1155,7 @@ title	oldid	sha1	year	usage	source	rule
 行政裁判所處務規程 (公布時)	111538	b1fc274fb93f5460f529cb6dac4f64d81c76b4d6	1890	all	listed	default
 行政裁判所處務規程中改正ノ件	111748	483bbf01285c6dcb322826c4bacaf6130c2f1556	1901	all	listed	default
 行政裁判法	111539	f3d5460d0a89ef273797d323d589e65795cb7da6	1890	all	listed	default
-行政裁判法 (公布時)	111540	57b3584a9cffc9cde05a2e9b2c6ff05da1709254	1890	all	listed	default
+行政裁判法 (公布時)	111540	57b3584a9cffc9cde05a2e9b2c6ff05da1709254	1890	all	pinned	pinned
 行政裁判法中改正法律	111927	eacc9e362605c666b79226111345a70299fdf54d	1916	all	listed	default
 行政訴答書書式	100762	5d93d51573664879e17498d747e2282e36208d62	1891	all	listed	default
 行政訴訟豫納金手續	111722	b41851d3e0bba189ad3c5772bd4931eafa18a6f9	1899	all	listed	default
@@ -1185,18 +1185,18 @@ title	oldid	sha1	year	usage	source	rule
 請願令	204166	c0e00e01fe5a470da4eaef5208a2f6c659ff87bc	1917	all	listed	default
 請願令中改正	103176	710f4386b68a0e4a012cf43318cc72a43f479bfa	1945	all	listed	default
 諫早市設置	103048	5a54ed1eed76024a840845051eba097c0f04c298	1940	all	listed	default
-諸品賣買取引心得方定書	143304	52830fabbe22417df8d98e88ac65a48b5ee2d5e3	1871	all	listed	default
+諸品賣買取引心得方定書	143304	52830fabbe22417df8d98e88ac65a48b5ee2d5e3	1871	all	pinned	pinned
 諸品賣買取引心得方定書ヲ廢シ向後約定證書ニハ趣意ヲ明確ニ書載セシム	111314	679d97b1941797ccaddce4640f95a79ac8709c49	1875	all	listed	default
 諸学校通則	207512	f5a325b01fd5163c9a7edb0a0c7596b0de3eb28e	1886	all	listed	default
 諸省事務章程通則	111418	f3c81a9d281f16d47addb493474271c5b78ff9e0	1881	all	listed	default
-諸藩ヲシテ暗殺ノ賊徒ヲ提警セシム	143302	7f11ea3d222a8f97c4df4f57d6dc206c93fd8e96	1868	all	listed	default
+諸藩ヲシテ暗殺ノ賊徒ヲ提警セシム	143302	7f11ea3d222a8f97c4df4f57d6dc206c93fd8e96	1868	all	pinned	pinned
 諸藩ヲシテ暗殺ノ賊徒ヲ提警セシムヲ諭示ス	143634	782a121622cab3244f004ff308ddcb1541a43053	1868	all	listed	default
-諸藩宮門警衛ノ御旗等菊章ヲ附セシム	207924	5625c7c39d78306f13885aa1ae45afc2e822f248	1868	kanji_only	listed	imperial-title
+諸藩宮門警衛ノ御旗等菊章ヲ附セシム	207924	5625c7c39d78306f13885aa1ae45afc2e822f248	1868	kanji_only	pinned	imperial-title
 諸藩徵募兵隊律ヲ犯ス者處置伺區分ノ儀兵部省屆	143629	418b4090cafae2f9ffe0260978c1f688baabb6d0	1871	all	listed	default
 諸証書ノ姓名ハ自書シ実印ヲ押サシム	111339	a6394c3c213afd15de1d4cfed94e6dff587a44cb	1877	all	listed	default
 講和ニ関スル詔書	177116	3f6a64016b6081ee8a5738ddb29264765ffce84e	1920	kanji_only	listed	imperial-title
 警察犯処罰令	223246	263a5657b7b23a07316400406080d43007e4a0a9	1908	all	listed	default
-議會竝議員保護ノ件	111525	ec92def6b78861294cf417169c5860f86ecc2276	1889	all	listed	default
+議會竝議員保護ノ件	111525	ec92def6b78861294cf417169c5860f86ecc2276	1889	all	pinned	pinned
 議院法	221614	46cd7ff18ec6384e6f9ff50234e043df46e8faed	1889	all	listed	default
 豊原市設置	103014	bbd2b81ab2ca6eb75e249b52011a442299b6d295	1937	all	listed	default
 豫定鐵道線路中私設鐵道會社ニ敷設許可ノ件	100939	a3bc797e9660f091a5ee1726f09905dc00bb9419	1897	all	listed	default
@@ -1211,7 +1211,7 @@ title	oldid	sha1	year	usage	source	rule
 貨幣條例	111358	8872dcbb6408d65e26a7e0c38db7ccd343130b14	1875	all	listed	default
 貨幣條例中改正追加	147591	21b274e323fe1eff6f1fea473c409ca55397e2dc	1888	all	listed	default
 貨幣條例中貿易銀ト本位金貨ノ比較改定	111328	1aaf80554c4c1f3753d3d6091c54e404ae0a8171	1876	all	listed	default
-貨幣法	165148	add86fe7a406df3d4e467be2ebc57d6dcf3ac8ba	1897	all	listed	default
+貨幣法	165148	add86fe7a406df3d4e467be2ebc57d6dcf3ac8ba	1897	all	pinned	pinned
 貨幣法中改正 (大正七年)	111994	fae1bcd21b4fd0d8dda05f61aec0e960fb101e51	1918	all	listed	default
 貨幣法中改正 (大正九年)	112004	2add49ca4a9ef06d8767008be5855bcec03c5748	1920	all	listed	default
 貨幣法中改正 (大正五年)	111928	e4189395d35b723e8c66703e33178fb8ee64a34f	1916	all	listed	default
@@ -1231,8 +1231,8 @@ title	oldid	sha1	year	usage	source	rule
 貴族院停會 (昭和3年1月21日詔書)	102609	7ac027841cb9380fa26c0c22b3c89aba0963823c	1928	kanji_only	listed	imperial-title
 貴族院停會 (昭和5年1月21日詔書)	102632	955eb3aa0b16eee3c2fb95bea88dbee73f927034	1930	kanji_only	listed	imperial-title
 貴族院停會 (昭和7年1月21日詔書)	102869	bd1a39d06a8aae595514578d4d82854cae894936	1932	kanji_only	listed	imperial-title
-貴族院多額納稅者議員互選規則 (明治二十二年勅令第七十九号)	111527	2eea1efd8fb14033b0d3769954fca50a992230c6	1889	all	listed	default
-貴族院衆議院守衞長守衞番長及守衞服裝規則	111646	c7157459a64e51a7b64953ed3ba94975f4d10bfa	1897	all	listed	default
+貴族院多額納稅者議員互選規則 (明治二十二年勅令第七十九号)	111527	2eea1efd8fb14033b0d3769954fca50a992230c6	1889	all	pinned	pinned
+貴族院衆議院守衞長守衞番長及守衞服裝規則	111646	c7157459a64e51a7b64953ed3ba94975f4d10bfa	1897	all	pinned	pinned
 貴族院議員資格及選挙争訟判決規則 (明治23年勅令第221号)	206639	1eb2314f8125e2e36039cd9c6913d347bad31a39	1890	all	listed	default
 貸座敷、引手茶屋、娼妓取締規則	226979	74dad49bc772a3936f699ef0da81038d9b606059	1900	all	listed	default
 貸座敷娼妓取締規則	231475	5861f4b96675c8c0c13ccc486dbb1cda90b6b93a	1916	all	listed	default
@@ -1246,7 +1246,7 @@ title	oldid	sha1	year	usage	source	rule
 賞勲局官制	111543	2a9b6676904613f9569ac03d64e22fccae33e08b	1890	all	listed	default
 賞勲局官制 (明治26年勅令第116号)	111575	473969db045444dfd3471782236a986edda809e5	1893	all	listed	default
 賞牌從軍牌ヲ定ム	111316	397e258de15fa120db2ce6b46ede8538bd9d00cc	1875	all	listed	default
-贋造金銀銅貨紙幣等取扱規則	170083	af626865ee28301f3e5d8a147f1bb2897510836c	1876	all	listed	default
+贋造金銀銅貨紙幣等取扱規則	170083	af626865ee28301f3e5d8a147f1bb2897510836c	1876	all	pinned	pinned
 赤坂ニ離宮ヲ置ク	107017	6034137d6bccd9c41e588ba1a7338a495d94c5b0	1872	kanji_only	listed	imperial-title
 赤坂離宮ヲ以テ假皇居ト定ム	194079	7bb4424a3c9a0f5834b5232239f05b7f6ecd929d	1873	kanji_only	listed	imperial-title
 路線ヲ府縣道ニ認定ス (大正12年宮城県告示第261号)	239638	566428023db93922b2ca1b99c0bac56937d0dd39	1923	all	listed	default
@@ -1259,7 +1259,7 @@ title	oldid	sha1	year	usage	source	rule
 軍事特別措置法廢止等ニ關スル件	103164	44b93a2385cc5382c3795795d208b70792197d30	1945	all	listed	default
 軍事警察賞與ノ件	130140	b5c43678b39535362e2d49bbef7fff9474e3209a	1907	all	listed	default
 軍令ニ關スル件	101625	209484e62e2e958a322acfc1db5deaec2c21d746	1907	all	pinned	pinned
-軍律ヲ定ム	143297	ba785398348e48aa9a5fb7496b318ac3aac02df9	1869	all	listed	default
+軍律ヲ定ム	143297	ba785398348e48aa9a5fb7496b318ac3aac02df9	1869	all	pinned	pinned
 軍政部長、軍政署長、同支署長ノ命令ニ関スル件	170048	b217e9707618dae1bf0253963fc0da639112dbc4	1920	all	listed	default
 軍法會議法確定マテ糺問司ニ假會議ヲ設ク	143296	afa88904f7fa68eaf01ee7912fbe2332b4c59af1	1872	all	listed	default
 軍費支辨ノ爲公債募集二關スル法律	111590	aefe314eb54bc9e79d103748564f400c43ec9fcf	1895	all	listed	default
@@ -1268,7 +1268,7 @@ title	oldid	sha1	year	usage	source	rule
 輕便鐵道法 (明治44年法律第31号による改正)	111893	4aeb93c5214d2331a5a169e31c720829d03c11af	1910	all	listed	default
 輕便鐵道法中改正法律 (大正7年法律第41号)	111996	2cddcda7abf39df9f5b7ea1761e4a1a578eaee15	1918	all	listed	default
 輕便鐵道法中改正法律 (明治44年法律第31号)	111902	22126b4d529f681a8ca7cb50b39499ed0cc0db3d	1911	all	listed	default
-辛未改正府藩縣交渉訴訟准判規程	143295	a6544f1dc6c6f71e56021b17afc7142a53bf305e	1871	all	listed	default
+辛未改正府藩縣交渉訴訟准判規程	143295	a6544f1dc6c6f71e56021b17afc7142a53bf305e	1871	all	pinned	pinned
 辯護士法 (大正12年法律第51号による改正後)	192103	23ad4c4337c00bef1a78157ecabf400615b675cc	1893	all	listed	default
 辯護士法 (大正3年法律第40号による改正後)	192105	d5ff70b4519e22424b0b8d518118a2f1672454cb	1893	all	listed	default
 辯護士法 (明治26年法律第7号)	192094	25a4167aafb6331ed80ca9c0eedf60a2797c70a3	1893	all	listed	default
@@ -1291,7 +1291,7 @@ title	oldid	sha1	year	usage	source	rule
 道路法 (大正8年法律第58号)	112002	4edddc82b3efedb051e07f568d3fef812a0c8151	1919	all	pinned	pinned
 道路法戦時特例	208069	354d29b0fe60a136a6c044ab4180686e79cec02c	1943	all	listed	default
 違警罪即決例	100404	59bf15686a2b5d63f6a1e685f99cade23da43e75	1886	all	listed	default
-遺失物取扱規則	111329	d01c7af7f63aa6e32e146d87a3f33f0b54397802	1876	all	listed	default
+遺失物取扱規則	111329	d01c7af7f63aa6e32e146d87a3f33f0b54397802	1876	all	pinned	pinned
 遺失物取扱規則 (公布時)	111330	c356ae533b0d01870e14256cd62c44ae4d086616	1876	all	pinned	pinned
 遺失物取扱規則第六條改正	111419	be26ca6753aacd019a0c6dc68bf421867fb34a6f	1881	all	listed	default
 郵便法、郵便爲替法、郵便貯金法、鐵道船舶郵便法及電信法ノ施行ハ遞信省令及吿示ニ依ルノ件	101660	142dd850841055a05fe16f5abb68fa7456b8c92b	1906	all	listed	default
@@ -1322,7 +1322,7 @@ title	oldid	sha1	year	usage	source	rule
 酒造税法中改正法律 (明治41年法律第18号)	245100	b44448afacc72b3eac9da845fe032d4559044290	1908	all	listed	default
 酒造税法中改正法律 (昭和13年法律第48号)	245224	ce52ba049ed35d6933e7f5906e99e88f80e71cc9	1938	all	listed	default
 酢造營業者酢元ニ供スルタメ酒類ヲ製造スル者酒造税則ニ準據スルノ件	245275	63d60e942e5d0c74d9748c2ff3a670d36dc82518	1883	all	listed	default
-醫師畫工諸職人ノ位階及國名受領等ヲ廢ス	143292	2a008f9b276a9115eca2238ce4c9b40bd7b2e1a2	1869	all	listed	default
+醫師畫工諸職人ノ位階及國名受領等ヲ廢ス	143292	2a008f9b276a9115eca2238ce4c9b40bd7b2e1a2	1869	all	pinned	pinned
 重要美術品保存ニ関スル物件認定 (昭和9年文部省告示第194号)	208056	e581a3aa95a82252a6dc790257eb2363c8c13cfb	1934	all	listed	default
 重要美術品保存ニ関スル物件認定 (昭和9年文部省告示第232号)	207956	083ae3357d33a51642f94936eb5c9ac859d78146	1934	all	listed	default
 重要美術品保存ニ関スル物件認定 (昭和9年文部省告示第232号)/1934年8月3日正誤	207957	1e2ce127afaef934f2a8c0eada8891cfee3c8e51	1934	all	listed	default
@@ -1330,9 +1330,9 @@ title	oldid	sha1	year	usage	source	rule
 重要美術品等ノ保存ニ関スル物件認定 (昭和9年文部省告示第245号)	208055	60e61802cce667f051ba0a98efb519f8b4e0cdd2	1933	all	listed	default
 重要美術品等ノ保存ニ関スル物件認定 (昭和9年文部省告示第245号)/告示時	208054	41b5867c5e2695644652f974b02dc7fc3043fee5	1933	all	listed	default
 重要美術品等ノ保存ニ關スル法律	102889	293e7729b4ad218ae1eefb052038df0ce43c411a	1933	all	listed	default
-重要美術品等保存ニ関スル物件認定 (昭和8年文部省告示第274号)	207949	03f8fed018d41a3ce385cbb736f353f2643feda0	1933	all	listed	default
+重要美術品等保存ニ関スル物件認定 (昭和8年文部省告示第274号)	207949	03f8fed018d41a3ce385cbb736f353f2643feda0	1933	all	pinned	pinned
 重要美術品等保存ニ関スル物件認定 (昭和8年文部省告示第286号)	207952	1cdd2e3a94b09ab3c9b72223ffa556cce027f330	1933	all	listed	default
-重要美術品等保存ニ関スル物件認定 (昭和8年文部省告示第312号)	208053	ff11075ac21ffcee4342cafd377cb1ea0da89204	1933	all	listed	default
+重要美術品等保存ニ関スル物件認定 (昭和8年文部省告示第312号)	208053	ff11075ac21ffcee4342cafd377cb1ea0da89204	1933	all	pinned	pinned
 重要美術品等保存ニ関スル物件認定 (昭和8年文部省告示第312号)/告示時	208052	bde9bfc0421b8cc1b18935f6ed5e5b210f978efe	1933	all	listed	default
 重要美術品等保存ニ関スル物件認定 (昭和8年文部省告示第315号)	208051	3fdd08eb3660e9db2a840ade7c941d96b2174a9f	1933	all	listed	default
 重要美術品等保存ニ関スル物件認定 (昭和8年文部省告示第315号)/告示時	208049	25a267332d05a55ea92b9e6ce85d32a58a2cf3ea	1933	all	listed	default
@@ -1350,10 +1350,10 @@ title	oldid	sha1	year	usage	source	rule
 金祿公債證書發行條例	111331	6f844293ae3e9becf1f6c0b9f2897bae9e12ef53	1876	all	listed	default
 金祿公債證書發行條例 (公布時)	111332	b19e31fbec2e0f76f36f1f179f1877bf470e891a	1876	all	listed	default
 金祿公債證書發行條例 (明治11年太政官布告第26号による改正)	111333	3ed786f28bf22b89dda791ee07389612c970e15c	1876	all	listed	default
-金穀等借用證書讓渡ノ節ハ書換ヘシム	111334	9e29722e8951c53bbb456334cc1b91c4904cd898	1876	all	listed	default
+金穀等借用證書讓渡ノ節ハ書換ヘシム	111334	9e29722e8951c53bbb456334cc1b91c4904cd898	1876	all	pinned	pinned
 金穀貸附ノ證文中利息トノミ記スモノ今後法律上ノ利息ヲ定ム	111300	e4a13f5085bdb5c98b7dea435d5a9e3eae0b9ab2	1873	all	listed	default
 金銀等借用證書ニ數名連印中失踪死亡シ相續人ナキトキ償却方	111317	ade0c0f1d73a3d2c634fa619262aba6273e306f0	1875	all	listed	default
-金錢貸借引當ニ人身書入嚴禁	111318	64034409133763648fdd358594b2a021f29234b7	1875	all	listed	default
+金錢貸借引當ニ人身書入嚴禁	111318	64034409133763648fdd358594b2a021f29234b7	1875	all	pinned	pinned
 鉱業取締令	101971	e11bc56d0fb3ee45f4934760740eb848a0514937	1920	all	listed	default
 銀貨幣量目增ニ付五十錢以下模様改正	111301	f9881e1862d6202be1996b40017d0414d1728882	1873	all	listed	default
 銃砲、火薬、刀剣類取締規則	101989	9d8a7fbaaa4c693f3376c397e9ae4d2338f74330	1920	all	listed	default
@@ -1363,8 +1363,8 @@ title	oldid	sha1	year	usage	source	rule
 鐵道國有法	218205	49e20fba2f4798486a4166249d00475b116cbad9	1906	all	listed	default
 鐵道敷設法中改正法律	107052	7fc8749119c5434ce2966dda2c62117005614a3f	1897	all	listed	default
 鐵道書記補通信手試驗規則ヲ統監府通信官署ニ準用ノ件	111807	31c6eb804699fc5ee4de8b78f9f268ae952bf2ac	1906	all	listed	default
-鐵道略則	111250	a9f690e73127b9261e8b1dfc91b4e61a6122a2b2	1872	all	listed	default
-鐵道略則 (明治5年太政官布告第61号)	180947	1e99fb344a2679a977fb06603de3862b15fdb75b	1872	all	listed	default
+鐵道略則	111250	a9f690e73127b9261e8b1dfc91b4e61a6122a2b2	1872	all	pinned	pinned
+鐵道略則 (明治5年太政官布告第61号)	180947	1e99fb344a2679a977fb06603de3862b15fdb75b	1872	all	pinned	pinned
 鐵道管理局内各事務所ノ名稱位置及所管區域中追加 (大正2年鉄道院告示第90号)	208081	68b0b2a41496c3213bdc208dadcefa3238e1007a	1913	all	listed	default
 長崎縣下郡廢置法律	100888	7ae487e1511a43d60c0a9eeab2f6edd5c2d1458e	1896	all	listed	default
 長崎縣對馬國等ニ於ケル町村制度ニ關スル件	147081	e63f16acb41ee6c0bc38b26ffe83aa9eca5ed1df	1918	all	listed	default
@@ -1387,7 +1387,7 @@ title	oldid	sha1	year	usage	source	rule
 阿片法	242331	e682a31541477414d364f7cfc4136d59f82f8031	1897	all	listed	default
 陪審法ノ停止ニ關スル法律	207059	26242f1f79577fae2afaaa0b0f1e966cd8c24a5a	1943	all	listed	default
 陵墓地ノ名稱所在及地域	234900	b76a467acb9e95cda524a15477994f351addfa6a	1927	kanji_only	listed	imperial-title
-陸地測量標條例	239990	4a0ee96473d5976e9ba41ca4e0945faa8135d0a1	1890	all	listed	default
+陸地測量標條例	239990	4a0ee96473d5976e9ba41ca4e0945faa8135d0a1	1890	all	pinned	pinned
 陸海軍ノ復員ニ伴ヒ不要ト爲ルベキ勅令ノ廢止ニ關スル件	167938	80280029821543b8d3d3da25ca2453810ebc8ce3	1945	all	listed	default
 陸海軍ノ復員ニ伴ヒ不要ト爲ルベキ軍令ノ廢止ニ關スル件	103140	907aeaae9809e32b4286eb780d0ebf7c37ab4efc	1945	all	listed	default
 陸海軍ノ復員ニ伴ヒ不要ト爲ルベキ軍令ノ廢止ニ關スル件 (昭和20年軍令第5号による読替え)	103141	456ce4a01706e848237e27bc6fed8f0c38bc49d6	1945	all	listed	default
@@ -1405,16 +1405,16 @@ title	oldid	sha1	year	usage	source	rule
 陸軍理事官臨時增置ノ件	179405	6d2b44114770f3b1bf4a0d1b8b5d05a741db7d8a	1944	all	listed	default
 陸軍管區制定ニ付キ從前ノ第一及第三軍管中ヨリ徵集ノ兵員取扱方	192375	020c612b604ccd59ddb31c0bac8f3017dee98bd6	1888	all	listed	default
 陸軍豫備役准士官下士ノ文官又ハ雇員タル者ヲ軍務ニ採用方	111837	02ea2a58494aaf90a3b0b072db4cdf3c89664d4b	1907	all	listed	default
-陸軍軍法会議法	220894	034dc9f9d2fec74d9e2dde53bc1f9308c6e3b07b	1921	all	listed	default
+陸軍軍法会議法	220894	034dc9f9d2fec74d9e2dde53bc1f9308c6e3b07b	1921	all	pinned	pinned
 陸軍部隊ニ於ケル被服經理ノ臨時特例ノ件	112146	9e97a907bad0f1829ee8470c6f12f94615736d29	1940	all	listed	default
 陸軍部隊委任經理臨時特例	112148	74dc5dfa04c5d528d30f7b9e7589da691cff2757	1941	all	listed	default
 隈之城外二村廢止ニ伴フ財産歸屬	102625	39fa64d07ca64513856c8558c0c9bb25991ff2bd	1929	all	listed	default
-隱岐縣ヲ廢シ大森縣ヲ置ク	143288	67e04a98da81d7978c9cc574cad6d11d4714d6e0	1869	all	listed	default
+隱岐縣ヲ廢シ大森縣ヲ置ク	143288	67e04a98da81d7978c9cc574cad6d11d4714d6e0	1869	all	pinned	pinned
 隱岐縣ヲ置ク	179546	7d2783ba8e31bdba353869bb6e6bc830f862699f	1869	all	listed	default
-集議院ニ於テ待詔院下局ノ事務ヲ料理セシム	143286	3cdc116bbf06a0435ab85f5db09cfabe14920b0c	1869	kanji_only	listed	imperial-title
+集議院ニ於テ待詔院下局ノ事務ヲ料理セシム	143286	3cdc116bbf06a0435ab85f5db09cfabe14920b0c	1869	kanji_only	pinned	imperial-title
 集議院ヲ廢シ其事務ヲ左院ニ屬ス	107007	3b844bfb32966aef413c6dfbfa916bbd15607364	1873	all	listed	default
 集議院臨時規則	143285	aa046af051c3517c93861130cb3fe874be1c3322	1870	all	listed	default
-集議院規則	218192	fb8ccc1c60436ef37b4f7f9adccc09c29b278d4b	1869	all	listed	default
+集議院規則	218192	fb8ccc1c60436ef37b4f7f9adccc09c29b278d4b	1869	all	pinned	pinned
 集議院規則 (明治二年法令全書第七百七十九)	143283	081fa48c169a9ae20a4768598cc3aac7a6b50066	1869	all	listed	default
 電信法中電話ノ施行ニ關シテハ電話規則ヲ準用セス	101677	656c33d4e716fd21d97ba6480bf7e238a93915d6	1906	all	listed	default
 霧嶋國立公園指定	208071	46eac8db603805b96513035499d6d82c459c200b	1934	all	listed	default
