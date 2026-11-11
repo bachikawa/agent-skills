@@ -25,7 +25,7 @@
 
 ## 手順
 
-1. スキルを足す Issue と、開発ブランチ `dev_<Issue 番号>` を作る（→ [README の「ブランチ運用」](../README.md#ブランチ運用)）。
+1. スキルを足す Issue と、開発ブランチ `dev_<Issue 番号>` を作る（→ README の「[開発する人へ](../README.md#開発する人へ)」の「ブランチ運用」）。
 2. 次のディレクトリとファイルを作る。
 
    ```text
@@ -39,7 +39,9 @@
 
 3. `plugin.json` と `SKILL.md` を、下の雛形から書く。最初の `version` は `0.1.0` にする（→ [リリースの決まり](releasing.md)）。
 4. `.claude-plugin/marketplace.json` の `plugins` に、エントリを足す。
-5. README の「スキルの一覧」の表に、行を足す。列は「スキル」（`<スキル名>`）・「説明」・「プラグイン ID」（`<スキル名>@bachikawa-skills`）である。
+5. README の「スキル」に、`kundoku-bungo` と同じ形の節を足す。中身は、見出し（`### <スキル名>`）・版のバッジ・説明・変換などの例・プラグイン ID（`<スキル名>@bachikawa-skills`）と、Releases・権利の表示へのリンクである。
+   - 版のバッジは、shields.io の dynamic JSON（外部の JSON の値を読んで表示するバッジ）で、`main` の `plugins/<スキル名>/.claude-plugin/plugin.json` の `version` を読む。版を README に固定で書かない（版を書く場所は `plugin.json` だけ）。利用者が入れる `main` の版を示すので、スキルを足した PR が `main` に入るまでは値が出ない。
+   - README の目次（見出しの絵の下のリンクの行）は、スキルごとには足さない。
 6. 下の「検証」を行う。
 
 ## 雛形
