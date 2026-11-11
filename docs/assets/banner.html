@@ -1,11 +1,18 @@
 <!doctype html>
 <!--
   Source of docs/assets/banner-light.png and banner-dark.png.
-  Fonts: Noto Sans JP and Noto Serif JP (SIL Open Font License 1.1), installed locally.
-  Render (1280x320) with a headless Chromium browser, for example:
+  Fonts: Noto Sans JP and Noto Serif JP (SIL Open Font License 1.1), installed
+  on the machine that renders the page. Get them from
+    https://fonts.google.com/noto/specimen/Noto+Sans+JP
+    https://fonts.google.com/noto/specimen/Noto+Serif+JP
+  Without them, the browser falls back to another font without a warning,
+  so compare the result with the committed images.
+  Render (1280x320) with a headless Chromium browser. Pass the page as an
+  absolute file URL, with #light or #dark:
     msedge --headless --disable-gpu --hide-scrollbars --force-device-scale-factor=1
-      --window-size=1280,320 --screenshot=banner-light.png "banner.html#light"
-    (and "#dark" for banner-dark.png)
+      --window-size=1280,320 --screenshot=<absolute path>/banner-light.png
+      "file:///<absolute path>/banner.html#light"
+    (and #dark for banner-dark.png)
 -->
 <html lang="ja">
 <meta charset="utf-8">
