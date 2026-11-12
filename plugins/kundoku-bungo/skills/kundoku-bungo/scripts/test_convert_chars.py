@@ -411,7 +411,7 @@ class AddIterationMarksTest(unittest.TestCase):
                 )
 
     def test_other_characters_are_not_marked(self) -> None:
-        for given in ("人人", "ーー", "ヶヶ", "・・", "ヽヽ"):
+        for given in ("人人", "ーー", "ヶヶ", "・・", "ヽヽ", "ッッ", "ゃゃ", "ゕゕ"):
             with self.subTest(given=given):
                 self.assertEqual(
                     convert_chars.add_iteration_marks(given), given
@@ -439,6 +439,23 @@ class ExpandMarksTest(unittest.TestCase):
             with self.subTest(given=given):
                 self.assertEqual(convert_chars.expand_marks(given), expected)
 
+    def test_kana_with_a_separate_voicing_mark_counts_as_the_kana(
+        self,
+    ) -> None:
+        for mark in (COMBINING_VOICED, SPACING_VOICED):
+            with self.subTest(mark=repr(mark)):
+                self.assertEqual(
+                    convert_chars.expand_marks("た" + mark + "ゝ"),
+                    "た" + mark + "た",
+                )
+                self.assertEqual(
+                    convert_chars.expand_marks("た" + mark + "ゞ"),
+                    "た" + mark + "だ",
+                )
+
+    def test_voiced_mark_after_a_kana_without_voicing_is_kept(self) -> None:
+        self.assertEqual(convert_chars.expand_marks("あゞ"), "あゞ")
+
     def test_vertical_mark_follows_the_character_before_it(self) -> None:
         cases = {
             "益" + VERTICAL_ITERATION_MARK: "益々",
@@ -449,7 +466,16 @@ class ExpandMarksTest(unittest.TestCase):
                 self.assertEqual(convert_chars.expand_marks(given), expected)
 
     def test_runs_and_marks_without_a_kana_before_are_kept(self) -> None:
-        for given in ("ゝゝゝゝ", "何ゝゝ", "なりゝゝ", "何ゝ", "ゝ", "　ゝ"):
+        for given in (
+            "ゝゝゝゝ",
+            "何ゝゝ",
+            "なりゝゝ",
+            "何ゝ",
+            "各ゞ",
+            "ゝ",
+            "　ゝ",
+            "　" + VERTICAL_ITERATION_MARK,
+        ):
             with self.subTest(given=given):
                 self.assertEqual(convert_chars.expand_marks(given), given)
 
@@ -504,6 +530,22 @@ class ToBungoMarksTest(unittest.TestCase):
                 "ものの如く", iteration_marks=True, katakana=False
             ),
             "ものゝ如く",
+        )
+
+    def test_katakana_kept_in_hiragana_take_their_own_mark(self) -> None:
+        self.assertEqual(
+            convert_chars.to_bungo(
+                "ルル", katakana=False, iteration_marks=True
+            ),
+            "ルヽ",
+        )
+
+    def test_small_kana_kept_small_are_not_marked(self) -> None:
+        self.assertEqual(
+            convert_chars.to_bungo(
+                "っっ", iteration_marks=True, keep_small_kana=True
+            ),
+            "ッッ",
         )
 
     def test_both_options(self) -> None:
@@ -713,6 +755,14 @@ class ExplainTest(unittest.TestCase):
                 "https://ja.wikisource.org/w/index.php?oldid=143507",
             ],
         )
+        self.assertEqual(
+            [row["note"] for row in rows[-2:]],
+            [
+                "コトを合字で書く",
+                "すぐ前と同じ仮名を踊り字で書く。"
+                "濁点の付いた仮名と、句読点・空白をはさむ所は書かない",
+            ],
+        )
 
     def test_hiragana_iteration_mark_has_its_own_evidence(self) -> None:
         (row,) = [
@@ -724,7 +774,28 @@ class ExplainTest(unittest.TestCase):
         ]
         self.assertEqual(row["to"], "ゝ")
         self.assertEqual(row["evidence"], "明治二十四年富山縣告諭第三號（1891）")
-        self.assertRegex(row["evidence_url"], EVIDENCE_URL)
+        self.assertEqual(
+            row["evidence_url"],
+            "https://ja.wikisource.org/w/index.php?oldid=115414",
+        )
+
+    def test_hiragana_text_with_katakana_has_a_row_for_each_mark(
+        self,
+    ) -> None:
+        rows = [
+            row
+            for row in self._by_category(
+                "ものの、ルル",
+                "notation",
+                katakana=False,
+                iteration_marks=True,
+            )
+            if row["from"] == "同じ仮名の 2 つ目"
+        ]
+        self.assertEqual(
+            [(row["to"], row["count"]) for row in rows],
+            [("ヽ", "1"), ("ゝ", "1")],
+        )
 
     def test_mark_rows_count_what_to_bungo_writes(self) -> None:
         text = "ことごとく、することは、るるる。ははは。ざざ"
@@ -735,10 +806,10 @@ class ExplainTest(unittest.TestCase):
             for row in self._by_category(text, "notation", **options)
             if row["to"] in (KOTO_LIGATURE, "ヽ")
         }
-        self.assertEqual(
-            counts,
-            {KOTO_LIGATURE: converted.count(KOTO_LIGATURE), "ヽ": 3},
-        )
+        # ことごとく gives one ligature too, which is why SKILL.md asks for
+        # such words in kanji.
+        self.assertEqual(counts, {KOTO_LIGATURE: 2, "ヽ": 3})
+        self.assertEqual(converted.count(KOTO_LIGATURE), 2)
         self.assertEqual(converted.count("ヽ"), 3)
 
     def test_mark_options_add_no_row_when_nothing_changes(self) -> None:
@@ -910,6 +981,7 @@ class CommandLineTest(unittest.TestCase):
             "--shinjitai",
             given="後るるコト",
         )
+        self.assertEqual(completed.returncode, 0)
         lines = completed.stdout.decode("utf-8").split("\n")
         self.assertEqual(
             [line.split("\t")[1:4] for line in lines[1:-1]],
@@ -924,7 +996,15 @@ class CommandLineTest(unittest.TestCase):
         completed = self._run(
             "to-modern", "--expand-marks", given="後ルヽ" + KOTO_LIGATURE
         )
+        self.assertEqual(completed.returncode, 0)
         self.assertEqual(completed.stdout.decode("utf-8"), "後るること")
+
+    def test_to_bungo_hiragana_iteration_marks(self) -> None:
+        completed = self._run(
+            "to-bungo", "--hiragana", "--iteration-marks", given="ものの如く"
+        )
+        self.assertEqual(completed.returncode, 0)
+        self.assertEqual(completed.stdout.decode("utf-8"), "ものゝ如く")
 
     def test_explain_keeps_the_input_for_the_conversion(self) -> None:
         source = self._temp_input("がくせい")

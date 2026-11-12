@@ -56,6 +56,8 @@ _HIRAGANA_END = 0x3096
 _HIRAGANA_BLOCK_END = 0x309F
 _KATAKANA_BLOCK_START = 0x30A0
 _KATAKANA_BLOCK_END = 0x30FF
+_KATAKANA_START = 0x30A1
+_KATAKANA_END = 0x30FA
 _KANA_OFFSET = 0x60
 
 # Small ヵ and ヶ are used as counters and in place names (三ヶ月,
@@ -154,7 +156,8 @@ def _is_plain_kana(char: str) -> bool:
     """
     code = ord(char)
     return (
-        _HIRAGANA_START <= code <= _HIRAGANA_END or 0x30A1 <= code <= 0x30FA
+        _HIRAGANA_START <= code <= _HIRAGANA_END
+        or _KATAKANA_START <= code <= _KATAKANA_END
     )
 
 
@@ -363,8 +366,9 @@ def _iteration_mark_positions(text: str) -> list[int]:
     the left (ハハハ becomes ハヽハ). Kana with a voicing mark (written
     precomposed or followed by a combining or spacing mark) are left
     out, because pre-war documents marked them with ヾ or ゞ, which the
-    corpus of this skill does not attest. The small ヵ and ヶ are
-    counters, not kana, and are left out too.
+    corpus of this skill does not attest. Small kana (kept with
+    --keep-small-kana) are left out too, since pre-war printing had
+    none; so are ヵ and ヶ, which are counters.
     """
     positions: list[int] = []
     for index in range(1, len(text)):
@@ -373,7 +377,7 @@ def _iteration_mark_positions(text: str) -> list[int]:
         if (
             char == text[index - 1]
             and _is_plain_kana(char)
-            and char not in KATAKANA_KEPT
+            and ord(char) not in _SMALL_TO_LARGE
             and unicodedata.normalize("NFD", char) == char
             and following not in _VOICING_MARKS
             and not (positions and positions[-1] == index - 1)
@@ -415,11 +419,13 @@ def expand_marks(text: str) -> str:
     ヿ becomes こと and 𪜈 becomes とも, in hiragana. An iteration mark
     (ヽ, ゝ or 〻) right after a kana becomes that kana without its
     voicing mark, and a voiced mark (ヾ or ゞ) becomes the kana with a
-    voiced mark. 〻 right after a kanji becomes 々. A mark that does
-    not follow a kana or kanji, and a run of two or more marks, is left
-    as it is: a run is often the copy of emphasis dots, not a mark. The
-    voicing that pre-war notation leaves out is not restored (許サヽル
-    becomes 許ささる).
+    voiced mark; a voiced mark after a kana that cannot be voiced is
+    kept. A kana written with a combining or spacing voicing mark
+    counts as the kana. 〻 right after a kanji becomes 々. Every other
+    mark is kept: ヽ, ゝ, ヾ and ゞ after a kanji, a mark after
+    anything else, and a run of two or more marks, which is often the
+    copy of emphasis dots. The voicing that pre-war notation leaves out
+    is not restored (許サヽル becomes 許ささる).
 
     Args:
         text: Text whose kana are already converted to hiragana.
@@ -435,15 +441,20 @@ def expand_marks(text: str) -> str:
         if len(mark) != 1 or start == 0:
             return mark
         before = text[start - 1]
+        if before in _VOICING_MARKS and start >= 2:
+            before = text[start - 2]
         if _is_plain_kana(before):
             base = unicodedata.normalize("NFD", before)[0]
             if mark in _UNVOICED_MARKS:
                 return base
             voiced = unicodedata.normalize("NFC", base + _COMBINING_VOICED)
             return voiced if len(voiced) == 1 else mark
-        if mark == _VERTICAL_ITERATION_MARK and unicodedata.category(
-            before
-        ) == "Lo" and not is_kana(before):
+        if (
+            mark == _VERTICAL_ITERATION_MARK
+            and text[start - 1] == before
+            and unicodedata.category(before) == "Lo"
+            and not is_kana(before)
+        ):
             return _KANJI_ITERATION_MARK
         return mark
 
@@ -528,6 +539,12 @@ def to_bungo(
     return text
 
 
+def _check_koto_ligature(*, koto_ligature: bool, katakana: bool) -> None:
+    """Raises ValueError when ヿ is asked for without katakana."""
+    if koto_ligature and not katakana:
+        raise ValueError("the koto ligature needs katakana")
+
+
 def _before_iteration(
     text: str,
     *,
@@ -539,8 +556,7 @@ def _before_iteration(
     koto_ligature: bool,
 ) -> str:
     """Runs the steps of to_bungo that come before the iteration marks."""
-    if koto_ligature and not katakana:
-        raise ValueError("the koto ligature needs katakana")
+    _check_koto_ligature(koto_ligature=koto_ligature, katakana=katakana)
     if kyujitai:
         text = to_kyujitai(text, compat=compat)
     if katakana:
@@ -712,8 +728,7 @@ def _mark_rows(
     iteration_marks: bool,
 ) -> list[dict[str, str]]:
     """Lists the koto ligature and iteration marks that to_bungo writes."""
-    if koto_ligature and not katakana:
-        raise ValueError("the koto ligature needs katakana")
+    _check_koto_ligature(koto_ligature=koto_ligature, katakana=katakana)
     rows = []
     if koto_ligature:
         source = to_katakana(text)
