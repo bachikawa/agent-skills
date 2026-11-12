@@ -453,8 +453,8 @@ def _unexpected(number: int, line: str) -> list[Candidate]:
                     "ヿ",
                     "ligature",
                     "カタカナにはさまれた「〓」（OCR が読めなかった字）。"
-                    "国立国会図書館の OCR は合字「ヿ」（コト）を「〓」と書き、"
-                    "その出力ではカタカナにはさまれた「〓」の 3 分の 2 が「ヿ」だった",
+                    "国立国会図書館の OCR は合字「ヿ」（コト）を書かずに"
+                    "「〓」と書くので、「ヿ」のことが多い",
                 )
             )
         elif _is_unexpected(char):

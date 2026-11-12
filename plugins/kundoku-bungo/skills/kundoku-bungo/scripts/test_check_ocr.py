@@ -297,7 +297,7 @@ class LigatureTest(unittest.TestCase):
             (item.column, item.found, item.suggestion, item.kind),
             (3, "〓", "ヿ", "ligature"),
         )
-        self.assertIn("3 分の 2", item.basis)
+        self.assertIn("ヿ", item.basis)
 
     def test_other_geta_stays_unexpected(self) -> None:
         for text in ("之ヲ〓罰ス", "〓ヲ禁ス", "入ル〓", "入ル〓〓ヲ"):
