@@ -22,7 +22,7 @@ Usage:
     python -I tools/kundoku-bungo/ocr_confusions.py count --work WORK
 
 annotations takes only the annotation files out of the dataset zip with
-HTTP range requests (about 8 MB of the 1.8 GB zip) and checks their
+HTTP range requests (about 12 MB of the 1.8 GB zip) and checks their
 CRC-32. fetch downloads the OCR text of the selected pages into
 WORK/ndl/pages/ and records each in ocr_pages.tsv; pages recorded there
 are fetched again only when missing, and must have the same SHA-1.
@@ -73,8 +73,8 @@ CONFUSION_COLUMNS = [
 ]
 ROLES = ("dataset", "neighbor")
 
-# The PascalVOC 1.1 form of the dataset. Its size, ETag and modification
-# time are pinned so that a changed zip stops annotations.
+# The PascalVOC 1.1 form of the dataset. Its size and ETag are pinned
+# so that a changed zip stops annotations.
 ZIP_URL = (
     "https://lab.ndl.go.jp/dataset/pdm_ocr_dataset/line/"
     "tosho_all_pascalvoc1.1.zip"
@@ -88,6 +88,14 @@ TAIL_SIZE = 4 * 1024 * 1024
 VOC_SCALE = 2.0
 PAGE_URL = "https://lab.ndl.go.jp/dl/api/page/{pid}_{frame}"
 ANNOTATION_NAME = re.compile(r"(\d+)_R(\d{7})\.xml")
+# Folder names in the zip, such as tosho_1920_bunkei. They become part of
+# local paths and of ocr_pages.tsv, so anything else stops annotations.
+FOLDER_NAME = re.compile(r"[A-Za-z0-9_]+")
+# Upper bounds that keep a wrong answer from filling the memory: one
+# range request, one response body, and one annotation file.
+MAX_RANGE = 16 * 1024 * 1024
+MAX_BODY = 32 * 1024 * 1024
+MAX_ANNOTATION = 1024 * 1024
 
 # A page counts as written in the pre-war official style when its
 # ground truth has at least this many characters, nearly all of its
@@ -169,9 +177,17 @@ class Confusion:
 
 def _urlopen(request: urllib.request.Request) -> Response:
     with urllib.request.urlopen(request, timeout=300) as response:
-        return Response(
-            response.status, dict(response.headers.items()), response.read()
-        )
+        headers = dict(response.headers.items())
+        # A server that ignores Range sends the whole 1.8 GB zip: stop
+        # before reading it.
+        if request.has_header("Range") and response.status != 206:
+            return Response(response.status, headers, b"")
+        body = response.read(MAX_BODY + 1)
+        if len(body) > MAX_BODY:
+            raise OcrDataError(
+                f"response over {MAX_BODY} bytes: {request.full_url}"
+            )
+        return Response(response.status, headers, body)
 
 
 class NdlClient:
@@ -224,6 +240,7 @@ class NdlClient:
                     raise OcrDataError(f"HTTP {error.code}: {url}") from error
                 server_errors = server_errors + 1 if error.code == 500 else 0
                 if server_errors >= UNAVAILABLE_AFTER:
+                    self._sleep(fetch_corpus.REQUEST_INTERVAL)
                     raise Unavailable(f"HTTP 500 again: {url}") from error
                 # A 500 usually means a missing book, not a busy server,
                 # so it is tried once more after the usual interval.
@@ -253,10 +270,11 @@ class NdlClient:
             The bytes.
 
         Raises:
-            OcrDataError: The range is outside the zip, or the server did
-                not answer with exactly that range of the pinned zip.
+            OcrDataError: The range is outside the zip or longer than
+                MAX_RANGE, or the server did not answer with exactly that
+                range of the pinned zip.
         """
-        if not 0 <= start < end <= ZIP_SIZE:
+        if not 0 <= start < end <= ZIP_SIZE or end - start > MAX_RANGE:
             raise OcrDataError(f"bad range {start}-{end}")
         response = self.get(ZIP_URL, {"Range": f"bytes={start}-{end - 1}"})
         headers = {key.lower(): value for key, value in response.headers.items()}
@@ -324,13 +342,13 @@ def annotation_ranges(
 
     Raises:
         OcrDataError: The annotations of a folder are not next to each
-            other in the zip.
+            other in the zip, or a folder has an unexpected name.
     """
     ordered = sorted(members, key=lambda info: info.header_offset)
     by_folder: dict[str, list[int]] = collections.defaultdict(list)
     for index, info in enumerate(ordered):
         if info.filename.endswith(".xml"):
-            by_folder[info.filename.split("/")[1]].append(index)
+            by_folder[_folder(info.filename)].append(index)
     tail = ZIP_SIZE - TAIL_SIZE
     ranges = []
     for folder, indexes in by_folder.items():
@@ -345,6 +363,13 @@ def annotation_ranges(
     return ranges
 
 
+def _folder(filename: str) -> str:
+    parts = filename.split("/")
+    if len(parts) < 3 or not FOLDER_NAME.fullmatch(parts[1]):
+        raise OcrDataError(f"unexpected name in the zip: {filename!r}")
+    return parts[1]
+
+
 def fetch_annotations(work: Path, client: NdlClient) -> int:
     """Saves the annotation files of the dataset in WORK/ndl/annotations/.
 
@@ -356,8 +381,9 @@ def fetch_annotations(work: Path, client: NdlClient) -> int:
         The number of files saved.
 
     Raises:
-        OcrDataError: A request failed, the zip changed or a file has a
-            wrong CRC-32.
+        OcrDataError: A request failed, the zip changed, a file has a
+            wrong CRC-32 or is larger than MAX_ANNOTATION, or a name is
+            not the expected folder and file name.
     """
     tail_start = ZIP_SIZE - TAIL_SIZE
     regions = [(tail_start, client.get_range(tail_start, ZIP_SIZE))]
@@ -372,11 +398,13 @@ def fetch_annotations(work: Path, client: NdlClient) -> int:
         name = Path(info.filename).name
         if not ANNOTATION_NAME.fullmatch(name):
             continue
+        if info.file_size > MAX_ANNOTATION:
+            raise OcrDataError(f"{info.filename}: {info.file_size} bytes")
         try:
             data = archive.read(info)
         except zipfile.BadZipFile as error:
             raise OcrDataError(f"{info.filename}: {error}") from error
-        target = annotation_dir(work) / info.filename.split("/")[1] / name
+        target = annotation_dir(work) / _folder(info.filename) / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
         saved += 1
@@ -572,6 +600,7 @@ def fetch_pages(
     pinned: dict[tuple[str, int], dict],
     today: str,
     checkpoint: Callable[[dict[tuple[str, int], dict]], None] | None = None,
+    retry_unavailable: bool = False,
 ) -> dict[tuple[str, int], dict]:
     """Downloads the OCR text of pages that are not saved yet.
 
@@ -582,14 +611,17 @@ def fetch_pages(
         pinned: The rows of ocr_pages.tsv.
         today: The date to record for newly fetched pages.
         checkpoint: Called with the rows after every CHECKPOINT_EVERY
-            new pages and when the run stops on an error, so that an
-            interrupted run keeps its records.
+            new pages and when the run stops for any reason (an error or
+            Ctrl-C), so that an interrupted run keeps its records.
+        retry_unavailable: Request again the pages recorded with an
+            empty sha1, such as after a passing server fault.
 
     Returns:
         The rows for ocr_pages.tsv, keyed by (PID, frame). A page of a
         book that the library does not hold has an empty sha1; once a
         page of a book is found missing, the other pages of the book are
-        not requested in this run.
+        not requested in this run. A page fetched again with the same
+        SHA-1 keeps its first fetched date.
 
     Raises:
         OcrDataError: A request failed, or a page recorded in
@@ -603,7 +635,7 @@ def fetch_pages(
             key = (ref.pid, ref.frame)
             path = page_file(work, ref)
             row = rows.get(key)
-            if row and row["sha1"] == "":
+            if row and row["sha1"] == "" and not retry_unavailable:
                 continue
             if row and path.exists() and _sha1(path.read_bytes()) == row["sha1"]:
                 continue
@@ -622,7 +654,7 @@ def fetch_pages(
                 else:
                     read_ocr_page(body)
                     sha1 = _sha1(body)
-            if row and row["sha1"] != sha1:
+            if row and row["sha1"] and row["sha1"] != sha1:
                 raise OcrDataError(
                     f"page {ref.pid}_{ref.frame} has changed since {row['fetched']}"
                 )
@@ -634,13 +666,15 @@ def fetch_pages(
                 "frame": str(ref.frame),
                 "role": role,
                 "folder": ref.folder,
-                "fetched": today,
+                "fetched": (
+                    row["fetched"] if row and row["sha1"] == sha1 else today
+                ),
                 "sha1": sha1,
             }
             fetched += 1
             if checkpoint is not None and fetched % CHECKPOINT_EVERY == 0:
                 checkpoint(rows)
-    except OcrDataError:
+    except BaseException:
         if checkpoint is not None:
             checkpoint(rows)
         raise
@@ -938,6 +972,11 @@ def _build_parser() -> argparse.ArgumentParser:
                 default=DEFAULT_NEIGHBORS,
                 help="how many selected pages get their neighbor pages",
             )
+            command.add_argument(
+                "--retry-unavailable",
+                action="store_true",
+                help="request again the pages recorded with an empty sha1",
+            )
     return parser
 
 
@@ -977,9 +1016,16 @@ def main(argv: list[str] | None = None) -> int:
                 read_pages_file(),
                 today,
                 checkpoint=_write_pages,
+                retry_unavailable=args.retry_unavailable,
             )
             _write_pages(rows)
-            print(f"{len(rows)} pages recorded", file=sys.stderr)
+            empty = [row for row in rows.values() if not row["sha1"]]
+            books = len({row["pid"] for row in empty})
+            print(
+                f"{len(rows)} pages recorded, {len(empty)} of them not held"
+                f" by the library ({books} books)",
+                file=sys.stderr,
+            )
         else:
             rows = read_pages_file()
             write_tsv(

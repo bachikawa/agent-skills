@@ -56,7 +56,7 @@ class FakeOpener:
     def __call__(self, request):
         self.requests.append(request)
         item = self.responses.pop(0)
-        if isinstance(item, Exception):
+        if isinstance(item, BaseException):
             raise item
         return item
 
@@ -107,6 +107,13 @@ class NdlClientTest(unittest.TestCase):
             ndl.get("https://example.invalid/")
         self.assertEqual(len(opener.requests), 2)
 
+    def test_waits_before_giving_up_on_a_server_error(self) -> None:
+        error = urllib.error.HTTPError("u", 500, "error", Message(), None)
+        ndl, _, waits = client([error, error])
+        with self.assertRaises(ocr_confusions.Unavailable):
+            ndl.get("https://example.invalid/")
+        self.assertEqual(waits, [3.0, 3.0])
+
     def test_one_server_error_is_retried(self) -> None:
         error = urllib.error.HTTPError("u", 500, "error", Message(), None)
         ndl, _, _ = client([error, Response(200, {}, b"ok")])
@@ -126,7 +133,13 @@ class GetRangeTest(unittest.TestCase):
 
     def test_refuses_a_range_outside_the_zip(self) -> None:
         ndl, opener, _ = client([])
-        for start, end in ((-1, 3), (5, 5), (0, ocr_confusions.ZIP_SIZE + 1)):
+        too_long = ocr_confusions.MAX_RANGE + 1
+        for start, end in (
+            (-1, 3),
+            (5, 5),
+            (0, ocr_confusions.ZIP_SIZE + 1),
+            (0, too_long),
+        ):
             with self.subTest(start=start, end=end):
                 with self.assertRaises(OcrDataError):
                     ndl.get_range(start, end)
@@ -227,6 +240,43 @@ class FetchAnnotationsTest(unittest.TestCase):
                 ocr_confusions.fetch_annotations(Path(work), ndl)
 
 
+    def _tail(self, entries: dict[str, bytes]) -> Response:
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+            for name, data in entries.items():
+                archive.writestr(name, data)
+        data = buffer.getvalue()
+        start = ocr_confusions.ZIP_SIZE - ocr_confusions.TAIL_SIZE
+        tail = b"\0" * (ocr_confusions.TAIL_SIZE - len(data)) + data
+        return range_response(start, tail)
+
+    def test_unexpected_folder_names_stop(self) -> None:
+        for name in (
+            "root/../1_R0000001.xml",
+            "root/D:/1_R0000001.xml",
+            "1_R0000001.xml",
+        ):
+            with self.subTest(name=name):
+                ndl, _, _ = client([self._tail({name: b"<a/>"})])
+                with tempfile.TemporaryDirectory() as work:
+                    with self.assertRaises(OcrDataError):
+                        ocr_confusions.fetch_annotations(Path(work), ndl)
+                    self.assertEqual(list(Path(work).rglob("*.xml")), [])
+
+    def test_a_large_annotation_stops_before_it_is_read(self) -> None:
+        big = b"<a>" + b" " * ocr_confusions.MAX_ANNOTATION + b"</a>"
+        ndl, _, _ = client([self._tail({"root/f/1_R0000001.xml": big})])
+        with tempfile.TemporaryDirectory() as work:
+            with self.assertRaisesRegex(OcrDataError, "bytes"):
+                ocr_confusions.fetch_annotations(Path(work), ndl)
+
+    def test_a_range_that_was_not_fetched_stops(self) -> None:
+        regions = ocr_confusions._Regions([(10, b"abc")])
+        regions.seek(5)
+        with self.assertRaises(OcrDataError):
+            regions.read(1)
+
+
 class ReadTest(unittest.TestCase):
     def test_annotation_lines_are_scaled_and_dontcare_is_skipped(self) -> None:
         lines = ocr_confusions.read_annotation(
@@ -322,6 +372,57 @@ class FetchPagesTest(unittest.TestCase):
         self.assertEqual(len(opener.requests), 3)
         self.assertEqual(saved, ["2_1.json"])
         self.assertEqual(opener2.requests, [])
+
+    def test_unavailable_pages_can_be_requested_again(self) -> None:
+        ref = PageRef("1", 2, "f")
+        pinned = {
+            ("1", 2): {
+                "pid": "1",
+                "frame": "2",
+                "role": "dataset",
+                "folder": "f",
+                "fetched": "d",
+                "sha1": "",
+            }
+        }
+        with tempfile.TemporaryDirectory() as work:
+            ndl, opener, _ = client([Response(200, {}, page_json())])
+            rows = ocr_confusions.fetch_pages(
+                Path(work), ndl, [(ref, "dataset")], pinned, "e",
+                retry_unavailable=True,
+            )
+        self.assertEqual(len(opener.requests), 1)
+        self.assertNotEqual(rows[("1", 2)]["sha1"], "")
+        self.assertEqual(rows[("1", 2)]["fetched"], "e")
+
+    def test_a_page_fetched_again_keeps_its_date(self) -> None:
+        ref = PageRef("1", 2, "f")
+        body = page_json(("ノ", (0, 0, 1, 1)))
+        with tempfile.TemporaryDirectory() as work:
+            ndl, _, _ = client([Response(200, {}, body)])
+            rows = ocr_confusions.fetch_pages(
+                Path(work), ndl, [(ref, "dataset")], {}, "d"
+            )
+        with tempfile.TemporaryDirectory() as empty:
+            again, opener, _ = client([Response(200, {}, body)])
+            rows2 = ocr_confusions.fetch_pages(
+                Path(empty), again, [(ref, "dataset")], rows, "e"
+            )
+        self.assertEqual(len(opener.requests), 1)
+        self.assertEqual(rows2[("1", 2)]["fetched"], "d")
+
+    def test_an_interrupt_still_writes_the_checkpoint(self) -> None:
+        refs = [(PageRef("1", n, "f"), "dataset") for n in (1, 2)]
+        calls = []
+        with tempfile.TemporaryDirectory() as work:
+            ndl, _, _ = client(
+                [Response(200, {}, page_json()), KeyboardInterrupt()]
+            )
+            with self.assertRaises(KeyboardInterrupt):
+                ocr_confusions.fetch_pages(
+                    Path(work), ndl, refs, {}, "d", checkpoint=calls.append
+                )
+        self.assertEqual([list(rows) for rows in calls], [[("1", 1)]])
 
     def test_an_error_still_writes_the_checkpoint(self) -> None:
         refs = [(PageRef("1", n, "f"), "dataset") for n in (1, 2)]
