@@ -1,13 +1,13 @@
 # kundoku-bungo の表を作るツール
 
-スキル `kundoku-bungo` の字の表（`kanji.tsv`）・語の表（`vocabulary.tsv`）・用例集（`examples.md`）の典拠を、ウィキソース日本語版から取り、作り直すためのスクリプトとデータ。スキルを使うのには要らないので、プラグインの外に置いている（スキルと一緒には配らない）。
+スキル `kundoku-bungo` の字の表（`kanji.tsv`）・語の表（`vocabulary.tsv`）・用例集（`examples.md`）の典拠を、ウィキソース日本語版から取り、作り直すためのスクリプトとデータ。OCR の見直し（`check_ocr.py`）の候補の決まりの根拠にする、国立国会図書館の OCR の読み違いの数も、ここで作る。スキルを使うのには要らないので、プラグインの外に置いている（スキルと一緒には配らない）。
 
-経緯と計画は #9 にある。
+経緯と計画は #9 にある。OCR の読み違いの数は #29 にある。
 
 ## 必要な環境
 
 - Python 3.10 以上（標準ライブラリだけを使う）
-- ネットワーク（ウィキソースの API と、Unicode のサイト）
+- ネットワーク（ウィキソースの API、Unicode のサイト、国立国会図書館のサイト）
 
 ## ファイル
 
@@ -23,6 +23,9 @@
 | `kanji_overrides.tsv` | 字の表の手で書く部分（語によって選ぶ字の印と説明、官報の画像で確かめた字の形の行） |
 | `vocabulary_entries.tsv` | 語の表の手で書く部分（語・読み・種類・意味と、同じ形の別の語を避ける条件） |
 | `line_exclusions.tsv` | 語の表・用例集で除く行の範囲（手で書く）。詔書・五箇条の御誓文を引く法令の範囲と、翻刻の誤りがある行 |
+| `ocr_confusions.py` | 国立国会図書館の OCR 学習用データセットの正しい文字と、同じページの OCR の出力を並べ、読み違いを数える |
+| `ocr_pages.tsv` | 数えたページ（資料の番号・コマ・取った日・本文のハッシュ値）の一覧。入力を固定する正本 |
+| `ocr_confusions.tsv` | 数えた読み違い（正しい字・OCR の字・前後の字の種類・数） |
 | `tests/` | テスト（ネットワークは使わない） |
 
 ### corpus_revisions.tsv の列
@@ -189,6 +192,50 @@ python -I tools/kundoku-bungo/fetch_corpus.py reclassify --work "$WORK"
 - `revisions` は、アカウントなし（仮アカウントを含む）で保存された版と、90 日以内に保存された版を `WORK/recent_edits.tsv` に書き出す。だれでも編集できるので、荒らされた版が入っていないかを、人が差分で確かめてからコミットする。
 - `reclassify` は、`WORK/pages.json` と `WORK/pages/` から、使い道を決め直す（ネットワークを使わない）。保存した本文の SHA-1 が `pages.json` と違う時と、表が `pages.json` にない版を引いている時は止まる。`revisions` からやり直す。
 
+## OCR の読み違いを数える（ocr_confusions.py）
+
+国立国会図書館（以下「国会図書館」）の 2 つの資料を使う。
+
+| 資料 | 使うもの |
+| --- | --- |
+| パブリックドメインOCR学習用データセット（令和3年度OCRテキスト化事業分）（https://github.com/ndl-lab/pdmocrdataset-part1 ） | PascalVOC 1.1 形式の zip の中の、行ごとの正しい文字と座標（注釈のファイル） |
+| 次世代デジタルライブラリーのページ（コマ）データ取得 API（https://lab.ndl.go.jp/service/tsugidigi/apiinfo の 2.2） | 同じページの OCR の出力（行ごとの文字と座標） |
+
+```bash
+python -I tools/kundoku-bungo/ocr_confusions.py annotations --work "$WORK"
+python -I tools/kundoku-bungo/ocr_confusions.py fetch --work "$WORK"
+python -I tools/kundoku-bungo/ocr_confusions.py count --work "$WORK"
+```
+
+- `annotations` は、zip（約 1.8 GB）を全部は取らない。範囲を指定した取得（HTTP の Range）で、末尾の目次と、フォルダごとの注釈のファイルの範囲だけを取る（16 回、約 12 MB）。zip の大きさと ETag はスクリプトに固定してあり、違えば止まる。取り出した時に、zip の CRC-32 を確かめる。`WORK/ndl/annotations/` に保存する。
+- `fetch` は、正しい文字が漢字カタカナ交じりのページ（200 字以上、仮名の 9 割以上がカタカナ、漢字が 4 割以上）を選び、OCR の出力を `WORK/ndl/pages/` に保存して、`ocr_pages.tsv` に書く。`ocr_pages.tsv` にあるページは、保存したファイルのハッシュ値が合えば取り直さない。取り直した時にハッシュ値が違えば止まる（国会図書館のデータは予告なく変わるため）。
+  - 選んだページのうち、最初の 200 ページ（`--neighbors` で変えられる）の前後のコマも取る。`role` が `neighbor` の行である。データセットに入っていないページで、学習の影響を比べるのに使う。
+  - `--limit` を付けると、選んだページの最初の数だけを取る（試す時のため）。
+  - 次世代デジタルライブラリーは、デジタル化した本の一部だけを持つ。持っていない本のページは HTTP 500 になる。500 が 2 回続いたページは、`sha1` を空にして `ocr_pages.tsv` に書き（その日には取れなかった印）、同じ本のほかのページは問い合わせずに同じく書く。`count` は、`sha1` が空のページを数えない。
+  - 途中で止まっても、50 ページごとと止まった時に `ocr_pages.tsv` を書くので、もう一度実行すると続きから取る。
+- `count` は、`ocr_pages.tsv` のハッシュ値と合う本文から、`ocr_confusions.tsv` を作る。行は座標の重なり（0.5 以上）で対応付け、字は `difflib.SequenceMatcher` で並べる。似ている度合いが 0.8 未満の行は数えない。標準出力に、データセットのページと前後のページの「〓」（OCR が読めなかった字）の数を出す。
+
+### 気を付けること
+
+- 全文テキストを作った OCR は、このデータセットで学習している（データセットの README）。数は「どの読み違いが起きるか」を示すもので、まだ見ていないページで何 % 読み違えるかは示さない。
+- 正しい文字は、旧字体・異体字を包摂せずに、見たとおりに書いてある（データセットの README）。そのため、互換漢字と普通の字の違いのような、書き方だけの違いも出る。NFKC で同じになる字の組は `variant` として、読み違い（`substitution`）と分けて数える。
+
+### ocr_confusions.tsv の列
+
+| 列 | 内容 |
+| --- | --- |
+| `kind` | `substitution`（1〜2 字を同じ数の字に読み違えた）・`variant`（NFKC で同じ字）・`geta`（OCR が「〓」と書いた）・`deletion`（OCR が字を落とした）・`insertion`（OCR が字を足した）・`other`（3 字以上か、数の違う置き換え） |
+| `expected`・`found` | 正しい字と OCR の字。`deletion` は `found` が空、`insertion` は `expected` が空 |
+| `before_kind`・`after_kind` | 正しい文字での、前と後ろの字の種類（`kanji`・`katakana`・`hiragana`・`digit`・`other`・`edge`〈行の端〉） |
+| `count`・`pages`・`books` | 数と、出てきたページの数・資料の数 |
+
+### 資料の権利の表示
+
+- 2 つの資料は、どちらも国会図書館が PDM（パブリック・ドメイン・マーク 1.0、https://creativecommons.org/publicdomain/mark/1.0/deed.ja ）で公開している。自由に二次利用できる。
+- `ocr_confusions.tsv` は、この 2 つの資料をこのリポジトリで加工して作ったものである（行と字を対応付けて数えた）。国会図書館が作ったものではない。
+- API は、営利目的で続けて使う時のほかは、申請なしで使える（https://lab.ndl.go.jp/service/tsugidigi/ の「ご利用に当たって」）。取得の間隔は、下の「取得の決まり」と同じにする。
+- 資料の本文（正しい文字と OCR の出力）は、リポジトリに入れない。
+
 ## 取得の決まり
 
 - 1 回の問い合わせに 50 ページずつまとめ、問い合わせの間は 3 秒以上あける。`maxlag=5` を付ける。
@@ -196,6 +243,7 @@ python -I tools/kundoku-bungo/fetch_corpus.py reclassify --work "$WORK"
   - HTTP 429・500・502・503・504（要求が多すぎる・混んでいるなどの応答）: `Retry-After` の秒数を待つ（3〜300 秒の範囲に収める。数でなければ 60 秒）
   - `maxlag` のエラー、接続のエラー、途中で切れた応答、JSON でない応答: 60 秒待つ
 - User-Agent は、ツールの名前だけの一般的なもの（`kundoku-bungo-corpus-tools/0.1`）を送る。個人の名前・連絡先・リポジトリの URL は送らない。変える時は `--user-agent` で渡す（ウィキメディアの方針: https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy ）。
+- 国会図書館への問い合わせ（`ocr_confusions.py`）も、1 回ずつ間を 3 秒以上あけ、上と同じ HTTP の応答・接続のエラーで待ってやり直す。`maxlag` は付けない。User-Agent も同じものを送る。
 
 ## 本文の取り扱い（clean_text.py）
 
