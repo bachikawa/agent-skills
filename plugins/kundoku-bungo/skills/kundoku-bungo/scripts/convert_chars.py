@@ -13,6 +13,11 @@ scope and left as they are.
 Usage:
     python convert_chars.py to-bungo [options] --input FILE [--remove-input]
     python convert_chars.py to-modern [options] --input FILE [--remove-input]
+    python convert_chars.py explain [options] --input FILE [--remove-input]
+
+explain takes the same text and options as to-bungo and writes a
+tab-separated table of what to-bungo changes, instead of the converted
+text.
 
 Without --input, the text is read from standard input. With
 --remove-input, the input file is deleted after a successful
@@ -26,6 +31,7 @@ from __future__ import annotations
 import argparse
 import csv
 import functools
+import io
 import os
 import re
 import sys
@@ -369,6 +375,207 @@ def to_modern(text: str, *, shinjitai: bool = True) -> str:
     return to_hiragana(text)
 
 
+EXPLAIN_COLUMNS = (
+    "category",
+    "from",
+    "to",
+    "count",
+    "note",
+    "evidence",
+    "evidence_url",
+)
+# The notes are read by Japanese users, like the notes of the kanji
+# table, so they are written in Japanese.
+_NOTATION_EVIDENCE = "SKILL.md 選べる表記"
+_COMPAT_NOTE = "互換漢字（{codepoint}）。ソフトによっては新字体に戻る"
+
+
+def _notation_row(
+    source: str, target: str, count: int, note: str
+) -> dict[str, str]:
+    return {
+        "category": "notation",
+        "from": source,
+        "to": target,
+        "count": str(count),
+        "note": note,
+        "evidence": _NOTATION_EVIDENCE,
+        "evidence_url": "",
+    }
+
+
+def _count_voicing(text: str) -> int:
+    """Counts the kana and marks that strip_voicing_marks changes."""
+    return sum(
+        1
+        for char in text
+        if char in _VOICING_MARKS
+        or (_is_kana(char) and unicodedata.normalize("NFD", char)[0] != char)
+    )
+
+
+def explain(
+    text: str,
+    *,
+    kyujitai: bool = True,
+    compat: bool = True,
+    katakana: bool = True,
+    keep_voicing: bool = False,
+    keep_small_kana: bool = False,
+    keep_punctuation: bool = False,
+) -> list[dict[str, str]]:
+    """Lists what to_bungo changes in the text, with the evidence.
+
+    The arguments are those of to_bungo. A conversion that an option
+    turns off has no row, and neither has a change that does not occur
+    in the text.
+
+    Args:
+        text: The text that would be passed to to_bungo.
+        kyujitai: Whether kanji are converted to their old forms.
+        compat: Whether old forms may use CJK compatibility ideographs.
+        katakana: Whether kana are written in katakana.
+        keep_voicing: Whether voiced and semi-voiced marks are kept.
+        keep_small_kana: Whether small kana are kept small.
+        keep_punctuation: Whether 、 and 。 are kept.
+
+    Returns:
+        One dict per row, keyed by EXPLAIN_COLUMNS. The category is
+        "kanji" for a kanji converted to its old form, "kept" for a
+        kanji left as it is because its old form depends on the word
+        (one row per old form in the table), and "notation" for kana,
+        voicing marks, small kana and punctuation. Kanji rows come in
+        the order the kanji first appear in the text.
+
+    Raises:
+        KanjiTableError: The kanji table cannot be read.
+    """
+    rows = []
+    if kyujitai:
+        found = [
+            (text.index(row["modern"]), row)
+            for row in load_kanji_table()
+            if row["modern"] in text
+        ]
+        # sorted() is stable, so the old forms of one kanji keep the
+        # order of the table.
+        for _, row in sorted(found, key=lambda item: item[0]):
+            is_compat = row["kind"] == _COMPAT_KIND
+            if row["one_to_many"] == "1":
+                category, note = "kept", row["note"]
+            elif is_compat and not compat:
+                continue
+            else:
+                category = "kanji"
+                note = (
+                    _COMPAT_NOTE.format(codepoint=row["old_codepoint"])
+                    if is_compat
+                    else ""
+                )
+            rows.append(
+                {
+                    "category": category,
+                    "from": row["modern"],
+                    "to": row["old"],
+                    "count": str(text.count(row["modern"])),
+                    "note": note,
+                    "evidence": row["evidence"],
+                    "evidence_url": row["evidence_url"],
+                }
+            )
+    notation = []
+    if katakana:
+        changed = sum(
+            1 for old, new in zip(text, to_katakana(text)) if old != new
+        )
+        notation.append(
+            _notation_row(
+                "ひらがな", "カタカナ", changed, "仮名をカタカナで書く"
+            )
+        )
+    if not keep_voicing:
+        notation.append(
+            _notation_row(
+                "濁点・半濁点",
+                "なし",
+                _count_voicing(text),
+                "濁点・半濁点を取る",
+            )
+        )
+    if not keep_small_kana:
+        small = sum(1 for char in text if ord(char) in _SMALL_TO_LARGE)
+        notation.append(
+            _notation_row(
+                "小書きの仮名",
+                "大きい仮名",
+                small,
+                "小書きの仮名を大きく書く",
+            )
+        )
+    if not keep_punctuation:
+        notation.append(
+            _notation_row(_COMMA, "なし", text.count(_COMMA), "読点を消す")
+        )
+        notation.append(
+            _notation_row(
+                _PERIOD,
+                "全角の空白",
+                text.count(_PERIOD),
+                "句点を全角の空白にする。行の終わり・空白の前・"
+                "閉じかっこの前の句点は消す",
+            )
+        )
+    rows.extend(row for row in notation if row["count"] != "0")
+    return rows
+
+
+def format_explanation(rows: list[dict[str, str]]) -> str:
+    """Formats the rows of explain as a tab-separated table.
+
+    Args:
+        rows: The rows returned by explain.
+
+    Returns:
+        The table with a header line. Every line ends with a newline.
+    """
+    output = io.StringIO()
+    writer = csv.DictWriter(
+        output,
+        fieldnames=EXPLAIN_COLUMNS,
+        delimiter="\t",
+        quoting=csv.QUOTE_NONE,
+        lineterminator="\n",
+    )
+    writer.writeheader()
+    writer.writerows(rows)
+    return output.getvalue()
+
+
+def _add_notation_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--shinjitai", action="store_true", help="keep modern kanji forms"
+    )
+    parser.add_argument(
+        "--no-compat",
+        action="store_true",
+        help="do not use CJK compatibility ideographs for old forms",
+    )
+    parser.add_argument(
+        "--hiragana", action="store_true", help="keep kana in hiragana"
+    )
+    parser.add_argument(
+        "--keep-voicing", action="store_true", help="keep voicing marks"
+    )
+    parser.add_argument(
+        "--keep-small-kana", action="store_true", help="keep small kana"
+    )
+    parser.add_argument(
+        "--keep-punctuation",
+        action="store_true",
+        help="keep the Japanese comma and period",
+    )
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__.splitlines()[0]
@@ -378,28 +585,11 @@ def _build_parser() -> argparse.ArgumentParser:
     bungo = sub.add_parser(
         "to-bungo", help="convert toward pre-war notation"
     )
-    bungo.add_argument(
-        "--shinjitai", action="store_true", help="keep modern kanji forms"
+    _add_notation_options(bungo)
+    explanation = sub.add_parser(
+        "explain", help="list what to-bungo changes, with the evidence"
     )
-    bungo.add_argument(
-        "--no-compat",
-        action="store_true",
-        help="do not use CJK compatibility ideographs for old forms",
-    )
-    bungo.add_argument(
-        "--hiragana", action="store_true", help="keep kana in hiragana"
-    )
-    bungo.add_argument(
-        "--keep-voicing", action="store_true", help="keep voicing marks"
-    )
-    bungo.add_argument(
-        "--keep-small-kana", action="store_true", help="keep small kana"
-    )
-    bungo.add_argument(
-        "--keep-punctuation",
-        action="store_true",
-        help="keep the Japanese comma and period",
-    )
+    _add_notation_options(explanation)
 
     modern = sub.add_parser(
         "to-modern", help="convert old kanji forms and katakana"
@@ -407,7 +597,7 @@ def _build_parser() -> argparse.ArgumentParser:
     modern.add_argument(
         "--keep-kyujitai", action="store_true", help="keep old kanji forms"
     )
-    for subparser in (bungo, modern):
+    for subparser in (bungo, modern, explanation):
         subparser.add_argument(
             "--input",
             metavar="FILE",
@@ -422,7 +612,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Reads text, converts it and writes it to standard output.
+    """Reads text, converts or explains it and writes to standard output.
 
     Args:
         argv: Command-line arguments without the program name. Uses
@@ -452,16 +642,19 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdin.reconfigure(encoding="utf-8-sig")
         text = sys.stdin.read()
     try:
-        if args.direction == "to-bungo":
-            result = to_bungo(
-                text,
-                kyujitai=not args.shinjitai,
-                compat=not args.no_compat,
-                katakana=not args.hiragana,
-                keep_voicing=args.keep_voicing,
-                keep_small_kana=args.keep_small_kana,
-                keep_punctuation=args.keep_punctuation,
-            )
+        if args.direction in ("to-bungo", "explain"):
+            options = {
+                "kyujitai": not args.shinjitai,
+                "compat": not args.no_compat,
+                "katakana": not args.hiragana,
+                "keep_voicing": args.keep_voicing,
+                "keep_small_kana": args.keep_small_kana,
+                "keep_punctuation": args.keep_punctuation,
+            }
+            if args.direction == "to-bungo":
+                result = to_bungo(text, **options)
+            else:
+                result = format_explanation(explain(text, **options))
         else:
             result = to_modern(text, shinjitai=not args.keep_kyujitai)
     except KanjiTableError as error:
