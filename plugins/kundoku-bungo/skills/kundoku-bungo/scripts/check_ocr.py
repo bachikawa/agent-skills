@@ -15,6 +15,8 @@ The candidates come from fixed rules:
     mixed-form  a modern kanji in text that mostly uses the old forms of
                 references/kanji.tsv; also flags correct text
     mixed-kana  hiragana in katakana text, or the other way round
+    ligature    〓 between katakana, which is mostly the ligature ヿ
+                (コト); the NDL OCR writes 〓 for it
     unexpected  characters pre-war printing does not use (half-width
                 letters, U+FFFD, private use, control characters, 〓)
 
@@ -58,6 +60,7 @@ KINDS = (
     "lookalike",
     "mixed-form",
     "mixed-kana",
+    "ligature",
     "unexpected",
 )
 CONTEXT_WIDTH = 8
@@ -98,6 +101,8 @@ _NUMBER_END = _NUMERALS | set("条條項号號年月日")
 # After a numeral, a particle is often followed by these (第一ニ日本ノ,
 # 其ノ一ハ年金), so a numeral candidate before them is less certain.
 _DATE_END = set("年月日")
+# OCR output writes 〓 for a character it cannot read.
+_GETA = "〓"
 # Counters that follow 二 and 八 used as numerals (二週, 八人). They
 # only keep these kanji out of lookalike: katakana before them is often
 # a particle, so they do not mark a number for numeral.
@@ -279,6 +284,11 @@ def _numeral(number: int, line: str) -> list[Candidate]:
             basis = f"数の並びの中のカタカナ（前「{before}」、後「{after}」）"
             if after in _DATE_END and before != "第":
                 basis += f"。後ろが「{after}」なので助詞のこともある。{_LOW}"
+            elif after in _NUMERALS and before != "第":
+                # Arithmetic reads 十六ニ八ヲ乘ス: a particle between
+                # two numbers. In the NDL OCR study (Issue #29) 31 of
+                # the 32 candidates of this rule were such particles.
+                basis += f"。後ろも数なので、数と数の間の助詞のこともある。{_LOW}"
             found.append(
                 Candidate(
                     number,
@@ -420,19 +430,45 @@ def _is_unexpected(char: str) -> bool:
     )
 
 
+def _between_katakana(line: str, index: int) -> bool:
+    return (
+        0 < index < len(line) - 1
+        and _is_katakana(line[index - 1])
+        and _is_katakana(line[index + 1])
+    )
+
+
 def _unexpected(number: int, line: str) -> list[Candidate]:
-    return [
-        Candidate(
-            number,
-            index + 1,
-            char,
-            "",
-            "unexpected",
-            f"当時の印刷にふつう出ない字（U+{ord(char):04X}）",
-        )
-        for index, char in enumerate(line)
-        if _is_unexpected(char)
-    ]
+    found = []
+    for index, char in enumerate(line):
+        if char == _GETA and _between_katakana(line, index):
+            # The NDL OCR never writes ヿ; in its output for the NDL
+            # dataset (Issue #29), 483 of the 730 〓 between katakana
+            # stood for ヿ.
+            found.append(
+                Candidate(
+                    number,
+                    index + 1,
+                    char,
+                    "ヿ",
+                    "ligature",
+                    "カタカナにはさまれた「〓」（OCR が読めなかった字）。"
+                    "国立国会図書館の OCR は合字「ヿ」（コト）を書かずに"
+                    "「〓」と書くので、「ヿ」のことが多い",
+                )
+            )
+        elif _is_unexpected(char):
+            found.append(
+                Candidate(
+                    number,
+                    index + 1,
+                    char,
+                    "",
+                    "unexpected",
+                    f"当時の印刷にふつう出ない字（U+{ord(char):04X}）",
+                )
+            )
+    return found
 
 
 def split_lines(text: str) -> list[str]:
