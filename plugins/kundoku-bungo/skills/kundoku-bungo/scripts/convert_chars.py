@@ -56,8 +56,8 @@ _KANA_OFFSET = 0x60
 # Small ヵ and ヶ are used as counters and in place names (三ヶ月,
 # 霞ヶ関), not read as kana, so they stay katakana. The full-size ケ
 # of pre-war text (三ケ月) cannot be told apart from the kana ケ by a
-# table, so the agent reads it.
-_KATAKANA_KEPT = {"ヵ", "ヶ"}
+# table, so the agent reads it. check_ocr.py uses this set too.
+KATAKANA_KEPT = {"ヵ", "ヶ"}
 
 # Iteration marks are converted together with the kana they repeat.
 _HIRAGANA_ITERATION = {"ゝ": "ヽ", "ゞ": "ヾ"}
@@ -91,8 +91,17 @@ _PERIODS_BEFORE_BREAK = re.compile(
 _PERIODS = re.compile(_PERIOD + "+")
 
 
-def _is_kana(char: str) -> bool:
-    """Returns whether the character is in the hiragana or katakana block."""
+def is_kana(char: str) -> bool:
+    """Returns whether the character is in the hiragana or katakana block.
+
+    check_ocr.py uses this too.
+
+    Args:
+        char: One character.
+
+    Returns:
+        True for a character of the hiragana or katakana block.
+    """
     code = ord(char)
     return (
         _HIRAGANA_START <= code <= _HIRAGANA_BLOCK_END
@@ -241,7 +250,7 @@ def to_hiragana(text: str) -> str:
     result = []
     for char in text:
         code = ord(char) - _KANA_OFFSET
-        if char in _KATAKANA_KEPT:
+        if char in KATAKANA_KEPT:
             result.append(char)
         elif _HIRAGANA_START <= code <= _HIRAGANA_END:
             result.append(chr(code))
@@ -267,7 +276,7 @@ def strip_voicing_marks(text: str) -> str:
     for char in text:
         if char in _VOICING_MARKS:
             continue
-        if _is_kana(char):
+        if is_kana(char):
             # Decompose kana only: normalizing the whole text would also
             # turn CJK compatibility ideographs (old forms such as the
             # U+FA4C form of 社) into their modern unified forms.
@@ -409,7 +418,7 @@ def _count_voicing(text: str) -> int:
         1
         for char in text
         if char in _VOICING_MARKS
-        or (_is_kana(char) and unicodedata.normalize("NFD", char)[0] != char)
+        or (is_kana(char) and unicodedata.normalize("NFD", char)[0] != char)
     )
 
 
@@ -714,7 +723,7 @@ def main(argv: list[str] | None = None) -> int:
     # Remove only after a successful conversion, so that a failed run
     # leaves the input in place for another try.
     if args.remove_input:
-        _remove_input(args.input)
+        remove_input(args.input)
     sys.stdout.write(result)
     return 0
 
@@ -744,8 +753,15 @@ def removal_problem(path: str, temp_dir: str) -> str | None:
     return None
 
 
-def _remove_input(path: str) -> None:
-    """Removes the input file, or warns on stderr why it was kept."""
+def remove_input(path: str) -> None:
+    """Removes an input file, or warns on stderr why it was kept.
+
+    check_ocr.py uses this too, so that both scripts delete only the
+    files that removal_problem allows.
+
+    Args:
+        path: The input file given with --input.
+    """
     problem = removal_problem(path, tempfile.gettempdir())
     if problem is not None:
         print(f"not removed {path}: {problem}", file=sys.stderr)
