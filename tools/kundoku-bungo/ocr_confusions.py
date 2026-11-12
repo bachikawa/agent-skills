@@ -103,6 +103,9 @@ MIN_LINE_SIMILARITY = 0.8
 # Replacements longer than this are not read as misread characters.
 MAX_REPLACE = 2
 GETA = "〓"
+# A book whose page answers HTTP 500 this many times in a row is taken
+# as not held by the Next Digital Library.
+UNAVAILABLE_AFTER = 2
 CHECKPOINT_EVERY = 50
 
 Opener = Callable[[urllib.request.Request], "Response"]
@@ -110,6 +113,15 @@ Opener = Callable[[urllib.request.Request], "Response"]
 
 class OcrDataError(Exception):
     """Raised when the data cannot be fetched or does not match."""
+
+
+class Unavailable(OcrDataError):
+    """Raised when the server keeps answering HTTP 500 for a URL.
+
+    The Next Digital Library answers 500 for books it does not hold
+    (it holds only part of the digitized books), so a repeated 500 means
+    that the page is not available rather than that the server is busy.
+    """
 
 
 @dataclass(frozen=True)
@@ -189,20 +201,30 @@ class NdlClient:
             The response.
 
         Raises:
+            Unavailable: The server answered HTTP 500 UNAVAILABLE_AFTER
+                times in a row.
             OcrDataError: The request failed fetch_corpus.MAX_ATTEMPTS
                 times or the server refused it.
         """
         request = urllib.request.Request(
             url, headers=dict(headers or {}, **{"User-Agent": self._user_agent})
         )
+        server_errors = 0
         for _ in range(fetch_corpus.MAX_ATTEMPTS):
             try:
                 response = self._opener(request)
             except urllib.error.HTTPError as error:
                 if error.code not in fetch_corpus.RETRIED_HTTP_CODES:
                     raise OcrDataError(f"HTTP {error.code}: {url}") from error
+                server_errors = server_errors + 1 if error.code == 500 else 0
+                if server_errors >= UNAVAILABLE_AFTER:
+                    raise Unavailable(f"HTTP 500 again: {url}") from error
+                # A 500 usually means a missing book, not a busy server,
+                # so it is tried once more after the usual interval.
                 self._sleep(
-                    fetch_corpus.retry_wait(error.headers.get("Retry-After"))
+                    fetch_corpus.REQUEST_INTERVAL
+                    if error.code == 500
+                    else fetch_corpus.retry_wait(error.headers.get("Retry-After"))
                 )
                 continue
             except (OSError, http.client.HTTPException):
@@ -535,10 +557,14 @@ def fetch_pages(
         pinned: The rows of ocr_pages.tsv.
         today: The date to record for newly fetched pages.
         checkpoint: Called with the rows after every CHECKPOINT_EVERY
-            new pages, so that an interrupted run keeps its records.
+            new pages and when the run stops on an error, so that an
+            interrupted run keeps its records.
 
     Returns:
-        The rows for ocr_pages.tsv, keyed by (PID, frame).
+        The rows for ocr_pages.tsv, keyed by (PID, frame). A page of a
+        book that the library does not hold has an empty sha1; once a
+        page of a book is found missing, the other pages of the book are
+        not requested in this run.
 
     Raises:
         OcrDataError: A request failed, or a page recorded in
@@ -546,32 +572,53 @@ def fetch_pages(
     """
     rows = dict(pinned)
     fetched = 0
-    for ref, role in refs:
-        key = (ref.pid, ref.frame)
-        path = page_file(work, ref)
-        row = rows.get(key)
-        if row and path.exists() and _sha1(path.read_bytes()) == row["sha1"]:
-            continue
-        body = client.get(PAGE_URL.format(pid=ref.pid, frame=ref.frame)).body
-        read_ocr_page(body)
-        sha1 = _sha1(body)
-        if row and row["sha1"] != sha1:
-            raise OcrDataError(
-                f"page {ref.pid}_{ref.frame} has changed since {row['fetched']}"
-            )
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(body)
-        rows[key] = {
-            "pid": ref.pid,
-            "frame": str(ref.frame),
-            "role": role,
-            "folder": ref.folder,
-            "fetched": today,
-            "sha1": sha1,
-        }
-        fetched += 1
-        if checkpoint is not None and fetched % CHECKPOINT_EVERY == 0:
+    missing_books: set[str] = set()
+    try:
+        for ref, role in refs:
+            key = (ref.pid, ref.frame)
+            path = page_file(work, ref)
+            row = rows.get(key)
+            if row and row["sha1"] == "":
+                continue
+            if row and path.exists() and _sha1(path.read_bytes()) == row["sha1"]:
+                continue
+            if ref.pid in missing_books:
+                sha1 = ""
+            else:
+                try:
+                    body = client.get(
+                        PAGE_URL.format(pid=ref.pid, frame=ref.frame)
+                    ).body
+                except Unavailable:
+                    missing_books.add(ref.pid)
+                    body = None
+                if body is None:
+                    sha1 = ""
+                else:
+                    read_ocr_page(body)
+                    sha1 = _sha1(body)
+            if row and row["sha1"] != sha1:
+                raise OcrDataError(
+                    f"page {ref.pid}_{ref.frame} has changed since {row['fetched']}"
+                )
+            if sha1:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(body)
+            rows[key] = {
+                "pid": ref.pid,
+                "frame": str(ref.frame),
+                "role": role,
+                "folder": ref.folder,
+                "fetched": today,
+                "sha1": sha1,
+            }
+            fetched += 1
+            if checkpoint is not None and fetched % CHECKPOINT_EVERY == 0:
+                checkpoint(rows)
+    except OcrDataError:
+        if checkpoint is not None:
             checkpoint(rows)
+        raise
     return rows
 
 
@@ -720,7 +767,8 @@ def count_confusions(
         rows: The rows of ocr_pages.tsv.
 
     Returns:
-        The rows for ocr_confusions.tsv, most frequent first.
+        The rows for ocr_confusions.tsv, most frequent first. Pages the
+        library does not hold (empty sha1) are left out.
 
     Raises:
         OcrDataError: A page is missing or has another SHA-1.
@@ -729,7 +777,7 @@ def count_confusions(
     pages: dict[Confusion, set] = collections.defaultdict(set)
     books: dict[Confusion, set] = collections.defaultdict(set)
     for key, row in sorted(rows.items()):
-        if row["role"] != "dataset":
+        if row["role"] != "dataset" or not row["sha1"]:
             continue
         ref = PageRef(row["pid"], int(row["frame"]), row["folder"])
         ocr = read_ocr_page(_checked_page(work, ref, row))
@@ -791,6 +839,8 @@ def geta_rates(
     """
     totals = {role: [0, 0] for role in ROLES}
     for row in rows.values():
+        if not row["sha1"]:
+            continue
         ref = PageRef(row["pid"], int(row["frame"]), row["folder"])
         text = "".join(
             line.text for line in read_ocr_page(_checked_page(work, ref, row))

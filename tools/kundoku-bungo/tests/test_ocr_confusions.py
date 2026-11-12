@@ -100,6 +100,18 @@ class NdlClientTest(unittest.TestCase):
         with self.assertRaises(OcrDataError):
             ndl.get("https://example.invalid/")
 
+    def test_repeated_server_error_means_unavailable(self) -> None:
+        error = urllib.error.HTTPError("u", 500, "error", Message(), None)
+        ndl, opener, _ = client([error, error])
+        with self.assertRaises(ocr_confusions.Unavailable):
+            ndl.get("https://example.invalid/")
+        self.assertEqual(len(opener.requests), 2)
+
+    def test_one_server_error_is_retried(self) -> None:
+        error = urllib.error.HTTPError("u", 500, "error", Message(), None)
+        ndl, _, _ = client([error, Response(200, {}, b"ok")])
+        self.assertEqual(ndl.get("https://example.invalid/").body, b"ok")
+
     def test_gives_up_after_the_attempts(self) -> None:
         ndl, _, _ = client([OSError("down")] * 6)
         with self.assertRaises(OcrDataError):
@@ -280,6 +292,36 @@ class FetchPagesTest(unittest.TestCase):
             with self.assertRaisesRegex(OcrDataError, "changed"):
                 ocr_confusions.fetch_pages(Path(work), ndl, [(ref, "dataset")], pinned, "2026-11-14")
 
+    def test_books_the_library_does_not_hold_are_recorded_empty(self) -> None:
+        error = urllib.error.HTTPError("u", 500, "error", Message(), None)
+        refs = [
+            (PageRef("1", 2, "f"), "dataset"),
+            (PageRef("1", 5, "f"), "dataset"),
+            (PageRef("2", 1, "f"), "dataset"),
+        ]
+        with tempfile.TemporaryDirectory() as work:
+            ndl, opener, _ = client([error, error, Response(200, {}, page_json())])
+            rows = ocr_confusions.fetch_pages(Path(work), ndl, refs, {}, "d")
+            saved = sorted(p.name for p in Path(work).rglob("*.json"))
+            again, opener2, _ = client([])
+            ocr_confusions.fetch_pages(Path(work), again, refs, rows, "e")
+        self.assertEqual(
+            [rows[key]["sha1"] == "" for key in sorted(rows)], [True, True, False]
+        )
+        self.assertEqual(len(opener.requests), 3)
+        self.assertEqual(saved, ["2_1.json"])
+        self.assertEqual(opener2.requests, [])
+
+    def test_an_error_still_writes_the_checkpoint(self) -> None:
+        refs = [(PageRef("1", n, "f"), "dataset") for n in (1, 2)]
+        missing = urllib.error.HTTPError("u", 404, "missing", Message(), None)
+        calls = []
+        with tempfile.TemporaryDirectory() as work:
+            ndl, _, _ = client([Response(200, {}, page_json()), missing])
+            with self.assertRaises(OcrDataError):
+                ocr_confusions.fetch_pages(Path(work), ndl, refs, {}, "d", checkpoint=calls.append)
+        self.assertEqual([list(rows) for rows in calls], [[("1", 1)]])
+
     def test_checkpoint_is_called(self) -> None:
         refs = [(PageRef("1", n, "f"), "dataset") for n in range(1, 51)]
         calls = []
@@ -378,11 +420,13 @@ class CountTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
             rows = self._work(work, {
+                PageRef("9", 1, "f"): ("dataset", b"", truth),
                 PageRef("1", 1, "f"): ("dataset", ocr, truth),
                 PageRef("1", 3, "f"): ("dataset", ocr, truth),
                 PageRef("2", 1, "f"): ("dataset", ocr, truth),
                 PageRef("1", 2, "f"): ("neighbor", page_json(("〓", (0, 0, 1, 1))), None),
             })
+            rows[("9", 1)]["sha1"] = ""
             result = ocr_confusions.count_confusions(work, rows)
             rates = ocr_confusions.geta_rates(work, rows)
         self.assertEqual(
