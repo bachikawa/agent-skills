@@ -714,7 +714,7 @@ def main(argv: list[str] | None = None) -> int:
     # Remove only after a successful conversion, so that a failed run
     # leaves the input in place for another try.
     if args.remove_input:
-        _remove_input(args.input)
+        remove_input(args.input)
     sys.stdout.write(result)
     return 0
 
@@ -744,8 +744,15 @@ def removal_problem(path: str, temp_dir: str) -> str | None:
     return None
 
 
-def _remove_input(path: str) -> None:
-    """Removes the input file, or warns on stderr why it was kept."""
+def remove_input(path: str) -> None:
+    """Removes an input file, or warns on stderr why it was kept.
+
+    check_ocr.py uses this too, so that both scripts delete only the
+    files that removal_problem allows.
+
+    Args:
+        path: The input file given with --input.
+    """
     problem = removal_problem(path, tempfile.gettempdir())
     if problem is not None:
         print(f"not removed {path}: {problem}", file=sys.stderr)
