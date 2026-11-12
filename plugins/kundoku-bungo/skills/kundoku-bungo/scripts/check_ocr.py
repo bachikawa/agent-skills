@@ -284,6 +284,11 @@ def _numeral(number: int, line: str) -> list[Candidate]:
             basis = f"数の並びの中のカタカナ（前「{before}」、後「{after}」）"
             if after in _DATE_END and before != "第":
                 basis += f"。後ろが「{after}」なので助詞のこともある。{_LOW}"
+            elif after in _NUMERALS and before != "第":
+                # Arithmetic reads 十六ニ八ヲ乘ス: a particle between
+                # two numbers. In the NDL OCR study (Issue #29) 31 of
+                # the 32 candidates of this rule were such particles.
+                basis += f"。後ろも数なので、数と数の間の助詞のこともある。{_LOW}"
             found.append(
                 Candidate(
                     number,
