@@ -219,12 +219,13 @@ python -I tools/kundoku-bungo/ocr_confusions.py count --work "$WORK"
 
 - 全文テキストを作った OCR は、このデータセットで学習している（データセットの README）。数は「どの読み違いが起きるか」を示すもので、まだ見ていないページで何 % 読み違えるかは示さない。
 - 正しい文字は、旧字体・異体字を包摂せずに、見たとおりに書いてある（データセットの README）。そのため、互換漢字と普通の字の違いのような、書き方だけの違いも出る。NFKC で同じになる字の組は `variant` として、読み違い（`substitution`）と分けて数える。
+- 正しい文字には、字を入れていない所に「▣」がある（データセットの README には説明がない）。OCR がそこを別の字に読んでいても、正しい字が分からないので、`placeholder` として読み違いと分けて数える。
 
 ### ocr_confusions.tsv の列
 
 | 列 | 内容 |
 | --- | --- |
-| `kind` | `substitution`（1〜2 字を同じ数の字に読み違えた）・`variant`（NFKC で同じ字）・`geta`（OCR が「〓」と書いた）・`deletion`（OCR が字を落とした）・`insertion`（OCR が字を足した）・`other`（3 字以上か、数の違う置き換え） |
+| `kind` | `substitution`（1〜2 字を同じ数の字に読み違えた）・`variant`（NFKC で同じ字）・`geta`（OCR が「〓」と書いた）・`deletion`（OCR が字を落とした）・`insertion`（OCR が字を足した）・`placeholder`（正しい文字が「▣」の所を、OCR が別の字にしたか落とした）・`other`（3 字以上か、数の違う置き換え） |
 | `expected`・`found` | 正しい字と OCR の字。`deletion` は `found` が空、`insertion` は `expected` が空 |
 | `before_kind`・`after_kind` | 正しい文字での、前と後ろの字の種類（`kanji`・`katakana`・`hiragana`・`digit`・`other`・`edge`〈行の端〉） |
 | `count`・`pages`・`books` | 数と、出てきたページの数・資料の数 |
