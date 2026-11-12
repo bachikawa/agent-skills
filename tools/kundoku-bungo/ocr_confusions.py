@@ -103,6 +103,9 @@ MIN_LINE_SIMILARITY = 0.8
 # Replacements longer than this are not read as misread characters.
 MAX_REPLACE = 2
 GETA = "〓"
+# The ground truth writes ▣ where no character was entered (the dataset
+# README does not say why; the OCR often reads a plain kanji there).
+PLACEHOLDER = "▣"
 # A book whose page answers HTTP 500 this many times in a row is taken
 # as not held by the Next Digital Library.
 UNAVAILABLE_AFTER = 2
@@ -715,7 +718,8 @@ def line_confusions(expected: str, found: str) -> list[Confusion]:
         two are the same character under NFKC, such as a CJK
         compatibility ideograph and its unified form), and
         "insertion" or "deletion" for a character the OCR added or left
-        out. Longer or uneven replacements are "other". before_kind and
+        out. A ground-truth ▣ replaced or left out is "placeholder",
+        since the right character is not known. Longer or uneven replacements are "other". before_kind and
         after_kind are the kinds of the ground-truth characters around.
     """
     matcher = difflib.SequenceMatcher(None, expected, found, autojunk=False)
@@ -734,7 +738,8 @@ def line_confusions(expected: str, found: str) -> list[Confusion]:
                 )
         elif tag == "delete":
             for old in expected[i1:i2]:
-                result.append(Confusion("deletion", old, "", before, after))
+                kind = "placeholder" if old == PLACEHOLDER else "deletion"
+                result.append(Confusion(kind, old, "", before, after))
         elif tag == "insert":
             for new in found[j1:j2]:
                 result.append(Confusion("insertion", "", new, before, after))
@@ -748,6 +753,8 @@ def line_confusions(expected: str, found: str) -> list[Confusion]:
 
 
 def _substitution_kind(expected: str, found: str) -> str:
+    if expected == PLACEHOLDER:
+        return "placeholder"
     if found == GETA:
         return "geta"
     if unicodedata.normalize("NFKC", expected) == unicodedata.normalize(

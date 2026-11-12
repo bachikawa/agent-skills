@@ -375,6 +375,16 @@ class LineConfusionsTest(unittest.TestCase):
         self.assertEqual(self._kinds("後ルヽ時ハ之ヲ罰ス", "後ル時ハ之ヲ罰ス"), [("deletion", "ヽ", "")])
         self.assertEqual(self._kinds("後ル時ハ之ヲ罰ス", "後ル丶時ハ之ヲ罰ス"), [("insertion", "", "丶")])
 
+    def test_placeholder_in_the_ground_truth(self) -> None:
+        self.assertEqual(
+            self._kinds("銳意▣價ノ向上ヲ圖ル", "銳意聲價ノ向上ヲ圖ル"),
+            [("placeholder", "▣", "聲")],
+        )
+        self.assertEqual(
+            self._kinds("銳意▣價ノ向上ヲ圖ル", "銳意價ノ向上ヲ圖ル"),
+            [("placeholder", "▣", "")],
+        )
+
     def test_long_or_uneven_replacements_are_other(self) -> None:
         line = "此ノ規則ニ違反シタル者ハ三年以下ノ懲役ニ處シ又ハ罰金ニ處ス"
         self.assertEqual(
