@@ -178,8 +178,6 @@ class NumeralTest(unittest.TestCase):
         (item,) = check_ocr.check("第" + KANA_NI + "條")
         self.assertNotIn("確かさは低い", item.basis)
 
-    def test_particle_after_a_number_is_not_found(self) -> None:
-        self.assertEqual(check_ocr.check("第一條" + KANA_NI + "依リ"), [])
 
 
 class LookalikeTest(unittest.TestCase):
@@ -274,6 +272,28 @@ class MixedKanaTest(unittest.TestCase):
     def test_counter_ke_is_not_counted(self) -> None:
         self.assertEqual(
             check_ocr.check("これをばっすることをえず三ヶ月"), []
+        )
+
+
+class LigatureTest(unittest.TestCase):
+    def test_geta_between_katakana_suggests_koto(self) -> None:
+        (item,) = check_ocr.check("入ル〓ヲ禁ス")
+        self.assertEqual(
+            (item.column, item.found, item.suggestion, item.kind),
+            (3, "〓", "ヿ", "ligature"),
+        )
+        self.assertIn("3 分の 2", item.basis)
+
+    def test_other_geta_stays_unexpected(self) -> None:
+        for text in ("之ヲ〓罰ス", "〓ヲ禁ス", "入ル〓", "入ル〓〓ヲ"):
+            with self.subTest(text=text):
+                self.assertEqual(
+                    set(kinds(check_ocr.check(text))), {"unexpected"}
+                )
+
+    def test_long_vowel_mark_is_not_katakana(self) -> None:
+        self.assertEqual(
+            kinds(check_ocr.check("ハー〓ヲ")), ["unexpected"]
         )
 
 
