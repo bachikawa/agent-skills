@@ -36,7 +36,7 @@ from pathlib import Path
 
 # The scripts ship together; make the sibling module importable even
 # when the interpreter does not add the script directory (python -I).
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.append(str(Path(__file__).resolve().parent))
 
 import convert_chars  # noqa: E402
 
@@ -92,13 +92,16 @@ _KANJI_FOR_KANA = {
     "卜": "ト",
     "才": "オ",
 }
-_NUMERALS = set("〇一二三四五六七八九十百千万萬壱弐參拾")
+_NUMERALS = set("〇一二三四五六七八九十百千万萬壱壹弐貳参參拾廿")
 _NUMBER_START = _NUMERALS | {"第"}
 _NUMBER_END = _NUMERALS | set("条條項号號年月日")
+# After a numeral, a particle is often followed by these (第一ニ日本ノ,
+# 其ノ一ハ年金), so a numeral candidate before them is less certain.
+_DATE_END = set("年月日")
 # Counters that follow 二 and 八 used as numerals (二週, 八人). They
 # only keep these kanji out of lookalike: katakana before them is often
 # a particle, so they do not mark a number for numeral.
-_COUNTERS = set("週人箇個回度名円圓銭錢里町尺寸分時歳級等倍")
+_COUNTERS = set("週人箇個回度名件枚本頭戸通期円圓銭錢里町尺寸分時歳級等倍")
 
 _MIN_COUNTED = 10
 _MIN_OLD_SHARE = 0.8
@@ -107,6 +110,9 @@ _MAX_MINORITY_SHARE = 0.1
 # The basis column is read by Japanese users, like the notes of the
 # tables, so it is written in Japanese.
 _LOW = "確かさは低い"
+# Control, format (such as zero-width and bidirectional marks) and line
+# or paragraph separator characters.
+_INVISIBLE = {"Cc", "Cf", "Zl", "Zp"}
 
 
 class TableError(Exception):
@@ -169,6 +175,9 @@ def load_headwords(path: Path = VOCABULARY_TABLE) -> list[str]:
 def _search_parts(headwords: list[str]) -> list[tuple[str, str]]:
     """Splits headwords at 〜 into the parts that are searched for.
 
+    Args:
+        headwords: The headwords of the vocabulary table.
+
     Returns:
         Pairs of a part and its headword. Parts of one character are
         dropped: a single look-alike would match almost anywhere.
@@ -198,7 +207,7 @@ def search_copy(line: str) -> str:
     copy = convert_chars.to_katakana(convert_chars.to_shinjitai(line))
     return "".join(
         unicodedata.normalize("NFD", char)[0]
-        if convert_chars._is_kana(char)
+        if convert_chars.is_kana(char)
         else char
         for char in copy
     )
@@ -220,10 +229,11 @@ def _vocabulary(
                 for index, (have, want) in enumerate(zip(window, part))
                 if have != want
             ]
+            after = line[start + size] if start + size < len(line) else ""
             if all(
                 frozenset((window[index], part[index])) in _LOOKALIKE
                 for index in differ
-            ):
+            ) and not _numeral_kept(window, differ, after):
                 original = line[start : start + size]
                 suggestion = "".join(
                     part[index] if index in differ else char
@@ -242,6 +252,22 @@ def _vocabulary(
     return found
 
 
+def _numeral_kept(window: str, differ: list[int], after: str) -> bool:
+    """Tells whether a swapped numeral in a window reads as a number.
+
+    A headword such as 徒ニ or 又ハ also matches a real number (生徒二名,
+    七月又八月): the swapped character is a numeral and a counter or
+    another number part follows the window.
+    """
+    last = len(window) - 1
+    return any(
+        window[index] in _NUMERALS
+        and index == last
+        and (after in _NUMBER_END or after in _COUNTERS)
+        for index in differ
+    )
+
+
 def _numeral(number: int, line: str) -> list[Candidate]:
     found = []
     for index, char in enumerate(line):
@@ -250,6 +276,9 @@ def _numeral(number: int, line: str) -> list[Candidate]:
         before = line[index - 1]
         after = line[index + 1] if index + 1 < len(line) else ""
         if before in _NUMBER_START and after in _NUMBER_END:
+            basis = f"数の並びの中のカタカナ（前「{before}」、後「{after}」）"
+            if after in _DATE_END and before != "第":
+                basis += f"。後ろが「{after}」なので助詞のこともある。{_LOW}"
             found.append(
                 Candidate(
                     number,
@@ -257,7 +286,7 @@ def _numeral(number: int, line: str) -> list[Candidate]:
                     char,
                     _KANA_FOR_NUMERAL[char],
                     "numeral",
-                    f"数の並びの中のカタカナ（前「{before}」、後「{after}」）",
+                    basis,
                 )
             )
     return found
@@ -336,7 +365,7 @@ def _mixed_kana(lines: list[str]) -> list[Candidate]:
     katakana = sum(
         1
         for char in text
-        if _is_katakana(char) and char not in convert_chars._KATAKANA_KEPT
+        if _is_katakana(char) and char not in convert_chars.KATAKANA_KEPT
     )
     total = hiragana + katakana
     if total < _MIN_COUNTED:
@@ -351,7 +380,7 @@ def _mixed_kana(lines: list[str]) -> list[Candidate]:
     else:
         is_minority, convert, major = (
             lambda char: _is_katakana(char)
-            and char not in convert_chars._KATAKANA_KEPT,
+            and char not in convert_chars.KATAKANA_KEPT,
             convert_chars.to_hiragana,
             "ひらがな",
         )
@@ -362,7 +391,8 @@ def _mixed_kana(lines: list[str]) -> list[Candidate]:
     found = []
     for number, line in enumerate(lines, start=1):
         for index, char in enumerate(line):
-            if is_minority(char):
+            # ヷ to ヺ have no hiragana, so there is nothing to suggest.
+            if is_minority(char) and convert(char) != char:
                 found.append(
                     Candidate(
                         number,
@@ -383,10 +413,10 @@ def _is_unexpected(char: str) -> bool:
         or ("A" <= char <= "Z")
         or ("a" <= char <= "z")
         or 0xFF61 <= code <= 0xFF9F
-        or char in ("�", "〓")
+        or char in ("\ufffd", "\u3013")
         or 0xE000 <= code <= 0xF8FF
         or code >= 0xF0000
-        or unicodedata.category(char) == "Cc"
+        or unicodedata.category(char) in _INVISIBLE
     )
 
 
@@ -477,7 +507,20 @@ def check(
 
 
 def _visible(text: str) -> str:
-    return text.replace("\t", "\\t")
+    """Writes invisible characters so that they cannot break the table.
+
+    A tab becomes \\t and any other control, format or line separator
+    character becomes \\uXXXX, so that every candidate stays on one line
+    of seven columns for any reader.
+    """
+    return "".join(
+        "\\t"
+        if char == "\t"
+        else f"\\u{ord(char):04X}"
+        if unicodedata.category(char) in _INVISIBLE
+        else char
+        for char in text
+    )
 
 
 def format_candidates(text: str, candidates: list[Candidate]) -> str:
@@ -540,7 +583,8 @@ def main(argv: list[str] | None = None) -> int:
 
     Returns:
         The exit code: 0 whether or not there are candidates, 1 when the
-        text or a table cannot be read.
+        input file or a table cannot be read. A usage error exits with 2
+        through argparse.
     """
     sys.stdout.reconfigure(encoding="utf-8", newline="\n")
     sys.stderr.reconfigure(encoding="utf-8")

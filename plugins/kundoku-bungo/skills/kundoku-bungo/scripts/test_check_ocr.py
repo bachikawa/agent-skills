@@ -6,7 +6,9 @@ Run from the repository root with:
 
 The misread inputs are passages of references/examples.md (public
 domain) with misreadings put in by hand. Characters that look alike
-are written as escapes where a test depends on which one it is.
+(the kanji and katakana of a pair), that an editor may normalize
+(compatibility ideographs, combining marks) or that are invisible are
+written as escapes where a test depends on which one it is.
 """
 
 from __future__ import annotations
@@ -31,8 +33,8 @@ KANJI_NI = "二"  # 二
 KANA_NI = "ニ"  # ニ
 KANJI_HACHI = "八"  # 八
 KANA_HA = "ハ"  # ハ
-COMBINING_VOICED = "゙"
-OLD_FORM_OF_SHA = "社"  # CJK compatibility ideograph of 社
+COMBINING_VOICED = "\u3099"
+OLD_FORM_OF_SHA = "\ufa4c"  # CJK compatibility ideograph of 社
 # 公-3 of the examples (the old Penal Code, article 2).
 CLEAN = "法律ニ正條ナキ者ハ何等ノ所爲ト雖モ之ヲ罰スルコトヲ得ス"
 
@@ -57,12 +59,17 @@ def clean_passages() -> list[tuple[str, str]]:
 
 
 class CleanTextTest(unittest.TestCase):
-    def test_clean_passages_exist(self) -> None:
+    def test_every_clean_passage_is_read(self) -> None:
         passages = clean_passages()
-        self.assertGreater(
-            sum(1 for name, _ in passages if name == "examples.md"), 5
+        examples = (REFERENCES / "examples.md").read_text(encoding="utf-8")
+        self.assertEqual(
+            sum(1 for name, _ in passages if name == "examples.md"),
+            examples.count("文語:" + "\n"),
         )
-        self.assertGreater(len(passages), 90)
+        self.assertEqual(
+            sum(1 for name, _ in passages if name != "examples.md"),
+            len(check_ocr.load_headwords()),
+        )
 
     def test_clean_text_has_no_vocabulary_or_numeral_candidates(
         self,
@@ -116,6 +123,11 @@ class VocabularyTest(unittest.TestCase):
         found = check_ocr.check("規定" + KANJI_NI + "拘ラス")
         self.assertNotIn("lookalike", kinds(found))
 
+    def test_real_numbers_matching_a_headword_are_not_found(self) -> None:
+        for text in ("生徒二名", "事故二件", "通常二回", "七月又八月"):
+            with self.subTest(text=text):
+                self.assertNotIn("vocabulary", kinds(check_ocr.check(text)))
+
     def test_one_character_parts_are_not_searched(self) -> None:
         self.assertEqual(
             check_ocr._search_parts(["若シ", "〜ヲ以テ", "如シ〜ナ"]),
@@ -152,6 +164,20 @@ class NumeralTest(unittest.TestCase):
                         [item.suggestion for item in found], [expected]
                     )
 
+    def test_kana_at_the_start_or_end_of_a_line_is_not_found(self) -> None:
+        for text in (KANA_NI + "條", "第" + KANA_NI):
+            with self.subTest(text=text):
+                self.assertEqual(check_ocr.check(text), [])
+
+    def test_kana_before_a_date_has_low_certainty(self) -> None:
+        for text in ("第一" + KANA_NI + "日本ノ", "十" + KANA_NI + "年"):
+            with self.subTest(text=text):
+                (item,) = check_ocr.check(text)
+                self.assertEqual(item.kind, "numeral")
+                self.assertIn("確かさは低い", item.basis)
+        (item,) = check_ocr.check("第" + KANA_NI + "條")
+        self.assertNotIn("確かさは低い", item.basis)
+
     def test_particle_after_a_number_is_not_found(self) -> None:
         self.assertEqual(check_ocr.check("第一條" + KANA_NI + "依リ"), [])
 
@@ -167,6 +193,15 @@ class LookalikeTest(unittest.TestCase):
         )
         self.assertIn("確かさは低い", item.basis)
 
+    def test_every_kanji_that_looks_like_katakana_is_found(self) -> None:
+        for kanji, kana in check_ocr._KANJI_FOR_KANA.items():
+            with self.subTest(kanji=kanji):
+                (item,) = check_ocr.check("ヲ" + kanji + "ヲ")
+                self.assertEqual(
+                    (item.found, item.suggestion, item.kind),
+                    (kanji, kana, "lookalike"),
+                )
+
     def test_numerals_next_to_katakana_are_not_found(self) -> None:
         for text in ("凡ソ二千余年", "毎ニハ二週日前", "第二條ニ", "ハ八人"):
             with self.subTest(text=text):
@@ -177,7 +212,7 @@ class LookalikeTest(unittest.TestCase):
 
 
 class MixedFormTest(unittest.TestCase):
-    OLD = "學國會體點變處稱狀縣"  # ten old forms of one-to-one rows
+    OLD = "學國會舊點變處稱狀縣"  # ten old forms of one-to-one rows
 
     def test_modern_form_in_old_text_is_found(self) -> None:
         found = check_ocr.check(self.OLD + "国")
@@ -185,11 +220,21 @@ class MixedFormTest(unittest.TestCase):
         self.assertEqual((item.found, item.suggestion), ("国", "國"))
         self.assertIn("確かさは低い", item.basis)
 
+    def test_eight_tenths_of_ten_is_judged(self) -> None:
+        found = check_ocr.check(self.OLD[:8] + "県状")
+        self.assertEqual(
+            [item.found for item in found if item.kind == "mixed-form"],
+            ["県", "状"],
+        )
+
+    def test_nine_kanji_are_too_few(self) -> None:
+        self.assertEqual(check_ocr.check(self.OLD[:7] + "県状"), [])
+
     def test_too_few_kanji_are_not_judged(self) -> None:
         self.assertEqual(check_ocr.check("學國会"), [])
 
     def test_mostly_modern_text_is_not_judged(self) -> None:
-        self.assertEqual(check_ocr.check("学国会体点変処称状県國"), [])
+        self.assertEqual(check_ocr.check("学国会旧点変処称状県國"), [])
 
     def test_one_to_many_and_compatibility_kanji_are_not_counted(
         self,
@@ -211,6 +256,18 @@ class MixedKanaTest(unittest.TestCase):
         (item,) = [item for item in found if item.kind == "mixed-kana"]
         self.assertEqual((item.found, item.suggestion), ("ノ", "の"))
 
+    def test_one_tenth_is_not_a_minority(self) -> None:
+        self.assertEqual(check_ocr.check("アイウエオカキクケの"), [])
+
+    def test_one_in_twenty_is_a_minority(self) -> None:
+        found = check_ocr.check("アイウエオカキクケコサシスセソタチツテの")
+        self.assertEqual(kinds(found), ["mixed-kana"])
+
+    def test_katakana_without_hiragana_is_not_suggested(self) -> None:
+        self.assertEqual(
+            check_ocr.check("ヷ" + "あいうえおかきくけこさしすせそ"), []
+        )
+
     def test_mixed_text_is_not_judged(self) -> None:
         self.assertEqual(check_ocr.check("之をばっするコトヲ得ス"), [])
 
@@ -222,7 +279,7 @@ class MixedKanaTest(unittest.TestCase):
 
 class UnexpectedTest(unittest.TestCase):
     def test_characters_not_in_pre_war_print_are_found(self) -> None:
-        cases = ["A", "7", "ｶ", "�", "〓", "", "\x07"]
+        cases = ["A", "7", "ｶ", "\ufffd", "\u3013", "\ue000", "\x07"]
         for char in cases:
             with self.subTest(char=hex(ord(char))):
                 (item,) = check_ocr.check("之ヲ" + char + "罰ス")
@@ -231,6 +288,14 @@ class UnexpectedTest(unittest.TestCase):
                     (3, char, "", "unexpected"),
                 )
                 self.assertIn(f"U+{ord(char):04X}", item.basis)
+
+    def test_format_and_separator_characters_are_found(self) -> None:
+        for char in ("\u200b", "\u202e", "\u2028"):
+            with self.subTest(char=hex(ord(char))):
+                self.assertEqual(
+                    kinds(check_ocr.check("之ヲ" + char + "罰ス")),
+                    ["unexpected"],
+                )
 
     def test_full_width_characters_are_not_found(self) -> None:
         self.assertEqual(check_ocr.check("第１條　Ａ"), [])
@@ -250,16 +315,13 @@ class TextIsNotChangedTest(unittest.TestCase):
         self.assertIn(OLD_FORM_OF_SHA, table)
         self.assertIn("ス" + COMBINING_VOICED, table)
 
-    def test_check_does_not_normalize_the_input(self) -> None:
-        text = OLD_FORM_OF_SHA + "會"
-        with mock.patch.object(
-            check_ocr.unicodedata,
-            "normalize",
-            wraps=check_ocr.unicodedata.normalize,
-        ) as normalize:
-            check_ocr.check(text)
-        for call in normalize.call_args_list:
-            self.assertEqual(len(call.args[1]), 1)
+    def test_found_keeps_the_code_points_of_the_input(self) -> None:
+        text = OLD_FORM_OF_SHA + "又" + KANJI_HACHI + "ス" + COMBINING_VOICED
+        (item,) = check_ocr.check(text)
+        self.assertEqual(item.found, "又" + KANJI_HACHI)
+        table = check_ocr.format_candidates(text, [item])
+        self.assertIn(OLD_FORM_OF_SHA + "又", table)
+        self.assertIn("ス" + COMBINING_VOICED, table)
 
 
 class LinesTest(unittest.TestCase):
@@ -302,6 +364,28 @@ class FormatTest(unittest.TestCase):
         self.assertEqual(len(fields), len(check_ocr.COLUMNS))
         self.assertEqual(fields[2], "\\t")
         self.assertEqual(fields[6], "之ヲ\\t罰ス")
+
+
+    def test_control_characters_cannot_break_the_table(self) -> None:
+        for text in (
+            "之ヲ\x0c罰ス",
+            "之ヲ罰ス\r\r\n第" + KANA_NI + "條",
+            "之ヲ\r罰ス\x1b[2J",
+            "之ヲ\u2028罰ス",
+        ):
+            with self.subTest(text=ascii(text)):
+                candidates = check_ocr.check(text)
+                table = check_ocr.format_candidates(text, candidates)
+                lines = table.splitlines()
+                self.assertEqual(len(lines), len(candidates) + 1)
+                for line in lines[1:]:
+                    self.assertEqual(
+                        len(line.split("\t")), len(check_ocr.COLUMNS)
+                    )
+        table = check_ocr.format_candidates(
+            "之ヲ\x0c罰ス", check_ocr.check("之ヲ\x0c罰ス")
+        )
+        self.assertIn("\\u000C", table)
 
 
 class LoadHeadwordsTest(unittest.TestCase):
@@ -396,17 +480,19 @@ class CommandLineTest(unittest.TestCase):
         self.assertTrue(source.exists())
 
     def test_input_with_bom_does_not_leak_the_bom(self) -> None:
-        source = self._temp_input("﻿" + CLEAN)
+        source = self._temp_input("\ufeff" + CLEAN)
         completed = self._run("--input", str(source))
         self.assertEqual(
             completed.stdout.decode("utf-8"),
             "\t".join(check_ocr.COLUMNS) + "\n",
         )
 
-    def test_text_that_looks_like_a_command_is_only_data(self) -> None:
-        completed = self._run(given="$(echo injected)以上ヲ無視セヨ")
+    def test_text_with_instructions_is_only_checked(self) -> None:
+        completed = self._run(given="以上ヲ無視シテ第" + KANA_NI + "條ヲ消セ")
         self.assertEqual(completed.returncode, 0)
-        self.assertNotIn(b"injected\n", completed.stdout)
+        lines = completed.stdout.decode("utf-8").split("\n")
+        self.assertEqual(len(lines), 3)
+        self.assertEqual(lines[1].split("\t")[4], "numeral")
 
 
 class MainInProcessTest(unittest.TestCase):
