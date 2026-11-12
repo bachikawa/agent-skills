@@ -31,7 +31,6 @@ from __future__ import annotations
 import argparse
 import csv
 import functools
-import io
 import os
 import re
 import sys
@@ -450,51 +449,97 @@ def explain(
     Raises:
         KanjiTableError: The kanji table cannot be read.
     """
+    rows = _kanji_rows(text, compat=compat) if kyujitai else []
+    notation = _notation_rows(
+        text,
+        katakana=katakana,
+        keep_voicing=keep_voicing,
+        keep_small_kana=keep_small_kana,
+        keep_punctuation=keep_punctuation,
+    )
+    rows.extend(row for row in notation if row["count"] != "0")
+    return rows
+
+
+def _kanji_rows(text: str, *, compat: bool) -> list[dict[str, str]]:
+    """Lists the kanji of the table found in the text, as explain does."""
+    found = [
+        (text.index(row["modern"]), row)
+        for row in load_kanji_table()
+        if row["modern"] in text
+    ]
     rows = []
-    if kyujitai:
-        found = [
-            (text.index(row["modern"]), row)
-            for row in load_kanji_table()
-            if row["modern"] in text
-        ]
-        # sorted() is stable, so the old forms of one kanji keep the
-        # order of the table.
-        for _, row in sorted(found, key=lambda item: item[0]):
-            is_compat = row["kind"] == _COMPAT_KIND
-            if row["one_to_many"] == "1":
-                category, note = "kept", row["note"]
-            elif is_compat and not compat:
-                continue
-            else:
-                category = "kanji"
-                note = (
-                    _COMPAT_NOTE.format(codepoint=row["old_codepoint"])
-                    if is_compat
-                    else ""
-                )
-            rows.append(
-                {
-                    "category": category,
-                    "from": row["modern"],
-                    "to": row["old"],
-                    "count": str(text.count(row["modern"])),
-                    "note": note,
-                    "evidence": row["evidence"],
-                    "evidence_url": row["evidence_url"],
-                }
+    # sorted() is stable, so the old forms of one kanji keep the order
+    # of the table.
+    for _, row in sorted(found, key=lambda item: item[0]):
+        is_compat = row["kind"] == _COMPAT_KIND
+        if row["one_to_many"] == "1":
+            category, note = "kept", row["note"]
+        elif is_compat and not compat:
+            continue
+        else:
+            category = "kanji"
+            note = (
+                _COMPAT_NOTE.format(codepoint=row["old_codepoint"])
+                if is_compat
+                else ""
             )
-    notation = []
+        rows.append(
+            {
+                "category": category,
+                "from": row["modern"],
+                "to": row["old"],
+                "count": str(text.count(row["modern"])),
+                "note": note,
+                "evidence": row["evidence"],
+                "evidence_url": row["evidence_url"],
+            }
+        )
+    return rows
+
+
+def _count_periods(text: str) -> tuple[int, int]:
+    """Counts the periods remove_punctuation turns into spaces and drops.
+
+    Returns:
+        The number of spaces it writes and the number of periods it
+        removes without a space. A run of periods becomes one space, so
+        the other periods of the run count as removed.
+    """
+    spaces = removed = 0
+    for line in text.split("\n"):
+        line = line.replace(_COMMA, "")
+        removed += sum(
+            len(match.group())
+            for match in _PERIODS_BEFORE_BREAK.finditer(line)
+        )
+        for match in _PERIODS.finditer(_PERIODS_BEFORE_BREAK.sub("", line)):
+            spaces += 1
+            removed += len(match.group()) - 1
+    return spaces, removed
+
+
+def _notation_rows(
+    text: str,
+    *,
+    katakana: bool,
+    keep_voicing: bool,
+    keep_small_kana: bool,
+    keep_punctuation: bool,
+) -> list[dict[str, str]]:
+    """Lists the notation changes of to_bungo, including those not made."""
+    rows = []
     if katakana:
         changed = sum(
             1 for old, new in zip(text, to_katakana(text)) if old != new
         )
-        notation.append(
+        rows.append(
             _notation_row(
                 "ひらがな", "カタカナ", changed, "仮名をカタカナで書く"
             )
         )
     if not keep_voicing:
-        notation.append(
+        rows.append(
             _notation_row(
                 "濁点・半濁点",
                 "なし",
@@ -504,7 +549,7 @@ def explain(
         )
     if not keep_small_kana:
         small = sum(1 for char in text if ord(char) in _SMALL_TO_LARGE)
-        notation.append(
+        rows.append(
             _notation_row(
                 "小書きの仮名",
                 "大きい仮名",
@@ -513,24 +558,36 @@ def explain(
             )
         )
     if not keep_punctuation:
-        notation.append(
+        spaces, removed = _count_periods(text)
+        rows.append(
             _notation_row(_COMMA, "なし", text.count(_COMMA), "読点を消す")
         )
-        notation.append(
+        rows.append(
             _notation_row(
                 _PERIOD,
                 "全角の空白",
-                text.count(_PERIOD),
-                "句点を全角の空白にする。行の終わり・空白の前・"
-                "閉じかっこの前の句点は消す",
+                spaces,
+                "文の区切りの句点を全角の空白にする。続いた句点は 1 つの空白",
             )
         )
-    rows.extend(row for row in notation if row["count"] != "0")
+        rows.append(
+            _notation_row(
+                _PERIOD,
+                "なし",
+                removed,
+                "行の終わり・空白の前・閉じかっこの前の句点と、"
+                "続いた句点の 2 つ目からを消す",
+            )
+        )
     return rows
 
 
 def format_explanation(rows: list[dict[str, str]]) -> str:
     """Formats the rows of explain as a tab-separated table.
+
+    The values come from the kanji table, which is itself tab-separated
+    without quoting, so they hold no tab or newline and are written as
+    they are (a csv writer would refuse a value with a quotation mark).
 
     Args:
         rows: The rows returned by explain.
@@ -538,17 +595,11 @@ def format_explanation(rows: list[dict[str, str]]) -> str:
     Returns:
         The table with a header line. Every line ends with a newline.
     """
-    output = io.StringIO()
-    writer = csv.DictWriter(
-        output,
-        fieldnames=EXPLAIN_COLUMNS,
-        delimiter="\t",
-        quoting=csv.QUOTE_NONE,
-        lineterminator="\n",
+    lines = ["\t".join(EXPLAIN_COLUMNS)]
+    lines.extend(
+        "\t".join(row[column] for column in EXPLAIN_COLUMNS) for row in rows
     )
-    writer.writeheader()
-    writer.writerows(rows)
-    return output.getvalue()
+    return "\n".join(lines) + "\n"
 
 
 def _add_notation_options(parser: argparse.ArgumentParser) -> None:

@@ -361,20 +361,17 @@ class ToModernTest(unittest.TestCase):
 
 
 class ExplainTest(unittest.TestCase):
-    def _rows(self, text: str, **options: bool) -> list[dict[str, str]]:
-        return convert_chars.explain(text, **options)
-
     def _by_category(
         self, text: str, category: str, **options: bool
     ) -> list[dict[str, str]]:
         return [
             row
-            for row in self._rows(text, **options)
+            for row in convert_chars.explain(text, **options)
             if row["category"] == category
         ]
 
     def test_every_row_has_the_columns(self) -> None:
-        for row in self._rows("がっこうに学生、弁あり。"):
+        for row in convert_chars.explain("がっこうに学生、弁あり。"):
             with self.subTest(row=row):
                 self.assertEqual(tuple(row), convert_chars.EXPLAIN_COLUMNS)
 
@@ -402,6 +399,13 @@ class ExplainTest(unittest.TestCase):
         rows = self._by_category("軽き処", "kanji")
         self.assertEqual([row["from"] for row in rows], ["軽", "処"])
 
+    def test_kept_and_converted_kanji_follow_the_text_together(self) -> None:
+        rows = convert_chars.explain("弁と学")
+        self.assertEqual(
+            [(row["category"], row["from"]) for row in rows[:3]],
+            [("kept", "弁"), ("kept", "弁"), ("kanji", "学")],
+        )
+
     def test_kanji_outside_the_table_has_no_row(self) -> None:
         self.assertEqual(self._by_category("山川", "kanji"), [])
 
@@ -416,7 +420,9 @@ class ExplainTest(unittest.TestCase):
 
     def test_one_to_many_kanji_is_kept_with_its_note(self) -> None:
         (row,) = self._by_category("舞台", "kept")
-        self.assertEqual((row["from"], row["to"], row["count"]), ("台", "臺", "1"))
+        self.assertEqual(
+            (row["from"], row["to"], row["count"]), ("台", "臺", "1")
+        )
         self.assertTrue(row["note"])
         self.assertTrue(row["evidence_url"])
 
@@ -427,7 +433,7 @@ class ExplainTest(unittest.TestCase):
         self.assertEqual([row["count"] for row in rows], ["2", "2"])
 
     def test_shinjitai_has_no_kanji_or_kept_rows(self) -> None:
-        rows = self._rows("学生の弁", kyujitai=False)
+        rows = convert_chars.explain("学生の弁", kyujitai=False)
         self.assertEqual(
             {row["category"] for row in rows}, {"notation"}
         )
@@ -441,12 +447,23 @@ class ExplainTest(unittest.TestCase):
                 ("濁点・半濁点", "なし", "1"),
                 ("小書きの仮名", "大きい仮名", "1"),
                 ("、", "なし", "1"),
-                ("。", "全角の空白", "1"),
+                ("。", "なし", "1"),
             ],
         )
         for row in rows:
             self.assertEqual(row["evidence"], "SKILL.md 選べる表記")
             self.assertEqual(row["evidence_url"], "")
+
+    def test_periods_are_counted_as_to_bungo_treats_them(self) -> None:
+        text = "あり。。\nなし。いや。」"
+        rows = self._by_category(text, "notation", katakana=False)
+        self.assertEqual(
+            [(row["to"], row["count"]) for row in rows if row["from"] == "。"],
+            [("全角の空白", "1"), ("なし", "3")],
+        )
+        converted = convert_chars.to_bungo(text, katakana=False)
+        self.assertEqual(converted.count("\u3000"), 1)
+        self.assertNotIn("。", converted)
 
     def test_combining_and_spacing_voicing_marks_are_counted(self) -> None:
         text = "か" + COMBINING_VOICED + "か" + SPACING_VOICED + "ぱ"
@@ -459,22 +476,22 @@ class ExplainTest(unittest.TestCase):
 
     def test_each_notation_option_drops_its_rows(self) -> None:
         text = "がっこうにあり、また。"
+        # Without options there are 5 rows: kana, voicing, small kana,
+        # comma and one period row (the period ends the line).
         cases = {
-            "katakana": (False, "ひらがな"),
-            "keep_voicing": (True, "濁点・半濁点"),
-            "keep_small_kana": (True, "小書きの仮名"),
-            "keep_punctuation": (True, "、"),
+            "katakana": (False, "ひらがな", 4),
+            "keep_voicing": (True, "濁点・半濁点", 4),
+            "keep_small_kana": (True, "小書きの仮名", 4),
+            "keep_punctuation": (True, "、", 3),
         }
-        for option, (value, source) in cases.items():
+        for option, (value, source, expected) in cases.items():
             with self.subTest(option=option):
                 rows = self._by_category(text, "notation", **{option: value})
                 self.assertNotIn(source, [row["from"] for row in rows])
-                self.assertEqual(
-                    len(rows), 3 if option == "keep_punctuation" else 4
-                )
+                self.assertEqual(len(rows), expected)
 
     def test_changes_that_do_not_occur_have_no_row(self) -> None:
-        self.assertEqual(self._rows("山川"), [])
+        self.assertEqual(convert_chars.explain("山川"), [])
 
     def test_rows_match_what_to_bungo_changes(self) -> None:
         text = "此の規則に違反したる者は、三年以下の懲役に処す。"
@@ -485,12 +502,18 @@ class ExplainTest(unittest.TestCase):
                 self.assertEqual(converted.count(row["to"]), int(row["count"]))
 
     def test_format_has_a_header_and_one_line_per_row(self) -> None:
-        rows = self._rows("学生、")
+        rows = convert_chars.explain("学生、")
         lines = convert_chars.format_explanation(rows).split("\n")
         self.assertEqual(lines[0], "\t".join(convert_chars.EXPLAIN_COLUMNS))
         self.assertEqual(len(lines), len(rows) + 2)
         self.assertEqual(lines[-1], "")
         self.assertEqual(lines[1].split("\t")[:4], ["kanji", "学", "學", "1"])
+
+    def test_format_keeps_quotation_marks(self) -> None:
+        row = dict.fromkeys(convert_chars.EXPLAIN_COLUMNS, "")
+        row["note"] = 'a"b'
+        lines = convert_chars.format_explanation([row]).split("\n")
+        self.assertEqual(lines[1].split("\t")[4], 'a"b')
 
     def test_format_of_no_rows_is_the_header_only(self) -> None:
         self.assertEqual(
@@ -786,6 +809,23 @@ class MainInProcessTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(out, "カクセイ")
         self.assertIn("cannot remove", err)
+        self.assertTrue(source.exists())
+
+    def test_explain_with_a_broken_table_fails_and_keeps_input(
+        self,
+    ) -> None:
+        source = self._temp_input("がくせい")
+        with mock.patch.object(
+            convert_chars,
+            "load_kanji_table",
+            side_effect=convert_chars.KanjiTableError("broken table"),
+        ):
+            code, out, err = self._run_main(
+                ["explain", "--input", str(source), "--remove-input"]
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(out, "")
+        self.assertIn("broken table", err)
         self.assertTrue(source.exists())
 
     def test_failed_conversion_keeps_the_input(self) -> None:
