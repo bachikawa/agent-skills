@@ -102,6 +102,9 @@ MIN_BOX_OVERLAP = 0.5
 MIN_LINE_SIMILARITY = 0.8
 # Replacements longer than this are not read as misread characters.
 MAX_REPLACE = 2
+# Longer sides of an "other" row are written as their length (<12>), so
+# that the table does not carry runs of the page text.
+MAX_OTHER = 4
 GETA = "〓"
 # The ground truth writes ▣ where no character was entered (the dataset
 # README does not say why; the OCR often reads a plain kanji there).
@@ -405,7 +408,14 @@ def read_annotation(data: bytes) -> list[Line]:
     for item in root.iter("object"):
         if item.findtext("name") != "text":
             continue
-        text = item.findtext("attributes/attribute/value") or ""
+        text = next(
+            (
+                attribute.findtext("value") or ""
+                for attribute in item.findall("attributes/attribute")
+                if attribute.findtext("name") == "contents"
+            ),
+            "",
+        )
         box = item.find("bndbox")
         if not text or box is None:
             continue
@@ -518,29 +528,41 @@ def neighbor_pages(
 
 
 def read_pages_file(path: Path = PAGES_FILE) -> dict[tuple[str, int], dict]:
-    """Reads ocr_pages.tsv, keyed by (PID, frame)."""
+    """Reads ocr_pages.tsv, keyed by (PID, frame).
+
+    Raises:
+        OcrDataError: The file has other columns or an unknown role.
+    """
     if not path.exists():
         return {}
     with open(path, encoding="utf-8", newline="") as source:
-        rows = csv.DictReader(source, delimiter="\t")
+        rows = csv.DictReader(source, delimiter="\t", quoting=csv.QUOTE_NONE)
         if rows.fieldnames != PAGE_COLUMNS:
             raise OcrDataError(f"unexpected columns in {path}")
-        return {(row["pid"], int(row["frame"])): row for row in rows}
+        result = {}
+        for row in rows:
+            if row["role"] not in ROLES:
+                raise OcrDataError(f"unknown role in {path}: {row['role']!r}")
+            result[(row["pid"], int(row["frame"]))] = row
+        return result
 
 
 def write_tsv(path: Path, columns: list[str], rows: Iterable[dict]) -> None:
-    """Writes a tab-separated file with LF line endings."""
-    with open(path, "w", encoding="utf-8", newline="") as target:
-        writer = csv.DictWriter(
-            target,
-            columns,
-            delimiter="\t",
-            lineterminator="\n",
-            quoting=csv.QUOTE_NONE,
-            escapechar="\\",
-        )
-        writer.writeheader()
-        writer.writerows(rows)
+    """Writes a tab-separated file with LF line endings.
+
+    Values are written as they are, like the other tables of the tools,
+    so that a reader with csv.QUOTE_NONE gets them back unchanged.
+
+    Raises:
+        OcrDataError: A value holds a tab or a line break.
+    """
+    lines = ["\t".join(columns)]
+    for row in rows:
+        values = [str(row[column]) for column in columns]
+        if any(char in value for value in values for char in "\t\r\n"):
+            raise OcrDataError(f"a tab or line break in a row of {path.name}")
+        lines.append("\t".join(values))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="")
 
 
 def fetch_pages(
@@ -729,27 +751,56 @@ def line_confusions(expected: str, found: str) -> list[Confusion]:
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == "equal":
             continue
-        before = char_kind(expected[i1 - 1] if i1 > 0 else "")
-        after = char_kind(expected[i2] if i2 < len(expected) else "")
+        before = _kind_at(expected, i1 - 1)
+        after = _kind_at(expected, i2)
         if tag == "replace" and i2 - i1 == j2 - j1 <= MAX_REPLACE:
-            for old, new in zip(expected[i1:i2], found[j1:j2]):
+            for offset, (old, new) in enumerate(
+                zip(expected[i1:i2], found[j1:j2])
+            ):
                 result.append(
-                    Confusion(_substitution_kind(old, new), old, new, before, after)
+                    Confusion(
+                        _substitution_kind(old, new),
+                        old,
+                        new,
+                        _kind_at(expected, i1 + offset - 1),
+                        _kind_at(expected, i1 + offset + 1),
+                    )
                 )
         elif tag == "delete":
-            for old in expected[i1:i2]:
+            for index in range(i1, i2):
+                old = expected[index]
                 kind = "placeholder" if old == PLACEHOLDER else "deletion"
-                result.append(Confusion(kind, old, "", before, after))
+                result.append(
+                    Confusion(
+                        kind,
+                        old,
+                        "",
+                        _kind_at(expected, index - 1),
+                        _kind_at(expected, index + 1),
+                    )
+                )
         elif tag == "insert":
             for new in found[j1:j2]:
                 result.append(Confusion("insertion", "", new, before, after))
         else:
             result.append(
                 Confusion(
-                    "other", expected[i1:i2], found[j1:j2], before, after
+                    "other",
+                    _shortened(expected[i1:i2]),
+                    _shortened(found[j1:j2]),
+                    before,
+                    after,
                 )
             )
     return result
+
+
+def _kind_at(text: str, index: int) -> str:
+    return char_kind(text[index] if 0 <= index < len(text) else "")
+
+
+def _shortened(text: str) -> str:
+    return text if len(text) <= MAX_OTHER else f"<{len(text)}>"
 
 
 def _substitution_kind(expected: str, found: str) -> str:

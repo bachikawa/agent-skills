@@ -234,6 +234,17 @@ class ReadTest(unittest.TestCase):
         )
         self.assertEqual(lines, [Line("其ノ", (2.0, 4.0, 6.0, 8.0))])
 
+    def test_annotation_text_comes_from_the_contents_attribute(self) -> None:
+        data = (
+            "<annotation><object><name>text</name><attributes>"
+            "<attribute><name>other</name><value>x</value></attribute>"
+            "<attribute><name>contents</name><value>之ヲ罰ス</value></attribute>"
+            "</attributes><bndbox><xmin>1</xmin><ymin>2</ymin>"
+            "<xmax>3</xmax><ymax>4</ymax></bndbox></object></annotation>"
+        ).encode("utf-8")
+        (line,) = ocr_confusions.read_annotation(data)
+        self.assertEqual(line.text, "之ヲ罰ス")
+
     def test_ocr_page_lines(self) -> None:
         lines = ocr_confusions.read_ocr_page(page_json(("其ノ", (2, 4, 6, 8))))
         self.assertEqual(lines, [Line("其ノ", (2.0, 4.0, 6.0, 8.0))])
@@ -396,6 +407,29 @@ class LineConfusionsTest(unittest.TestCase):
             [("substitution", "又", "叉")],
         )
 
+    def test_long_other_sides_are_written_as_lengths(self) -> None:
+        line = "此ノ規則ニ違反シタル者ハ三年以下ノ懲役ニ處シ又ハ罰金ニ處ス"
+        (confusion,) = ocr_confusions.line_confusions(
+            line, line.replace("懲役ニ處シ", "微後二虜ン丿")
+        )
+        self.assertEqual(confusion.kind, "other")
+        self.assertEqual(confusion.expected, "<5>")
+        self.assertEqual(confusion.found, "<6>")
+
+    def test_each_character_has_its_own_context(self) -> None:
+        line = "此ノ規則ニハ違反スルコトヲ得ス"
+        (first, second) = ocr_confusions.line_confusions(
+            line, line.replace("ニハ", "二八")
+        )
+        self.assertEqual(
+            (first.expected, first.before_kind, first.after_kind),
+            ("ニ", "kanji", "katakana"),
+        )
+        self.assertEqual(
+            (second.expected, second.before_kind, second.after_kind),
+            ("ハ", "katakana", "kanji"),
+        )
+
     def test_dissimilar_lines_give_nothing(self) -> None:
         self.assertEqual(ocr_confusions.line_confusions("此ノ規則", "全ク別ノ行"), [])
 
@@ -467,7 +501,50 @@ class PagesFileTest(unittest.TestCase):
                 ocr_confusions.read_pages_file(path)
 
     def test_missing_file_is_empty(self) -> None:
-        self.assertEqual(ocr_confusions.read_pages_file(Path(tempfile.gettempdir(), "no-such-file.tsv")), {})
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "no-such-file.tsv")
+            self.assertEqual(ocr_confusions.read_pages_file(path), {})
+
+    def test_unknown_role_stops(self) -> None:
+        row = {
+            "pid": "1",
+            "frame": "2",
+            "role": "other",
+            "folder": "f",
+            "fetched": "d",
+            "sha1": "",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "pages.tsv")
+            ocr_confusions.write_tsv(path, ocr_confusions.PAGE_COLUMNS, [row])
+            with self.assertRaisesRegex(OcrDataError, "role"):
+                ocr_confusions.read_pages_file(path)
+
+
+class WriteTsvTest(unittest.TestCase):
+    def test_quotes_and_backslashes_are_written_as_they_are(self) -> None:
+        import csv
+
+        rows = [{"a": 'ヒ', "b": '"'}, {"a": "\\", "b": "x"}]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "t.tsv")
+            ocr_confusions.write_tsv(path, ["a", "b"], rows)
+            with open(path, encoding="utf-8", newline="") as source:
+                read = list(
+                    csv.DictReader(
+                        source, delimiter="\t", quoting=csv.QUOTE_NONE
+                    )
+                )
+        self.assertEqual(read, rows)
+
+    def test_tabs_and_line_breaks_stop(self) -> None:
+        for value in ("a\tb", "a\nb", "a\rb"):
+            with self.subTest(value=value):
+                with tempfile.TemporaryDirectory() as directory:
+                    with self.assertRaises(OcrDataError):
+                        ocr_confusions.write_tsv(
+                            Path(directory, "t.tsv"), ["a"], [{"a": value}]
+                        )
 
 
 if __name__ == "__main__":
