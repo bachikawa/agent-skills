@@ -10,9 +10,19 @@ Half-width katakana and punctuation other than the ideographic comma
 and period (such as the full-width comma and full stop) are out of
 scope and left as they are.
 
+The ligature ヿ (koto) and the kana iteration marks ヽ and ゝ of early
+and mid Meiji documents are written only when asked for
+(--koto-ligature, --iteration-marks). to-modern turns them back into
+kana with --expand-marks.
+
 Usage:
     python convert_chars.py to-bungo [options] --input FILE [--remove-input]
     python convert_chars.py to-modern [options] --input FILE [--remove-input]
+    python convert_chars.py explain [options] --input FILE [--remove-input]
+
+explain takes the same text and options as to-bungo and writes a
+tab-separated table of what to-bungo changes, instead of the converted
+text.
 
 Without --input, the text is read from standard input. With
 --remove-input, the input file is deleted after a successful
@@ -46,17 +56,27 @@ _HIRAGANA_END = 0x3096
 _HIRAGANA_BLOCK_END = 0x309F
 _KATAKANA_BLOCK_START = 0x30A0
 _KATAKANA_BLOCK_END = 0x30FF
+_KATAKANA_START = 0x30A1
+_KATAKANA_END = 0x30FA
 _KANA_OFFSET = 0x60
 
 # Small ヵ and ヶ are used as counters and in place names (三ヶ月,
 # 霞ヶ関), not read as kana, so they stay katakana. The full-size ケ
 # of pre-war text (三ケ月) cannot be told apart from the kana ケ by a
-# table, so the agent reads it.
-_KATAKANA_KEPT = {"ヵ", "ヶ"}
+# table, so the agent reads it. check_ocr.py uses this set too.
+KATAKANA_KEPT = {"ヵ", "ヶ"}
 
 # Iteration marks are converted together with the kana they repeat.
 _HIRAGANA_ITERATION = {"ゝ": "ヽ", "ゞ": "ヾ"}
 _KATAKANA_ITERATION = {v: k for k, v in _HIRAGANA_ITERATION.items()}
+
+_KATAKANA_ITERATION_MARK = "ヽ"
+_HIRAGANA_ITERATION_MARK = "ゝ"
+_KOTO = "コト"
+_KOTO_LIGATURE = "ヿ"
+_TOMO_LIGATURE = "\U0002a708"
+_VERTICAL_ITERATION_MARK = "\u303b"
+_KANJI_ITERATION_MARK = "々"
 
 _SMALL_TO_LARGE = str.maketrans(
     "ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶ",
@@ -84,10 +104,31 @@ _PERIODS_BEFORE_BREAK = re.compile(
     _PERIOD + "+(?=[" + re.escape(_CLOSING_BRACKETS) + r"]|\s|$)"
 )
 _PERIODS = re.compile(_PERIOD + "+")
+# A voicing mark after コト makes it ゴト or コド, which is not koto.
+_KOTO_PATTERN = re.compile(
+    _KOTO + "(?![" + "".join(sorted(_VOICING_MARKS)) + "])"
+)
+_UNVOICED_MARKS = (
+    _KATAKANA_ITERATION_MARK,
+    _HIRAGANA_ITERATION_MARK,
+    _VERTICAL_ITERATION_MARK,
+)
+_VOICED_MARKS = ("ヾ", "ゞ")
+_ITERATION_MARKS = _UNVOICED_MARKS + _VOICED_MARKS
+_ITERATION_RUN = re.compile("[" + "".join(_ITERATION_MARKS) + "]+")
 
 
-def _is_kana(char: str) -> bool:
-    """Returns whether the character is in the hiragana or katakana block."""
+def is_kana(char: str) -> bool:
+    """Returns whether the character is in the hiragana or katakana block.
+
+    check_ocr.py uses this too.
+
+    Args:
+        char: One character.
+
+    Returns:
+        True for a character of the hiragana or katakana block.
+    """
     code = ord(char)
     return (
         _HIRAGANA_START <= code <= _HIRAGANA_BLOCK_END
@@ -105,6 +146,19 @@ _TABLE_COLUMNS = (
     "evidence",
     "evidence_url",
 )
+
+
+def _is_plain_kana(char: str) -> bool:
+    """Returns whether the character is a kana letter.
+
+    Iteration marks, the long vowel mark, the middle dot and ligatures
+    are not kana letters.
+    """
+    code = ord(char)
+    return (
+        _HIRAGANA_START <= code <= _HIRAGANA_END
+        or _KATAKANA_START <= code <= _KATAKANA_END
+    )
 
 
 class KanjiTableError(Exception):
@@ -236,7 +290,7 @@ def to_hiragana(text: str) -> str:
     result = []
     for char in text:
         code = ord(char) - _KANA_OFFSET
-        if char in _KATAKANA_KEPT:
+        if char in KATAKANA_KEPT:
             result.append(char)
         elif _HIRAGANA_START <= code <= _HIRAGANA_END:
             result.append(chr(code))
@@ -262,7 +316,7 @@ def strip_voicing_marks(text: str) -> str:
     for char in text:
         if char in _VOICING_MARKS:
             continue
-        if _is_kana(char):
+        if is_kana(char):
             # Decompose kana only: normalizing the whole text would also
             # turn CJK compatibility ideographs (old forms such as the
             # U+FA4C form of 社) into their modern unified forms.
@@ -284,6 +338,127 @@ def enlarge_small_kana(text: str) -> str:
         The text with every small kana replaced by its full-size form.
     """
     return text.translate(_SMALL_TO_LARGE)
+
+
+def use_koto_ligature(text: str) -> str:
+    """Writes the katakana コト as the ligature ヿ.
+
+    Early Meiji statutes wrote the noun koto after a verb this way
+    (入ルヿヲ禁ス). Every コト is changed, so words that hold koto
+    (such as 殊ニ or 悉ク) must be written in kanji. コト followed by a
+    voicing mark (as in コド) is left as it is. Run this before the
+    voicing marks are stripped, so that ゴト does not become ヿ.
+
+    Args:
+        text: Text in katakana.
+
+    Returns:
+        The text with every コト replaced by ヿ.
+    """
+    return _KOTO_PATTERN.sub(_KOTO_LIGATURE, text)
+
+
+def _iteration_mark_positions(text: str) -> list[int]:
+    """Finds the kana that add_iteration_marks replaces.
+
+    A kana is replaced when the character just before it is the same
+    kana and was not replaced itself, so a run is marked in pairs from
+    the left (ハハハ becomes ハヽハ). Kana with a voicing mark (written
+    precomposed or followed by a combining or spacing mark) are left
+    out, because pre-war documents marked them with ヾ or ゞ, which the
+    corpus of this skill does not attest. Small kana (kept with
+    --keep-small-kana) are left out too, since pre-war printing had
+    none; so are ヵ and ヶ, which are counters.
+    """
+    positions: list[int] = []
+    for index in range(1, len(text)):
+        char = text[index]
+        following = text[index + 1] if index + 1 < len(text) else ""
+        if (
+            char == text[index - 1]
+            and _is_plain_kana(char)
+            and ord(char) not in _SMALL_TO_LARGE
+            and unicodedata.normalize("NFD", char) == char
+            and following not in _VOICING_MARKS
+            and not (positions and positions[-1] == index - 1)
+        ):
+            positions.append(index)
+    return positions
+
+
+def _iteration_mark(char: str) -> str:
+    if ord(char) <= _HIRAGANA_END:
+        return _HIRAGANA_ITERATION_MARK
+    return _KATAKANA_ITERATION_MARK
+
+
+def add_iteration_marks(text: str) -> str:
+    """Writes the second of two identical kana as an iteration mark.
+
+    Early and mid Meiji documents wrote 後ルル as 後ルヽ and ものの as
+    ものゝ. Only kana right next to each other are marked, so run this
+    before the punctuation is removed: kana that come together only
+    after a comma or period is removed stay as they are. Katakana take
+    ヽ and hiragana take ゝ.
+
+    Args:
+        text: The text to convert.
+
+    Returns:
+        The text with iteration marks.
+    """
+    chars = list(text)
+    for index in _iteration_mark_positions(text):
+        chars[index] = _iteration_mark(chars[index])
+    return "".join(chars)
+
+
+def expand_marks(text: str) -> str:
+    """Writes iteration marks and kana ligatures as the kana they stand for.
+
+    ヿ becomes こと and 𪜈 becomes とも, in hiragana. An iteration mark
+    (ヽ, ゝ or 〻) right after a kana becomes that kana without its
+    voicing mark, and a voiced mark (ヾ or ゞ) becomes the kana with a
+    voiced mark; a voiced mark after a kana that cannot be voiced is
+    kept. A kana written with a combining or spacing voicing mark
+    counts as the kana. 〻 right after a kanji becomes 々. Every other
+    mark is kept: ヽ, ゝ, ヾ and ゞ after a kanji, a mark after
+    anything else, and a run of two or more marks, which is often the
+    copy of emphasis dots. The voicing that pre-war notation leaves out
+    is not restored (許サヽル becomes 許ささる).
+
+    Args:
+        text: Text whose kana are already converted to hiragana.
+
+    Returns:
+        The text with marks and ligatures expanded.
+    """
+    text = text.replace(_KOTO_LIGATURE, "こと").replace(_TOMO_LIGATURE, "とも")
+
+    def expand(match: re.Match[str]) -> str:
+        mark = match.group()
+        start = match.start()
+        if len(mark) != 1 or start == 0:
+            return mark
+        before = text[start - 1]
+        if before in _VOICING_MARKS and start >= 2:
+            before = text[start - 2]
+        if _is_plain_kana(before):
+            base = unicodedata.normalize("NFD", before)[0]
+            if mark in _UNVOICED_MARKS:
+                return base
+            voiced = unicodedata.normalize("NFC", base + _COMBINING_VOICED)
+            return voiced if len(voiced) == 1 else mark
+        if (
+            mark == _VERTICAL_ITERATION_MARK
+            and text[start - 1] == before
+            and unicodedata.category(before) == "Lo"
+            and not is_kana(before)
+        ):
+            return _KANJI_ITERATION_MARK
+        return mark
+
+    return _ITERATION_RUN.sub(expand, text)
 
 
 def remove_punctuation(text: str) -> str:
@@ -317,12 +492,16 @@ def to_bungo(
     keep_voicing: bool = False,
     keep_small_kana: bool = False,
     keep_punctuation: bool = False,
+    koto_ligature: bool = False,
+    iteration_marks: bool = False,
 ) -> str:
     """Applies the mechanical conversions toward pre-war notation.
 
     The defaults follow the notation of pre-war statutes: old kanji
     forms, katakana, no voicing marks, full-size kana and no
-    punctuation.
+    punctuation. The steps run in this order: old kanji forms,
+    katakana, the koto ligature, voicing marks, small kana, iteration
+    marks and punctuation.
 
     Args:
         text: Text whose grammar and kana spelling are already in the
@@ -333,24 +512,67 @@ def to_bungo(
         keep_voicing: Whether to keep voiced and semi-voiced marks.
         keep_small_kana: Whether to keep small kana small.
         keep_punctuation: Whether to keep 、 and 。.
+        koto_ligature: Whether to write コト as ヿ.
+        iteration_marks: Whether to write the second of two identical
+            kana as ヽ or ゝ.
 
     Returns:
         The converted text.
+
+    Raises:
+        ValueError: koto_ligature is set without katakana, since ヿ is
+            a katakana ligature.
     """
-    if kyujitai:
-        text = to_kyujitai(text, compat=compat)
-    if katakana:
-        text = to_katakana(text)
-    if not keep_voicing:
-        text = strip_voicing_marks(text)
-    if not keep_small_kana:
-        text = enlarge_small_kana(text)
+    text = _before_iteration(
+        text,
+        kyujitai=kyujitai,
+        compat=compat,
+        katakana=katakana,
+        keep_voicing=keep_voicing,
+        keep_small_kana=keep_small_kana,
+        koto_ligature=koto_ligature,
+    )
+    if iteration_marks:
+        text = add_iteration_marks(text)
     if not keep_punctuation:
         text = remove_punctuation(text)
     return text
 
 
-def to_modern(text: str, *, shinjitai: bool = True) -> str:
+def _check_koto_ligature(*, koto_ligature: bool, katakana: bool) -> None:
+    """Raises ValueError when ヿ is asked for without katakana."""
+    if koto_ligature and not katakana:
+        raise ValueError("the koto ligature needs katakana")
+
+
+def _before_iteration(
+    text: str,
+    *,
+    kyujitai: bool,
+    compat: bool,
+    katakana: bool,
+    keep_voicing: bool,
+    keep_small_kana: bool,
+    koto_ligature: bool,
+) -> str:
+    """Runs the steps of to_bungo that come before the iteration marks."""
+    _check_koto_ligature(koto_ligature=koto_ligature, katakana=katakana)
+    if kyujitai:
+        text = to_kyujitai(text, compat=compat)
+    if katakana:
+        text = to_katakana(text)
+    if koto_ligature:
+        text = use_koto_ligature(text)
+    if not keep_voicing:
+        text = strip_voicing_marks(text)
+    if not keep_small_kana:
+        text = enlarge_small_kana(text)
+    return text
+
+
+def to_modern(
+    text: str, *, shinjitai: bool = True, expand: bool = False
+) -> str:
     """Applies the mechanical conversions toward modern notation.
 
     Old kanji forms in the table and the kana script are changed.
@@ -360,13 +582,373 @@ def to_modern(text: str, *, shinjitai: bool = True) -> str:
     Args:
         text: Text in pre-war notation.
         shinjitai: Whether to convert old kanji forms to modern ones.
+        expand: Whether to write iteration marks and kana ligatures as
+            kana (see expand_marks).
 
     Returns:
         The converted text.
     """
     if shinjitai:
         text = to_shinjitai(text)
-    return to_hiragana(text)
+    text = to_hiragana(text)
+    return expand_marks(text) if expand else text
+
+
+EXPLAIN_COLUMNS = (
+    "category",
+    "from",
+    "to",
+    "count",
+    "note",
+    "evidence",
+    "evidence_url",
+)
+# The notes are read by Japanese users, like the notes of the kanji
+# table, so they are written in Japanese.
+_NOTATION_EVIDENCE = "SKILL.md 選べる表記"
+# The ligature and iteration marks are written only as the corpus of
+# the skill attests them; these are the earliest documents found there.
+_WIKISOURCE_URL = "https://ja.wikisource.org/w/index.php?oldid={oldid}"
+_KOTO_EVIDENCE = ("太政官規則（1869）", _WIKISOURCE_URL.format(oldid=143485))
+_ITERATION_EVIDENCE = {
+    _KATAKANA_ITERATION_MARK: (
+        "右院規則（1871）",
+        _WIKISOURCE_URL.format(oldid=143507),
+    ),
+    _HIRAGANA_ITERATION_MARK: (
+        "明治二十四年富山縣告諭第三號（1891）",
+        _WIKISOURCE_URL.format(oldid=115414),
+    ),
+}
+_COMPAT_NOTE = "互換漢字（{codepoint}）。ソフトによっては新字体に戻る"
+
+
+def _notation_row(
+    source: str,
+    target: str,
+    count: int,
+    note: str,
+    *,
+    evidence: str = _NOTATION_EVIDENCE,
+    evidence_url: str = "",
+) -> dict[str, str]:
+    return {
+        "category": "notation",
+        "from": source,
+        "to": target,
+        "count": str(count),
+        "note": note,
+        "evidence": evidence,
+        "evidence_url": evidence_url,
+    }
+
+
+def _count_voicing(text: str) -> int:
+    """Counts the kana and marks that strip_voicing_marks changes."""
+    return sum(
+        1
+        for char in text
+        if char in _VOICING_MARKS
+        or (is_kana(char) and unicodedata.normalize("NFD", char)[0] != char)
+    )
+
+
+def explain(
+    text: str,
+    *,
+    kyujitai: bool = True,
+    compat: bool = True,
+    katakana: bool = True,
+    keep_voicing: bool = False,
+    keep_small_kana: bool = False,
+    keep_punctuation: bool = False,
+    koto_ligature: bool = False,
+    iteration_marks: bool = False,
+) -> list[dict[str, str]]:
+    """Lists what to_bungo changes in the text, with the evidence.
+
+    The arguments are those of to_bungo. A conversion that an option
+    turns off has no row, and neither has a change that does not occur
+    in the text.
+
+    Args:
+        text: The text that would be passed to to_bungo.
+        kyujitai: Whether kanji are converted to their old forms.
+        compat: Whether old forms may use CJK compatibility ideographs.
+        katakana: Whether kana are written in katakana.
+        keep_voicing: Whether voiced and semi-voiced marks are kept.
+        keep_small_kana: Whether small kana are kept small.
+        keep_punctuation: Whether 、 and 。 are kept.
+        koto_ligature: Whether コト is written as ヿ.
+        iteration_marks: Whether the second of two identical kana is
+            written as an iteration mark.
+
+    Returns:
+        One dict per row, keyed by EXPLAIN_COLUMNS. The category is
+        "kanji" for a kanji converted to its old form, "kept" for a
+        kanji left as it is because its old form depends on the word
+        (one row per old form in the table), and "notation" for kana,
+        voicing marks, small kana, punctuation, the koto ligature and
+        iteration marks (one row per mark written). Kanji rows come in
+        the order the kanji first appear in the text.
+
+    Raises:
+        KanjiTableError: The kanji table cannot be read.
+        ValueError: koto_ligature is set without katakana.
+    """
+    rows = _kanji_rows(text, compat=compat) if kyujitai else []
+    notation = _notation_rows(
+        text,
+        katakana=katakana,
+        keep_voicing=keep_voicing,
+        keep_small_kana=keep_small_kana,
+        keep_punctuation=keep_punctuation,
+    )
+    notation.extend(
+        _mark_rows(
+            text,
+            katakana=katakana,
+            keep_voicing=keep_voicing,
+            keep_small_kana=keep_small_kana,
+            koto_ligature=koto_ligature,
+            iteration_marks=iteration_marks,
+        )
+    )
+    rows.extend(row for row in notation if row["count"] != "0")
+    return rows
+
+
+def _mark_rows(
+    text: str,
+    *,
+    katakana: bool,
+    keep_voicing: bool,
+    keep_small_kana: bool,
+    koto_ligature: bool,
+    iteration_marks: bool,
+) -> list[dict[str, str]]:
+    """Lists the koto ligature and iteration marks that to_bungo writes."""
+    _check_koto_ligature(koto_ligature=koto_ligature, katakana=katakana)
+    rows = []
+    if koto_ligature:
+        source = to_katakana(text)
+        evidence, url = _KOTO_EVIDENCE
+        rows.append(
+            _notation_row(
+                _KOTO,
+                _KOTO_LIGATURE,
+                len(_KOTO_PATTERN.findall(source)),
+                "コトを合字で書く",
+                evidence=evidence,
+                evidence_url=url,
+            )
+        )
+    if iteration_marks:
+        # Kanji do not change which kana are marked, so the old forms
+        # are not needed here.
+        ready = _before_iteration(
+            text,
+            kyujitai=False,
+            compat=True,
+            katakana=katakana,
+            keep_voicing=keep_voicing,
+            keep_small_kana=keep_small_kana,
+            koto_ligature=koto_ligature,
+        )
+        marks = [
+            _iteration_mark(ready[index])
+            for index in _iteration_mark_positions(ready)
+        ]
+        for mark in (_KATAKANA_ITERATION_MARK, _HIRAGANA_ITERATION_MARK):
+            evidence, url = _ITERATION_EVIDENCE[mark]
+            rows.append(
+                _notation_row(
+                    "同じ仮名の 2 つ目",
+                    mark,
+                    marks.count(mark),
+                    "すぐ前と同じ仮名を踊り字で書く。"
+                    "濁点の付いた仮名と、句読点・空白をはさむ所は書かない",
+                    evidence=evidence,
+                    evidence_url=url,
+                )
+            )
+    return rows
+
+
+def _kanji_rows(text: str, *, compat: bool) -> list[dict[str, str]]:
+    """Lists the kanji of the table found in the text, as explain does."""
+    found = [
+        (text.index(row["modern"]), row)
+        for row in load_kanji_table()
+        if row["modern"] in text
+    ]
+    rows = []
+    # sorted() is stable, so the old forms of one kanji keep the order
+    # of the table.
+    for _, row in sorted(found, key=lambda item: item[0]):
+        is_compat = row["kind"] == _COMPAT_KIND
+        if row["one_to_many"] == "1":
+            category, note = "kept", row["note"]
+        elif is_compat and not compat:
+            continue
+        else:
+            category = "kanji"
+            note = (
+                _COMPAT_NOTE.format(codepoint=row["old_codepoint"])
+                if is_compat
+                else ""
+            )
+        rows.append(
+            {
+                "category": category,
+                "from": row["modern"],
+                "to": row["old"],
+                "count": str(text.count(row["modern"])),
+                "note": note,
+                "evidence": row["evidence"],
+                "evidence_url": row["evidence_url"],
+            }
+        )
+    return rows
+
+
+def _count_periods(text: str) -> tuple[int, int]:
+    """Counts the periods remove_punctuation turns into spaces and drops.
+
+    Returns:
+        The number of spaces it writes and the number of periods it
+        removes without a space. A run of periods becomes one space, so
+        the other periods of the run count as removed.
+    """
+    spaces = removed = 0
+    for line in text.split("\n"):
+        line = line.replace(_COMMA, "")
+        removed += sum(
+            len(match.group())
+            for match in _PERIODS_BEFORE_BREAK.finditer(line)
+        )
+        for match in _PERIODS.finditer(_PERIODS_BEFORE_BREAK.sub("", line)):
+            spaces += 1
+            removed += len(match.group()) - 1
+    return spaces, removed
+
+
+def _notation_rows(
+    text: str,
+    *,
+    katakana: bool,
+    keep_voicing: bool,
+    keep_small_kana: bool,
+    keep_punctuation: bool,
+) -> list[dict[str, str]]:
+    """Lists the notation changes of to_bungo, including those not made."""
+    rows = []
+    if katakana:
+        changed = sum(
+            1 for old, new in zip(text, to_katakana(text)) if old != new
+        )
+        rows.append(
+            _notation_row(
+                "ひらがな", "カタカナ", changed, "仮名をカタカナで書く"
+            )
+        )
+    if not keep_voicing:
+        rows.append(
+            _notation_row(
+                "濁点・半濁点",
+                "なし",
+                _count_voicing(text),
+                "濁点・半濁点を取る",
+            )
+        )
+    if not keep_small_kana:
+        small = sum(1 for char in text if ord(char) in _SMALL_TO_LARGE)
+        rows.append(
+            _notation_row(
+                "小書きの仮名",
+                "大きい仮名",
+                small,
+                "小書きの仮名を大きく書く",
+            )
+        )
+    if not keep_punctuation:
+        spaces, removed = _count_periods(text)
+        rows.append(
+            _notation_row(_COMMA, "なし", text.count(_COMMA), "読点を消す")
+        )
+        rows.append(
+            _notation_row(
+                _PERIOD,
+                "全角の空白",
+                spaces,
+                "文の区切りの句点を全角の空白にする。続いた句点は 1 つの空白",
+            )
+        )
+        rows.append(
+            _notation_row(
+                _PERIOD,
+                "なし",
+                removed,
+                "行の終わり・空白の前・閉じかっこの前の句点と、"
+                "続いた句点の 2 つ目からを消す",
+            )
+        )
+    return rows
+
+
+def format_explanation(rows: list[dict[str, str]]) -> str:
+    """Formats the rows of explain as a tab-separated table.
+
+    The values come from the kanji table, which is itself tab-separated
+    without quoting, so they hold no tab or newline and are written as
+    they are (a csv writer would refuse a value with a quotation mark).
+
+    Args:
+        rows: The rows returned by explain.
+
+    Returns:
+        The table with a header line. Every line ends with a newline.
+    """
+    lines = ["\t".join(EXPLAIN_COLUMNS)]
+    lines.extend(
+        "\t".join(row[column] for column in EXPLAIN_COLUMNS) for row in rows
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _add_notation_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--shinjitai", action="store_true", help="keep modern kanji forms"
+    )
+    parser.add_argument(
+        "--no-compat",
+        action="store_true",
+        help="do not use CJK compatibility ideographs for old forms",
+    )
+    parser.add_argument(
+        "--hiragana", action="store_true", help="keep kana in hiragana"
+    )
+    parser.add_argument(
+        "--keep-voicing", action="store_true", help="keep voicing marks"
+    )
+    parser.add_argument(
+        "--keep-small-kana", action="store_true", help="keep small kana"
+    )
+    parser.add_argument(
+        "--keep-punctuation",
+        action="store_true",
+        help="keep the Japanese comma and period",
+    )
+    parser.add_argument(
+        "--koto-ligature",
+        action="store_true",
+        help="write コト as the ligature ヿ (katakana only)",
+    )
+    parser.add_argument(
+        "--iteration-marks",
+        action="store_true",
+        help="write the second of two identical kana as ヽ or ゝ",
+    )
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -378,28 +960,11 @@ def _build_parser() -> argparse.ArgumentParser:
     bungo = sub.add_parser(
         "to-bungo", help="convert toward pre-war notation"
     )
-    bungo.add_argument(
-        "--shinjitai", action="store_true", help="keep modern kanji forms"
+    _add_notation_options(bungo)
+    explanation = sub.add_parser(
+        "explain", help="list what to-bungo changes, with the evidence"
     )
-    bungo.add_argument(
-        "--no-compat",
-        action="store_true",
-        help="do not use CJK compatibility ideographs for old forms",
-    )
-    bungo.add_argument(
-        "--hiragana", action="store_true", help="keep kana in hiragana"
-    )
-    bungo.add_argument(
-        "--keep-voicing", action="store_true", help="keep voicing marks"
-    )
-    bungo.add_argument(
-        "--keep-small-kana", action="store_true", help="keep small kana"
-    )
-    bungo.add_argument(
-        "--keep-punctuation",
-        action="store_true",
-        help="keep the Japanese comma and period",
-    )
+    _add_notation_options(explanation)
 
     modern = sub.add_parser(
         "to-modern", help="convert old kanji forms and katakana"
@@ -407,7 +972,12 @@ def _build_parser() -> argparse.ArgumentParser:
     modern.add_argument(
         "--keep-kyujitai", action="store_true", help="keep old kanji forms"
     )
-    for subparser in (bungo, modern):
+    modern.add_argument(
+        "--expand-marks",
+        action="store_true",
+        help="write iteration marks and kana ligatures as kana",
+    )
+    for subparser in (bungo, modern, explanation):
         subparser.add_argument(
             "--input",
             metavar="FILE",
@@ -422,7 +992,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Reads text, converts it and writes it to standard output.
+    """Reads text, converts or explains it and writes to standard output.
 
     Args:
         argv: Command-line arguments without the program name. Uses
@@ -440,6 +1010,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.remove_input and args.input is None:
         parser.error("--remove-input requires --input")
+    if getattr(args, "koto_ligature", False) and args.hiragana:
+        parser.error("--koto-ligature cannot be used with --hiragana")
     if args.input is not None:
         try:
             # utf-8-sig drops the BOM that some Windows editors add.
@@ -452,25 +1024,34 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdin.reconfigure(encoding="utf-8-sig")
         text = sys.stdin.read()
     try:
-        if args.direction == "to-bungo":
-            result = to_bungo(
-                text,
-                kyujitai=not args.shinjitai,
-                compat=not args.no_compat,
-                katakana=not args.hiragana,
-                keep_voicing=args.keep_voicing,
-                keep_small_kana=args.keep_small_kana,
-                keep_punctuation=args.keep_punctuation,
-            )
+        if args.direction in ("to-bungo", "explain"):
+            options = {
+                "kyujitai": not args.shinjitai,
+                "compat": not args.no_compat,
+                "katakana": not args.hiragana,
+                "keep_voicing": args.keep_voicing,
+                "keep_small_kana": args.keep_small_kana,
+                "keep_punctuation": args.keep_punctuation,
+                "koto_ligature": args.koto_ligature,
+                "iteration_marks": args.iteration_marks,
+            }
+            if args.direction == "to-bungo":
+                result = to_bungo(text, **options)
+            else:
+                result = format_explanation(explain(text, **options))
         else:
-            result = to_modern(text, shinjitai=not args.keep_kyujitai)
+            result = to_modern(
+                text,
+                shinjitai=not args.keep_kyujitai,
+                expand=args.expand_marks,
+            )
     except KanjiTableError as error:
         print(error, file=sys.stderr)
         return 1
     # Remove only after a successful conversion, so that a failed run
     # leaves the input in place for another try.
     if args.remove_input:
-        _remove_input(args.input)
+        remove_input(args.input)
     sys.stdout.write(result)
     return 0
 
@@ -500,8 +1081,15 @@ def removal_problem(path: str, temp_dir: str) -> str | None:
     return None
 
 
-def _remove_input(path: str) -> None:
-    """Removes the input file, or warns on stderr why it was kept."""
+def remove_input(path: str) -> None:
+    """Removes an input file, or warns on stderr why it was kept.
+
+    check_ocr.py uses this too, so that both scripts delete only the
+    files that removal_problem allows.
+
+    Args:
+        path: The input file given with --input.
+    """
     problem = removal_problem(path, tempfile.gettempdir())
     if problem is not None:
         print(f"not removed {path}: {problem}", file=sys.stderr)
